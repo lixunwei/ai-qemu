@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **26 篇文档**，总计 **~1052KB** 中文技术文档
+> 共 **27 篇文档**，总计 **~1091KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 5 | ~161KB | 全局架构、QOM、执行循环、Machine 建立、线程模型 |
-| [arm64/](#arm64-arm64-架构) | 10 | ~386KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展 |
+| [arm64/](#arm64-arm64-架构) | 11 | ~425KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回 |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
@@ -171,6 +171,14 @@ ARM64 虚拟化扩展的 QEMU 完整实现。HCR_EL2 寄存器 60+ 位域定义�
 **适合读者**：分析 Hypervisor 行为、Stage-2 页表或虚拟化性能的开发者。  
 **关键源文件**：`target/arm/cpu.h`、`target/arm/helper.c`、`target/arm/ptw.c`、`target/arm/cpu-irq.c`
 
+### [10-异常入口与返回深度分析.md](arm64/10-异常入口与返回深度分析.md)
+> **39KB · 27 节**
+
+ARM64 异常入口与返回的 QEMU 完整实现。异常触发路径（`raise_exception()` / `raise_exception_ra()`）、目标 EL 确定（`exception_target_el()` / `arm_phys_excp_target_el()` 6 维路由表）、同步异常翻译（SVC/HVC/SMC/BRK + 系统寄存器陷入 + 内存故障 + PC/SP 对齐）、异步中断分发（`arm_cpu_exec_interrupt()` 优先级 NMI→FIQ→IRQ→VIRQ→VFIQ→VSERR）、调试异常（MDCR 路由）。异常入口总控（`arm_cpu_do_interrupt()` PSCI/Semihost 拦截 + AArch64/AArch32 分派）、向量表完整布局（16 向量 = 4来源×4类型）、ESR 综合征构建与 AArch32→AArch64 转换、FAR_ELx 写入、PSTATE→SPSR 保存（含 `pstate_read()/pstate_write()` 缓存字段拆解）、ELR 保存、SP 保存/恢复、新 PSTATE 组装（DAIF/PAN/TCO/SSBS/ALLINT）。ERET 翻译（FGT trap 优先 + PAuth 认证）、ERET Helper 完整流程（7 种非法返回条件 + SPSR→PSTATE 恢复 + TBI PC 处理）、AArch32↔AArch64 状态切换、SVE/SME 向量长度变更、FEAT_NV/NV2 SPSR 修改、FEAT_DoubleFault SError 重定向、GCS EXLOCK 集成。
+
+**适合读者**：分析异常处理、中断路由或 EL 切换行为的开发者。  
+**关键源文件**：`target/arm/helper.c`、`target/arm/tcg/helper-a64.c`、`target/arm/tcg/op_helper.c`、`target/arm/cpu-irq.c`、`target/arm/tcg/translate-a64.c`
+
 ---
 
 ## device-model/ 设备模型
@@ -329,9 +337,10 @@ GDB 远程串行协议 (RSP) 完整实现分析。RSP 状态机、命令分发�
 3. `arm64/07-不同EL下指令执行差异深度分析.md` — 指令 trap 机制
 4. `arm64/08-TrustZone安全扩展与Secure-World深度分析.md` — 安全世界
 5. `arm64/09-虚拟化扩展深度分析-VHE-HCR_EL2-Stage2-MMU.md` — 虚拟化
-6. `arm64/03-GICv3中断控制器模拟架构深度分析.md` — 中断系统
-7. `arm64/04-中断注入与处理深度分析.md` — 中断完整路径
-8. `arm64/02-特殊指令模拟深度分析.md` — 指令级细节
+6. `arm64/10-异常入口与返回深度分析.md` — 异常入口/返回/ERET
+7. `arm64/03-GICv3中断控制器模拟架构深度分析.md` — 中断系统
+8. `arm64/04-中断注入与处理深度分析.md` — 中断完整路径
+9. `arm64/02-特殊指令模拟深度分析.md` — 指令级细节
 
 ### I/O 路径路线
 1. `architecture/02-模拟执行循环与MMIO分发深度分析.md` — 执行 + MMIO
