@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **32 篇文档**，总计 **~1218KB** 中文技术文档
+> 共 **33 篇文档**，总计 **~1244KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 5 | ~161KB | 全局架构、QOM、执行循环、Machine 建立、线程模型 |
-| [arm64/](#arm64-arm64-架构) | 16 | ~555KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、EL 状态管理、SVE/SME |
+| [arm64/](#arm64-arm64-架构) | 17 | ~581KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、EL 状态管理、SVE/SME、PAC/BTI/MTE |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
@@ -222,6 +222,14 @@ ARM64 SVE（Scalable Vector Extension）和 SME（Scalable Matrix Extension）�
 
 **适合读者**：分析 SVE/SME 指令仿真、向量长度管理、Streaming 模式切换或 SIMD 性能优化的开发者。  
 **关键源文件**：`target/arm/cpu.h`、`target/arm/helper.c`、`target/arm/cpu64.c`、`target/arm/tcg/translate-sve.c`、`target/arm/tcg/sve_helper.c`、`target/arm/tcg/translate-sme.c`、`target/arm/tcg/hflags.c`
+
+### [16-PAC-BTI-MTE安全特性深度分析.md](arm64/16-PAC-BTI-MTE安全特性深度分析.md)
+> **26KB · 19 节**
+
+ARM64 三大硬件安全特性完整实现分析。**PAC（指针认证码）**：5 组 128-bit 密钥（APIA/APIB/APDA/APDB/APGA）存储、QARMA5/QARMA3/IMPDEF 三种算法选择、`pauth_addpac()` 签名与 `pauth_auth()` 认证流程、SCTLR.EnIA/EnIB/EnDA/EnDB 独立使能、HCR.API/SCR.API 两级陷入控制、认证分支指令（BRAA/BLRAA/RETAA/ERETAA）combined 路径、FEAT_FPAC/FPACCOMBINE 直接异常 vs 基础版指针破坏。**BTI（分支目标识别）**：PSTATE.BTYPE 4 值状态机、BR/BLR 分别设置 BTYPE=1/2/3、`btype_destination_ok()` 着陆点兼容性矩阵（BTI/BTI c/BTI j/BTI jc/PACIASP）、GP 保护页属性与页表第 50 位、SCTLR.BT0/BT1 强化模式、两阶段检查（翻译时静态 + 运行时页检查）、EC_BTITRAP=0x0d 异常。**MTE（内存标签扩展）**：4-bit 逻辑标签（地址 [59:56]）与 4-bit 分配标签（每 16 字节粒度）、用户模式 `page_get_target_data()` vs 系统模式独立标签地址空间、`mte_probe_int()` 逐粒度比较、SCTLR.TCF/TCF0 四种故障模式（忽略/同步/异步/非对称）、PSTATE.TCO 覆盖、IRG LFSR 随机标签生成与 GCR_EL1 排除掩码、MTEDESC 紧凑描述符、FEAT_MTE/MTE2/MTE3 三级特性。三大特性的 TB 标志集成（PAUTH_ACTIVE/BT/BTYPE/MTE_ACTIVE/ATA）。
+
+**适合读者**：分析 ARM64 安全特性仿真、控制流/数据流完整性保护、内存安全机制实现的开发者。  
+**关键源文件**：`target/arm/tcg/pauth_helper.c`、`target/arm/tcg/mte_helper.c`、`target/arm/tcg/translate-a64.c`、`target/arm/tcg/helper-a64.c`、`target/arm/tcg/hflags.c`、`target/arm/cpu.h`、`target/arm/internals.h`、`target/arm/cpu-features.h`
 
 ---
 
