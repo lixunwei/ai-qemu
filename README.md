@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **28 篇文档**，总计 **~1123KB** 中文技术文档
+> 共 **29 篇文档**，总计 **~1157KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 5 | ~161KB | 全局架构、QOM、执行循环、Machine 建立、线程模型 |
-| [arm64/](#arm64-arm64-架构) | 12 | ~457KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB |
+| [arm64/](#arm64-arm64-架构) | 13 | ~491KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
@@ -187,6 +187,14 @@ ARM64 内存管理单元完整实现分析。ARMMMUIdx 翻译体制索引全量�
 **适合读者**：分析 MMU 行为、页表遍历、TLB 管理或内存权限的开发者。  
 **关键源文件**：`target/arm/ptw.c`、`target/arm/helper.c`、`target/arm/mmuidx.h`、`target/arm/tcg/tlb-insns.c`、`accel/tcg/cputlb.c`
 
+### [12-Generic-Timer定时器深度分析.md](arm64/12-Generic-Timer定时器深度分析.md)
+> **34KB · 31 节**
+
+ARM64 Generic Timer 完整实现分析。7 种定时器类型全量枚举（GTIMER_PHYS/VIRT/HYP/SEC/HYPVIRT/S_EL2_PHYS/S_EL2_VIRT）。计数器系统基于 `QEMU_CLOCK_VIRTUAL`，频率可配置（ARMv8.6+ 默认 1 GHz，兼容模式 62.5 MHz）。核心重算逻辑 `gt_recalc_timer()` 完整解析：ISTATUS 计算、QEMUTimer 重编程、中断状态更新。偏移体系三层设计（raw/indirect/direct），CNTVOFF_EL2 虚拟偏移、CNTPOFF_EL2 物理偏移（FEAT_ECV）。VHE 重定向（物理→HYP、虚拟→HYPVIRT）。系统寄存器接口全量 `generic_timer_cp_reginfo[]` 数组。访问控制：CNTKCTL_EL1（EL0→EL1 陷入）、CNTHCTL_EL2（EL1→EL2 陷入、ECV 扩展陷入位）。EL3 安全定时器访问控制（SCR.ST）。GIC PPI 连线（7 条 GPIO→PPI 映射）。FDT 设备树描述（arm,armv8-timer 兼容）。KVM 定时器集成（虚拟时间同步、迁移钩子）。RME CNTVMASK/CNTPMASK 屏蔽。定时器与 WFI 唤醒机制。
+
+**适合读者**：分析定时器中断调度、虚拟化时间管理或 KVM 定时器同步的开发者。  
+**关键源文件**：`target/arm/helper.c`、`target/arm/gtimer.h`、`target/arm/cpu.c`、`target/arm/cpu.h`、`hw/arm/virt.c`、`include/hw/arm/bsa.h`
+
 ---
 
 ## device-model/ 设备模型
@@ -347,9 +355,10 @@ GDB 远程串行协议 (RSP) 完整实现分析。RSP 状态机、命令分发�
 5. `arm64/09-虚拟化扩展深度分析-VHE-HCR_EL2-Stage2-MMU.md` — 虚拟化
 6. `arm64/10-异常入口与返回深度分析.md` — 异常入口/返回/ERET
 7. `arm64/11-MMU-TLB深度分析.md` — MMU 页表遍历与 TLB
-8. `arm64/03-GICv3中断控制器模拟架构深度分析.md` — 中断系统
-9. `arm64/04-中断注入与处理深度分析.md` — 中断完整路径
-10. `arm64/02-特殊指令模拟深度分析.md` — 指令级细节
+8. `arm64/12-Generic-Timer定时器深度分析.md` — 定时器与计数器
+9. `arm64/03-GICv3中断控制器模拟架构深度分析.md` — 中断系统
+10. `arm64/04-中断注入与处理深度分析.md` — 中断完整路径
+11. `arm64/02-特殊指令模拟深度分析.md` — 指令级细节
 
 ### I/O 路径路线
 1. `architecture/02-模拟执行循环与MMIO分发深度分析.md` — 执行 + MMIO
