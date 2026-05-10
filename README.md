@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **31 篇文档**，总计 **~1200KB** 中文技术文档
+> 共 **32 篇文档**，总计 **~1218KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 5 | ~161KB | 全局架构、QOM、执行循环、Machine 建立、线程模型 |
-| [arm64/](#arm64-arm64-架构) | 15 | ~537KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、EL 状态管理 |
+| [arm64/](#arm64-arm64-架构) | 16 | ~555KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、EL 状态管理、SVE/SME |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
@@ -212,6 +212,16 @@ ARM64 异常级别（EL0-EL3）状态管理与指令执行变化完整分析。P
 
 **适合读者**：分析 EL 切换行为、异常处理、虚拟化陷入或调试特权指令执行的开发者。  
 **关键源文件**：`target/arm/helper.c`、`target/arm/tcg/helper-a64.c`、`target/arm/tcg/op_helper.c`、`target/arm/tcg/hflags.c`、`target/arm/cpu-irq.c`、`target/arm/mmuidx.h`、`target/arm/internals.h`
+
+---
+
+### [15-SVE-SME可扩展向量扩展深度分析.md](arm64/15-SVE-SME可扩展向量扩展深度分析.md)
+> **18KB · 15 节**
+
+ARM64 SVE（Scalable Vector Extension）和 SME（Scalable Matrix Extension）完整实现分析。Z 寄存器（32×最大 2048 位）、P 谓词寄存器（16+FFR）存储布局。向量长度不可知（VLA）编程模型：ZCR_EL1/2/3 层级控制有效 VL，高 EL 可限制低 EL 的 VL。VL 缩小时 `aarch64_sve_narrow_vq()` 截断高位。三层陷入控制：CPACR.ZEN→CPTR_EL2.TZ→CPTR_EL3.EZ。SME Streaming SVE 模式（PSTATE.SM）：进入/退出清零所有 Z/P/FFR。ZA 矩阵存储（256×256 字节，Tile 行交错映射）。SVL 独立于 SVE VL（SMCR vs ZCR）。FA64 允许 Streaming 模式下执行全部 A64 指令。SVE 指令翻译基于 GVec 框架（`tcg_gen_gvec_*` + out-of-line helper）。SVE2 扩展（AES/PMULL/BitPerm/SHA3/SM4）。SME2 ZT0 寄存器（512 位）。EL 切换时 SVE 状态处理与 VL 调整。
+
+**适合读者**：分析 SVE/SME 指令仿真、向量长度管理、Streaming 模式切换或 SIMD 性能优化的开发者。  
+**关键源文件**：`target/arm/cpu.h`、`target/arm/helper.c`、`target/arm/cpu64.c`、`target/arm/tcg/translate-sve.c`、`target/arm/tcg/sve_helper.c`、`target/arm/tcg/translate-sme.c`、`target/arm/tcg/hflags.c`
 
 ---
 
