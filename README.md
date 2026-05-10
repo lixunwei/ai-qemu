@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **21 篇文档**，总计 **~890KB** 中文技术文档
+> 共 **24 篇文档**，总计 **~990KB** 中文技术文档
 
 ---
 
@@ -10,8 +10,8 @@
 
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
-| [architecture/](#architecture-架构) | 4 | ~134KB | 全局架构、QOM、执行循环、Machine 建立 |
-| [arm64/](#arm64-arm64-架构) | 6 | ~261KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令 |
+| [architecture/](#architecture-架构) | 5 | ~161KB | 全局架构、QOM、执行循环、Machine 建立、线程模型 |
+| [arm64/](#arm64-arm64-架构) | 8 | ~325KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态管理 |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
@@ -58,6 +58,16 @@ ARM virt 机器从 `machvirt_init()` 到所有设备就绪的完整流程。CPU 
 
 **适合读者**：需要修改机器类型或添加新外设的开发者。  
 **关键源文件**：`hw/arm/virt.c`、`hw/intc/arm_gicv3*.c`、`hw/pci-host/gpex.c`
+
+---
+
+### [04-线程模型与锁机制深度分析.md](architecture/04-线程模型与锁机制深度分析.md)
+> **27KB · 20 节 + 3 附录**
+
+QEMU 完整多线程并发架构。BQL（Big QEMU Lock）定义与保护范围、主事件循环与 AioContext、vCPU 线程模型（MTTCG/KVM）、IOThread 独立事件循环、RCU 用户态实现（grace period/call_rcu 线程）、协程机制（ucontext 后端/两级池化/CoMutex/CoQueue）、Bottom Half 延迟回调。
+
+**适合读者**：调试并发问题或优化 I/O 性能的开发者。  
+**关键源文件**：`system/cpus.c`、`util/main-loop.c`、`util/rcu.c`、`util/qemu-coroutine.c`
 
 ---
 
@@ -120,6 +130,26 @@ GICv3 完整架构：Distributor（SPI 路由）、Redistributor（SGI/PPI/LPI�
 
 **适合读者**：调试 Linux 内核设备树解析或修改设备树生成的开发者。  
 **关键源文件**：`hw/arm/virt.c`（`virt_machine_done()`）
+
+---
+
+### [06-异常级别状态管理深度分析.md](arm64/06-异常级别状态管理深度分析.md)
+> **30KB · 20 节 + 3 附录**
+
+ARM64 异常级别 (EL0-EL3) 的状态跟踪与切换。PSTATE 分拆存储、`arm_current_el()`/`arm_el_is_aa64()` 核心函数、异常入口的 PSTATE→SPSR 保存、ERET 返回的合法性检查与 SP 恢复、SVC/HVC/SMC 路由逻辑、WFI/WFE trap 控制、系统寄存器 EL 访问矩阵、MMU index 与 EL 映射、SVE 向量长度在 EL 切换时的收窄。
+
+**适合读者**：分析异常/中断处理流程或 Hypervisor 切换的开发者。  
+**关键源文件**：`target/arm/internals.h`、`target/arm/helper.c`、`target/arm/tcg/helper-a64.c`
+
+---
+
+### [07-不同EL下指令执行差异深度分析.md](arm64/07-不同EL下指令执行差异深度分析.md)
+> **34KB · 25 节 + 3 附录**
+
+CPU 在不同 EL (EL0-EL3) 下可执行指令的差异。WFI/WFE 三层 trap（SCTLR→HCR→SCR）、SVC/HVC/SMC 路由与 disable 控制、FP/SIMD/SVE/SME 多层 trap（CPACR→CPTR_EL2→CPTR_EL3）、ERET 的 EL 限制与 FGT trap、系统寄存器 CPAccessRights 位矩阵与 `cp_access_ok()` 检查、MSR/MRS 完整访问控制流程（TIDCP→查找→静态→VHE→动态→FGT）、Cache/TLBI/AT/DC ZVA 的 EL 访问控制、调试寄存器四类 trap（TDOSA/TDRA/TDA/TDCC）、TB flags 预计算优化。
+
+**适合读者**：分析指令 trap 机制或实现 Hypervisor 细粒度控制的开发者。  
+**关键源文件**：`target/arm/cpregs.h`、`target/arm/tcg/translate-a64.c`、`target/arm/tcg/op_helper.c`
 
 ---
 
