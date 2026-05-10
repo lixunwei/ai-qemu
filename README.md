@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **25 篇文档**，总计 **~1015KB** 中文技术文档
+> 共 **26 篇文档**，总计 **~1052KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 5 | ~161KB | 全局架构、QOM、执行循环、Machine 建立、线程模型 |
-| [arm64/](#arm64-arm64-架构) | 9 | ~349KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone |
+| [arm64/](#arm64-arm64-架构) | 10 | ~386KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展 |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
@@ -160,6 +160,16 @@ ARM TrustZone 安全扩展的 QEMU 实现。ARMSecuritySpace 四状态模型（S
 
 **适合读者**：分析安全启动、TrustZone 隔离或 EL3 固件交互的开发者。  
 **关键源文件**：`include/hw/arm/arm-security.h`、`target/arm/helper.c`、`target/arm/cpu.c`、`hw/arm/virt.c`
+
+---
+
+### [09-虚拟化扩展深度分析-VHE-HCR_EL2-Stage2-MMU.md](arm64/09-虚拟化扩展深度分析-VHE-HCR_EL2-Stage2-MMU.md)
+> **37KB · 30 节 + 3 附录**
+
+ARM64 虚拟化扩展的 QEMU 完整实现。HCR_EL2 寄存器 60+ 位域定义与写入副作用（TLB 刷新 + 虚拟中断更新）、有效 HCR 计算（`arm_hcr_el2_eff_secstate()` 含 TGE/E2H 副作用）、VHE（E2H+TGE）寄存器重定向机制（`_EL12` 别名创建）、`ELIsInHost()` 判定、HCR trap 位分类与检查函数映射、中断虚拟化（FMO/IMO/AMO 路由 + VI/VF/VSE 注入）、MMU Index 与翻译体制（E10/E20/E2/Stage2）、Stage-2 MMU 完整实现（VTTBR_EL2/VTCR_EL2、页表遍历、`get_S2prot()` 权限、FWB 属性、S2PIR 间接权限）、Stage-2 TLB 管理与故障处理（HPFAR_EL2/ESR_EL2）、异常路由与 EL2 入口、嵌套虚拟化（NV/NV1/NV2 + VNCR_EL2）、虚拟定时器、KVM 与 EL2 交互。
+
+**适合读者**：分析 Hypervisor 行为、Stage-2 页表或虚拟化性能的开发者。  
+**关键源文件**：`target/arm/cpu.h`、`target/arm/helper.c`、`target/arm/ptw.c`、`target/arm/cpu-irq.c`
 
 ---
 
@@ -318,9 +328,10 @@ GDB 远程串行协议 (RSP) 完整实现分析。RSP 状态机、命令分发�
 2. `arm64/06-异常级别状态管理深度分析.md` — EL 状态切换
 3. `arm64/07-不同EL下指令执行差异深度分析.md` — 指令 trap 机制
 4. `arm64/08-TrustZone安全扩展与Secure-World深度分析.md` — 安全世界
-5. `arm64/03-GICv3中断控制器模拟架构深度分析.md` — 中断系统
-6. `arm64/04-中断注入与处理深度分析.md` — 中断完整路径
-7. `arm64/02-特殊指令模拟深度分析.md` — 指令级细节
+5. `arm64/09-虚拟化扩展深度分析-VHE-HCR_EL2-Stage2-MMU.md` — 虚拟化
+6. `arm64/03-GICv3中断控制器模拟架构深度分析.md` — 中断系统
+7. `arm64/04-中断注入与处理深度分析.md` — 中断完整路径
+8. `arm64/02-特殊指令模拟深度分析.md` — 指令级细节
 
 ### I/O 路径路线
 1. `architecture/02-模拟执行循环与MMIO分发深度分析.md` — 执行 + MMIO
