@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **24 篇文档**，总计 **~990KB** 中文技术文档
+> 共 **25 篇文档**，总计 **~1015KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 5 | ~161KB | 全局架构、QOM、执行循环、Machine 建立、线程模型 |
-| [arm64/](#arm64-arm64-架构) | 8 | ~325KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态管理 |
+| [arm64/](#arm64-arm64-架构) | 9 | ~349KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
@@ -150,6 +150,16 @@ CPU 在不同 EL (EL0-EL3) 下可执行指令的差异。WFI/WFE 三层 trap（S
 
 **适合读者**：分析指令 trap 机制或实现 Hypervisor 细粒度控制的开发者。  
 **关键源文件**：`target/arm/cpregs.h`、`target/arm/tcg/translate-a64.c`、`target/arm/tcg/op_helper.c`
+
+---
+
+### [08-TrustZone安全扩展与Secure-World深度分析.md](arm64/08-TrustZone安全扩展与Secure-World深度分析.md)
+> **24KB · 24 节 + 3 附录**
+
+ARM TrustZone 安全扩展的 QEMU 实现。ARMSecuritySpace 四状态模型（Secure/NonSecure/Root/Realm）、SCR_EL3 安全配置寄存器写入副作用、CPU 安全复位（EL3 启动 + RVBAR）、`arm_emulate_firmware_reset()` 固件模拟、双地址空间架构（ARMASIdx_S/NS + secure_sysmem overlay）、安全内存布局（Flash/RAM/UART/GPIO）、MMU index 安全映射、SMC 预检查与路由（SMD/TSC/PSCI）、PSCI v1.1 内置实现、世界切换机制（SCR_EL3.NS 翻转 + TLB 刷新）、寄存器 Bank 安全/非安全副本、GIC 安全分组（Group 0/1）、MPC/PPC 保护控制器。
+
+**适合读者**：分析安全启动、TrustZone 隔离或 EL3 固件交互的开发者。  
+**关键源文件**：`include/hw/arm/arm-security.h`、`target/arm/helper.c`、`target/arm/cpu.c`、`hw/arm/virt.c`
 
 ---
 
@@ -305,9 +315,12 @@ GDB 远程串行协议 (RSP) 完整实现分析。RSP 状态机、命令分发�
 
 ### ARM64 专题路线
 1. `arm64/00-ARM64-CPU-GICv3-TCG深度分析.md` — CPU 模型入门
-2. `arm64/03-GICv3中断控制器模拟架构深度分析.md` — 中断系统
-3. `arm64/04-中断注入与处理深度分析.md` — 中断完整路径
-4. `arm64/02-特殊指令模拟深度分析.md` — 指令级细节
+2. `arm64/06-异常级别状态管理深度分析.md` — EL 状态切换
+3. `arm64/07-不同EL下指令执行差异深度分析.md` — 指令 trap 机制
+4. `arm64/08-TrustZone安全扩展与Secure-World深度分析.md` — 安全世界
+5. `arm64/03-GICv3中断控制器模拟架构深度分析.md` — 中断系统
+6. `arm64/04-中断注入与处理深度分析.md` — 中断完整路径
+7. `arm64/02-特殊指令模拟深度分析.md` — 指令级细节
 
 ### I/O 路径路线
 1. `architecture/02-模拟执行循环与MMIO分发深度分析.md` — 执行 + MMIO
