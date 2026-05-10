@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **27 篇文档**，总计 **~1091KB** 中文技术文档
+> 共 **28 篇文档**，总计 **~1123KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 5 | ~161KB | 全局架构、QOM、执行循环、Machine 建立、线程模型 |
-| [arm64/](#arm64-arm64-架构) | 11 | ~425KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回 |
+| [arm64/](#arm64-arm64-架构) | 12 | ~457KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
@@ -179,6 +179,14 @@ ARM64 异常入口与返回的 QEMU 完整实现。异常触发路径（`raise_e
 **适合读者**：分析异常处理、中断路由或 EL 切换行为的开发者。  
 **关键源文件**：`target/arm/helper.c`、`target/arm/tcg/helper-a64.c`、`target/arm/tcg/op_helper.c`、`target/arm/cpu-irq.c`、`target/arm/tcg/translate-a64.c`
 
+### [11-MMU-TLB深度分析.md](arm64/11-MMU-TLB深度分析.md)
+> **32KB · 32 节**
+
+ARM64 内存管理单元完整实现分析。ARMMMUIdx 翻译体制索引全量枚举（22 种有 TLB 索引 + 5 种无 TLB 索引，含 PAN/GCS 变体）、体制选择逻辑（`arm_mmu_idx_el()` 含 VHE/PAN/AArch32 分支）、翻译禁用判定（HCR.DC/TGE/VM 联动）。LPAE 页表遍历核心函数 `get_phys_addr_lpae()` 完整 590 行解析（TCR 参数提取 `aa64_va_parameters()`、TTBR 选择、起始级别计算、描述符解析循环、Block/Table/Page 处理）。AF/Dirty Bit 硬件辅助管理（HA/HD）。Stage-1 权限检查（AP/PAN/PAN3/WXN/XN/PXN + 安全状态交叉检查）、Stage-2 权限检查（S2AP + FEAT_XNX 4 值 XN）、间接权限（FEAT_S1PIR/S2PIR 16 种编码查表）。内存属性（MAIR AttrIndx + Device 检测 + FWB 覆盖）。HCR_EL2 控制位（VM/DC/PTW/FWB/TGE）。FEAT_LPA/LPA2 52 位物理地址（TTBR/描述符 OA 扩展）。AT 指令与 PAR_EL1。故障类型全量枚举（`ARMFaultType` + `ARMMMUFaultInfo`）与分发（`arm_deliver_fault()` Stage-2 强制 EL2）。QEMU 软件 TLB 架构（直接映射 + victim cache + CPUTLBEntry 标志）、TLB 插入（`tlb_set_page_full()`）、TLBI 指令实现（IS 广播 + HCR.FB 升级 + FEAT_TLBIRANGE）、ASID/VMID 管理（全刷新策略）、多核一致性。地址空间分区（ARMASIdx 4 种）。
+
+**适合读者**：分析 MMU 行为、页表遍历、TLB 管理或内存权限的开发者。  
+**关键源文件**：`target/arm/ptw.c`、`target/arm/helper.c`、`target/arm/mmuidx.h`、`target/arm/tcg/tlb-insns.c`、`accel/tcg/cputlb.c`
+
 ---
 
 ## device-model/ 设备模型
@@ -338,9 +346,10 @@ GDB 远程串行协议 (RSP) 完整实现分析。RSP 状态机、命令分发�
 4. `arm64/08-TrustZone安全扩展与Secure-World深度分析.md` — 安全世界
 5. `arm64/09-虚拟化扩展深度分析-VHE-HCR_EL2-Stage2-MMU.md` — 虚拟化
 6. `arm64/10-异常入口与返回深度分析.md` — 异常入口/返回/ERET
-7. `arm64/03-GICv3中断控制器模拟架构深度分析.md` — 中断系统
-8. `arm64/04-中断注入与处理深度分析.md` — 中断完整路径
-9. `arm64/02-特殊指令模拟深度分析.md` — 指令级细节
+7. `arm64/11-MMU-TLB深度分析.md` — MMU 页表遍历与 TLB
+8. `arm64/03-GICv3中断控制器模拟架构深度分析.md` — 中断系统
+9. `arm64/04-中断注入与处理深度分析.md` — 中断完整路径
+10. `arm64/02-特殊指令模拟深度分析.md` — 指令级细节
 
 ### I/O 路径路线
 1. `architecture/02-模拟执行循环与MMIO分发深度分析.md` — 执行 + MMIO
