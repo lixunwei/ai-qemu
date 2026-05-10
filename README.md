@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **30 篇文档**，总计 **~1180KB** 中文技术文档
+> 共 **31 篇文档**，总计 **~1200KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 5 | ~161KB | 全局架构、QOM、执行循环、Machine 建立、线程模型 |
-| [arm64/](#arm64-arm64-架构) | 14 | ~514KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU |
+| [arm64/](#arm64-arm64-架构) | 15 | ~537KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、EL 状态管理 |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
@@ -202,6 +202,16 @@ ARM64 PMU 性能监控单元完整实现分析。差值快照计数模型（`pmu
 
 **适合读者**：分析性能计数器实现、PMU 中断或虚拟化 PMU 分区的开发者。  
 **关键源文件**：`target/arm/cpregs-pmu.c`、`target/arm/cpu.h`、`target/arm/internals.h`、`hw/arm/virt.c`、`target/arm/kvm.c`
+
+---
+
+### [14-EL状态管理与指令执行变化深度分析.md](arm64/14-EL状态管理与指令执行变化深度分析.md)
+> **23KB · 13 节**
+
+ARM64 异常级别（EL0-EL3）状态管理与指令执行变化完整分析。PSTATE 存储与 EL 提取（`pstate[3:2]`、`arm_current_el()`）。PSTATE 位域分散存储优化（NZCV→独立变量、DAIF→env->daif、nRW→env->aarch64）。AArch64/AArch32 宽度层级控制模型（EL3→SCR.RW→EL2, EL2→HCR.RW→EL1）。安全状态×EL 矩阵（Root/Secure/NonSecure/Realm）。异常进入完整流程：目标 EL 确定→向量地址计算（VBAR+偏移）→状态保存（SPSR/ELR/ESR）→PSTATE 修改（DAIF 全屏蔽、PAN/TCO/SSBS 配置）→hflags 重建。异常返回（ERET）：SPSR 解析→合法性验证→状态恢复→TBI 应用。22 种 MMU 索引映射 EL 到翻译体制。系统寄存器三层访问控制（accessfn→HSTR_EL2→FGT）。特权指令 EL 依赖（ERET/HVC/SMC/WFI）。中断路由与屏蔽规则。TB flags 与 EL 敏感缓存。EL 变化钩子（PMU/Timer/SVE）。
+
+**适合读者**：分析 EL 切换行为、异常处理、虚拟化陷入或调试特权指令执行的开发者。  
+**关键源文件**：`target/arm/helper.c`、`target/arm/tcg/helper-a64.c`、`target/arm/tcg/op_helper.c`、`target/arm/tcg/hflags.c`、`target/arm/cpu-irq.c`、`target/arm/mmuidx.h`、`target/arm/internals.h`
 
 ---
 
