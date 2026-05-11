@@ -264,12 +264,12 @@ QEMU 设备模型框架（DeviceState/BusState/DeviceClass）、QOM 设备生命
 ---
 
 ### [02-块层IO路径深度分析.md](device-model/02-块层IO路径深度分析.md)
-> **47KB · 24 节**
+> **28KB · 14 节 + 4 附录**
 
-从 Guest I/O 请求到宿主文件系统的完整路径：BlockBackend → BlockDriverState → 格式驱动 (qcow2/raw) → 协议驱动 (file-posix/nbd)。协程 I/O 模型、AIO 基础设施、I/O 调度。
+从 Guest I/O 请求到宿主文件系统的完整数据路径：BlockBackend → BlockDriverState → BDS 图 → BlockDriver 接口。读/写/Flush/Discard I/O 路径详解、协程异步 I/O 模型（blk_aio→协程桥接、AioContext 事件循环、线程池 AIO、io_uring 集成）。qcow2 格式驱动/Block 作业/限流等详见 doc 04。
 
-**适合读者**：调试磁盘 I/O 性能或开发块驱动的开发者。  
-**关键源文件**：`block/block-backend.c`、`block/io.c`、`block/qcow2.c`、`block/file-posix.c`
+**适合读者**：调试磁盘 I/O 性能或理解块层数据流的开发者。  
+**关键源文件**：`block/block-backend.c`、`block/io.c`、`block/file-posix.c`、`util/thread-pool.c`
 
 ---
 
@@ -284,12 +284,12 @@ QEMU 设备模型框架（DeviceState/BusState/DeviceClass）、QOM 设备生命
 ---
 
 ### [04-Block设备子系统深度分析.md](device-model/04-Block设备子系统深度分析.md)
-> **49KB · 28 节 + 3 附录**
+> **51KB · 28 节 + 3 附录**
 
-块设备创建与生命周期、qcow2 格式内部（L1/L2 映射表、refcount、快照、压缩、加密）、块任务（mirror/commit/stream/backup）、增量备份 (dirty bitmap)、I/O 限速。
+块设备创建与生命周期（-drive/-blockdev）、qcow2 格式内部（L1/L2 映射表、refcount、快照、L2/Refcount 缓存、压缩、加密、并行读优化）、QCOW_OFLAG_COPIED 语义与 COW 触发条件、块任务框架（mirror/commit/stream/backup）、增量备份 (dirty bitmap)、I/O 限速（Throttle）、块过滤器。
 
-**适合读者**：深入理解 qcow2 或使用高级块功能的开发者。  
-**关键源文件**：`block/qcow2.c`、`block/qcow2-cluster.c`、`block/mirror.c`
+**适合读者**：深入理解 qcow2 格式或使用高级块功能（快照/备份/迁移）的开发者。  
+**关键源文件**：`block/qcow2.c`、`block/qcow2-cluster.c`、`block/mirror.c`、`block/throttle-groups.c`
 
 ---
 

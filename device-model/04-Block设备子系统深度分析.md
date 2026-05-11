@@ -551,6 +551,16 @@ qcow2_get_host_offset():                [qcow2-cluster.c:586]
     └─ 如果 refcount=0 → 加入 discard 队列
 ```
 
+**关键引用计数函数**（qcow2-refcount.c）：
+
+| 操作 | 函数 | 位置 |
+|------|------|------|
+| 初始化 | `qcow2_refcount_init()` | qcow2-refcount.c:101 |
+| 更新引用计数 | `update_refcount()` | qcow2-refcount.c:811 |
+| 分配簇 | 搜索 refcount=0 的簇 | qcow2-cluster.c |
+| 释放簇 | 设置 refcount=0 | `update_refcount()` |
+| 快照增减 | `qcow2_update_snapshot_refcount()` | qcow2-snapshot.c |
+
 ### §14 qcow2 驱动注册与打开
 
 **源文件**：`qcow2.c:1403-1710, 6294-6366`
@@ -636,6 +646,8 @@ qcow2_co_preadv_part(bs, offset, bytes, qiov, ...)
      }
 ```
 
+**并行读优化**：大 I/O 请求使用 `AioTaskPool` + `QCOW2_MAX_WORKERS` 并行处理多个子簇请求，提高吞吐量。加密簇还需经过 `qcow2_co_preadv_encrypted()` 解密。
+
 ### §16 qcow2 写路径
 
 **源文件**：`qcow2.c:2763-2843`，`qcow2-cluster.c:755-815`
@@ -677,6 +689,9 @@ qcow2_co_pwritev_part(bs, offset, bytes, qiov, ...)
        └─ bytes -= cur_bytes
      }
 ```
+
+
+**QCOW_OFLAG_COPIED 语义**：L2 表项中的 `QCOW_OFLAG_COPIED` 标志表示该簇引用计数为 1（独占），可直接覆写。无此标志表示被快照共享（refcount > 1），写入时必须先 COW。`l2_allocate()` 在 L2 表本身也需要分配时，会分配新 L2 簇、复制旧内容、更新 L1 指针并设置 `QCOW_OFLAG_COPIED`。
 
 ### §17 快照机制
 
