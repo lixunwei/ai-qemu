@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **34 篇文档**，总计 **~1266KB** 中文技术文档
+> 共 **35 篇文档**，总计 **~1299KB** 中文技术文档
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
-| [architecture/](#architecture-架构) | 5 | ~161KB | 全局架构、QOM、执行循环、Machine 建立、线程模型 |
+| [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
 | [arm64/](#arm64-arm64-架构) | 18 | ~603KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、EL 状态管理、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展 |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
@@ -68,6 +68,16 @@ QEMU 完整多线程并发架构。BQL（Big QEMU Lock）定义与保护范围�
 
 **适合读者**：调试并发问题或优化 I/O 性能的开发者。  
 **关键源文件**：`system/cpus.c`、`util/main-loop.c`、`util/rcu.c`、`util/qemu-coroutine.c`
+
+---
+
+### [05-事件循环与IO模型深度分析.md](architecture/05-事件循环与IO模型深度分析.md)
+> **33KB · 27 节 + 3 附录**
+
+AioContext 核心数据结构与生命周期、主循环（`main_loop_wait` + GMainContext 集成）、`aio_poll` 核心循环、三级 FD 监控后端（ppoll → epoll → io_uring 逐级升级）、自适应轮询机制（poll_ns/poll_max_ns 动态调整）、Bottom Half 延迟执行、定时器系统（4 种时钟类型）、EventNotifier 跨线程唤醒、IOThread 子系统、协程核心架构（ucontext/池化/CoMutex/CoQueue）、协程与事件循环集成（aio_co_schedule/aio_co_wake）、块层异步 I/O 路径（Linux AIO/io_uring/线程池）。
+
+**适合读者**：需要深入理解 QEMU 事件驱动架构、优化 I/O 延迟或开发新异步后端的开发者。  
+**关键源文件**：`util/async.c`、`util/aio-posix.c`、`util/main-loop.c`、`iothread.c`、`util/qemu-coroutine.c`、`block/linux-aio.c`
 
 ---
 
