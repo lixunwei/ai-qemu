@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **33 篇文档**，总计 **~1244KB** 中文技术文档
+> 共 **34 篇文档**，总计 **~1266KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 5 | ~161KB | 全局架构、QOM、执行循环、Machine 建立、线程模型 |
-| [arm64/](#arm64-arm64-架构) | 17 | ~581KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、EL 状态管理、SVE/SME、PAC/BTI/MTE |
+| [arm64/](#arm64-arm64-架构) | 18 | ~603KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、EL 状态管理、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展 |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
@@ -230,6 +230,14 @@ ARM64 三大硬件安全特性完整实现分析。**PAC（指针认证码）**�
 
 **适合读者**：分析 ARM64 安全特性仿真、控制流/数据流完整性保护、内存安全机制实现的开发者。  
 **关键源文件**：`target/arm/tcg/pauth_helper.c`、`target/arm/tcg/mte_helper.c`、`target/arm/tcg/translate-a64.c`、`target/arm/tcg/helper-a64.c`、`target/arm/tcg/hflags.c`、`target/arm/cpu.h`、`target/arm/internals.h`、`target/arm/cpu-features.h`
+
+### [17-GCS-RME及新扩展深度分析.md](arm64/17-GCS-RME及新扩展深度分析.md)
+> **22KB · 19 节**
+
+ARM64 GCS/RME 及 ARMv9 新扩展完整实现分析。**GCS（守护控制栈）**：`GCSPR_EL[0-3]` 影子栈指针与 `GCSCR_EL[0-3]` 控制、BL/BLR 自动推入返回地址（`gen_add_gcs_record()`）、RET 弹出并比较（`gen_load_check_gcs_record()` + RVCHKEN）、GCSPUSHM/GCSPOPM/GCSPUSHX/GCSPOPCX 指令集、PSTATE.EXLOCK 异常锁定状态机、GCS 专用 MMU 索引与页表写保护、多层使能控制（GCSCR.PCRSEL→HCRX.GCSEN→SCR.GCSEN）、GCSSTR 独立陷入控制。**RME（领域管理扩展）**：ARMSecuritySpace 四安全状态（Secure/NonSecure/Root/Realm）、SCR_EL3.NS/NSE 2-bit 编码矩阵、`arm_granule_protection_check()` GPT 两级遍历（L0 block/table + L1 contiguous/granule）、GPI 值解析（16 种粒度保护标识）、4 种 GPC 故障类型（Walk/Fail/EABT/AddressSize）、Root 不可禁用保证、MFAR_EL3 故障地址记录、MECID 寄存器、Phys_Root/Phys_Realm MMU 索引。**其他新扩展**：FEAT_NMI（PSTATE.ALLINT + SCTLR.SPINTMASK + VINMI/VFNMI）、FEAT_S1PIE/S1POE（PIR_EL1/PIRE0_EL1 权限间接 16 条目索引表）、FEAT_HAFDBS（硬件 AF 自动设置 + DBM 脏位管理）、FEAT_AIE（MAIR2/AMAIR2 属性扩展）、MPAM 存根状态。
+
+**适合读者**：分析 ARM CCA 机密计算、影子栈保护、RME 安全域隔离、ARMv9 新特性仿真实现的开发者。  
+**关键源文件**：`target/arm/cpregs-gcs.c`、`target/arm/tcg/translate-a64.c`、`target/arm/ptw.c`、`target/arm/helper.c`、`target/arm/tcg/hflags.c`、`target/arm/mmuidx.h`、`include/hw/arm/arm-security.h`、`target/arm/cpu-irq.c`
 
 ---
 
