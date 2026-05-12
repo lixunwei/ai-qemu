@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **34 篇文档**，总计 **~1270KB** 中文技术文档
+> 共 **35 篇文档**，总计 **~1500KB** 中文技术文档
 
 ---
 
@@ -13,7 +13,7 @@
 | [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
 | [arm64/](#arm64-arm64-架构) | 17 | ~574KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展 |
 | [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
-| [memory/](#memory-内存子系统) | 1 | ~30KB | MemoryRegion、MMIO、IOMMU |
+| [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
@@ -335,6 +335,16 @@ MemoryRegion 树、FlatView 扁平化、AddressSpace、RCU 无锁分发、MMIO d
 
 ---
 
+### [01-RAM管理与脏页追踪深度分析.md](memory/01-RAM管理与脏页追踪深度分析.md)
+> **27KB · 21 节 + 4 附录**
+
+RAMBlock 管理与 Guest RAM 分配（mmap/MAP_SHARED/MAP_PRIVATE）、Huge Pages（hugetlbfs/memfd）、内存后端 QOM（HostMemoryBackendFile/Memfd/Ram）、RAM 预分配。三客户端脏页位图（VGA/CODE/MIGRATION）、TCG TLB_NOTDIRTY 机制、KVM Dirty Log（KVM_GET_DIRTY_LOG/KVM_CLEAR_DIRTY_LOG）、KVM Dirty Ring（per-vCPU 环形缓冲区 + reaper 线程）。迁移 RAM 保存（precopy 脏页迭代、clear_bmap 优化）。NUMA 拓扑配置、PC-DIMM/NVDIMM 热插拔、virtio-mem 动态内存（RamDiscardManager）、ARM virt 内存布局。
+
+**适合读者**：研究 VM 迁移脏页追踪、内存性能调优（大页/NUMA）或内存热插拔的开发者。  
+**关键源文件**：`system/physmem.c`、`accel/kvm/kvm-all.c`、`migration/ram.c`、`include/system/ramblock.h`
+
+---
+
 ## accel/ 加速器
 
 ### [00-TCG深度分析.md](accel/00-TCG深度分析.md)
@@ -389,7 +399,8 @@ GDB 远程串行协议 (RSP) 完整实现分析。RSP 状态机、命令分发�
 1. `architecture/00-全局架构概览.md` — 建立整体认知
 2. `architecture/01-QOM对象模型深度分析.md` — 理解对象系统
 3. `memory/00-内存子系统深度分析.md` — 理解内存模型
-4. `device-model/00-设备模型与virtio深度分析.md` — 理解设备框架
+4. `memory/01-RAM管理与脏页追踪深度分析.md` — RAM 分配与脏页追踪
+5. `device-model/00-设备模型与virtio深度分析.md` — 理解设备框架
 
 ### ARM64 专题路线
 1. `arm64/00-ARM64-CPU-GICv3-TCG深度分析.md` — CPU 模型入门
