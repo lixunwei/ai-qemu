@@ -38,6 +38,18 @@
 26. [全链路数据路径对比](#26-全链路数据路径对比)
 27. [端到端 TX/RX 流程图](#27-端到端-txrx-流程图)
 
+**第七部分：virtio-net 设备仿真**
+28. [virtio-net 概述](#28-virtio-net-概述)
+29. [VirtIONet 结构体](#29-virtionet-结构体)
+30. [设备 Realize 流程](#30-设备-realize-流程)
+31. [RX 接收路径](#31-rx-接收路径)
+32. [TX 发送路径](#32-tx-发送路径)
+33. [控制队列](#33-控制队列)
+34. [多队列与 RSS](#34-多队列与-rss)
+35. [特性协商](#35-特性协商)
+36. [网络后端与 vhost 集成](#36-网络后端与-vhost-集成)
+37. [CLI 使用与配置](#37-cli-使用与配置)
+
 **附录**
 - [A. 关键数据结构速查表](#附录-a-关键数据结构速查表)
 - [B. 源码文件索引](#附录-b-源码文件索引)
@@ -1699,6 +1711,470 @@ Guest App                                                Host
   +-- DPDK PMD 发送到物理 NIC --------------------------->+
       （绕过整个内核网络栈）                           物理 NIC
 ```
+
+---
+
+
+## 第七部分：virtio-net 设备仿真
+
+## 28. virtio-net 概述
+
+virtio-net 是 QEMU 中性能最高的虚拟网卡，支持多队列、TSO/GSO 卸载、RSS 以及 vhost 加速。它是生产环境中最常用的虚拟网络设备。
+
+**QOM 类型层级**：
+
+```
+Object → DeviceState → VirtIODevice → VirtIONet
+
+传输层:
+  VirtIONetPCI  (virtio-net-pci)    — PCI 传输
+  VirtIOMMIOProxy (virtio-net-device) — MMIO 传输
+```
+
+## 29. VirtIONet 结构体
+
+定义于 `virtio-net.h:158-233`：
+
+```c
+struct VirtIONet {
+    VirtIODevice parent_obj;
+
+    /* 网络接口 */
+    NICState *nic;                 // NIC 状态
+    NICConf nic_conf;              // NIC 配置（MAC, model, peers）
+
+    /* MAC 与链路 */
+    uint8_t mac[ETH_ALEN];         // MAC 地址
+    uint16_t status;               // 链路状态
+    uint16_t mtu;                  // 最大传输单元
+
+    /* 队列 */
+    VirtIONetQueue *vqs;           // 队列对数组
+    VirtQueue *ctrl_vq;            // 控制队列
+    uint16_t max_queue_pairs;      // 最大队列对数
+    uint16_t curr_queue_pairs;     // 当前活跃队列对数
+
+    /* 接收过滤 */
+    uint8_t promisc;               // 混杂模式
+    uint8_t allmulti;               // 接收所有多播
+    uint8_t alluni;                // 接收所有单播
+    uint8_t nomulti;               // 不接收多播
+    uint8_t nouni;                 // 不接收单播
+    uint8_t nobcast;               // 不接收广播
+    struct { ... } mac_table;      // MAC 过滤表
+    uint32_t *vlans;               // VLAN 过滤位图
+
+    /* 卸载特性 */
+    uint32_t has_vnet_hdr;         // vnet header 支持
+    uint32_t curr_guest_offloads;  // 当前 Guest 卸载特性
+    int multiqueue;                // 多队列标志
+
+    /* RSS */
+    VirtioNetRssData rss_data;     // RSS 配置
+    bool rss_data_loaded;
+    struct NetRxPkt *rx_pkt;       // RSS 辅助结构
+
+    /* vhost */
+    VHostNetState *vhost_net;      // vhost 后端状态
+};
+```
+
+#### VirtIONetQueue（virtio-net.h:147-157）
+
+```c
+struct VirtIONetQueue {
+    VirtQueue *rx_vq;              // 接收 VirtQueue
+    VirtQueue *tx_vq;              // 发送 VirtQueue
+    QEMUTimer *tx_timer;           // TX 定时器（定时器模式）
+    QEMUBH *tx_bh;                 // TX Bottom Half（BH 模式）
+    uint32_t tx_waiting;           // TX 等待计数
+    struct {
+        VirtQueueElement *elem;    // 异步发送中的元素
+    } async_tx;
+    VirtIONet *n;                  // 反向指针
+};
+```
+
+## 30. 设备 Realize 流程
+
+`virtio_net_device_realize()`（virtio-net.c:3867-4049）：
+
+```
+virtio_net_device_realize(dev, errp)
+  │
+  ├── 1. 验证参数
+  │     ├── MTU 范围检查
+  │     ├── speed/duplex 验证
+  │     └── failover 配置
+  │
+  ├── 2. 初始化 virtio
+  │     └── virtio_init(vdev, VIRTIO_ID_NET, sizeof(virtio_net_config))
+  │
+  ├── 3. 分配队列
+  │     ├── n->vqs = g_new0(VirtIONetQueue, max_queue_pairs)
+  │     ├── virtio_net_add_queue(n, 0)   — 第一个队列对
+  │     └── virtio_add_queue(ctrl_vq)    — 控制队列
+  │
+  ├── 4. 设置 MAC 地址
+  │     ├── qemu_macaddr_default_if_unset(&n->nic_conf.macaddr)
+  │     └── memcpy(n->mac, ...)
+  │
+  ├── 5. 创建 NIC
+  │     └── n->nic = qemu_new_nic(&net_virtio_info, &n->nic_conf, ...)
+  │           │                                    [3991-3998]
+  │           └── net_virtio_info 回调:
+  │                 ├── .can_receive = virtio_net_can_receive
+  │                 ├── .receive     = virtio_net_receive
+  │                 └── .link_status_changed = virtio_net_set_link_status
+  │
+  └── 6. 后端连接
+        └── NIC 自动与 -netdev 指定的 peer 关联
+```
+
+## 31. RX 接收路径
+
+外部网络数据包到达 Guest 的完整路径：
+
+```
+网络后端（TAP/用户/socket）
+  │
+  ▼
+QEMU 网络层
+  │
+  ├── 1. 检查可接收性
+  │     └── virtio_net_can_receive() [virtio-net.c:1628-1648]
+  │           ├── VM 是否运行？
+  │           ├── 驱动是否就绪（VIRTIO_CONFIG_S_DRIVER_OK）？
+  │           └── 队列是否有可用缓冲区？
+  │
+  ├── 2. 可选 RSS 路由
+  │     └── virtio_net_process_rss() [virtio-net.c:1848-1901]
+  │           └── 根据 RSS 哈希将包路由到正确的队列对
+  │
+  ├── 3. 接收过滤
+  │     └── receive_filter() [virtio-net.c:1737-1786]
+  │           ├── 混杂模式？→ 直接通过
+  │           ├── 广播？→ 检查 nobcast
+  │           ├── 多播？→ 检查 allmulti / MAC 表
+  │           └── 单播？→ 检查 alluni / MAC 表
+  │
+  └── 4. 复制到 Guest
+        └── virtio_net_receive_rcu() [virtio-net.c:1904-2054]
+              │
+              ├── 构建 virtio-net header
+              │     └── receive_header() [virtio-net.c:1715-1735]
+              │           └── 填充 checksum/TSO 卸载提示
+              │
+              ├── 从 RX 队列弹出缓冲区
+              │     └── virtqueue_pop(rx_vq) [1956]
+              │
+              ├── 复制数据到 Guest 内存
+              │     ├── 非 mergeable：一个描述符放完整包
+              │     └── mergeable：可跨多个描述符，更新 num_buffers
+              │
+              └── 完成通知
+                    ├── virtqueue_fill()      — 填充 used ring
+                    ├── virtqueue_flush()     — 更新 used idx
+                    └── virtio_notify()       — 触发中断
+```
+
+#### RSC（Receive Segment Coalescing）
+
+在标准 RX 路径之前，可选的 RSC 层合并属于同一 TCP 流的多个小包：
+
+```
+virtio_net_receive()
+  └── virtio_net_rsc_receive4/6() [virtio-net.c:2502-2605]
+        ├── 匹配 TCP 流（5-tuple）
+        ├── 合并数据段到缓存包
+        ├── 定时器触发刷新 → virtio_net_rsc_purge()
+        └── 合并包一次性递送给 Guest
+```
+
+## 32. TX 发送路径
+
+Guest 发送网络数据包的完整路径：
+
+```
+Guest 驱动写入 TX QueueNotify
+  │
+  ▼
+virtio_net_handle_tx_timer() [virtio-net.c:2822-2849]  ← 定时器模式
+virtio_net_handle_tx_bh()    [virtio-net.c:2851-2875]  ← BH 模式
+  │
+  └── 调度定时器或 BH，避免频繁处理
+        │
+        ▼
+  virtio_net_tx_timer() [2877-2925]  或  virtio_net_tx_bh() [2927-2974]
+        │
+        └── virtio_net_flush_tx() [virtio-net.c:2718-2818]
+              │
+              ├── while (包数 < TX_BURST):
+              │     │
+              │     ├── virtqueue_pop(tx_vq) [2740]
+              │     │     └── 取出一个包的描述符链
+              │     │
+              │     ├── 验证头长度
+              │     │     └── out_sg[0] >= sizeof(virtio_net_hdr)
+              │     │
+              │     ├── 处理 vnet header
+              │     │     └── virtio_net_hdr_swap() — 端序转换
+              │     │
+              │     ├── 发送到网络后端
+              │     │     └── qemu_sendv_packet_async(nc, out_sg, out_num,
+              │     │               virtio_net_tx_complete) [2795-2801]
+              │     │
+              │     ├── 如果异步发送未完成:
+              │     │     ├── 保存 async_tx.elem
+              │     │     └── 禁用通知，退出循环
+              │     │
+              │     └── 如果同步完成:
+              │           ├── virtqueue_push(tx_vq, elem, 0)
+              │           └── virtio_notify(vdev, tx_vq)
+              │
+              └── 如果达到 TX_BURST 限制:
+                    └── 重新调度定时器/BH 继续发送
+```
+
+#### TX 定时器 vs BH 模式
+
+| 模式 | 触发方式 | 延迟 | 吞吐量 | 代码位置 |
+|------|---------|------|--------|---------|
+| Timer | 延迟合并 | 较高 | 较高 | 2877-2925 |
+| BH | 立即调度 | 较低 | 较低 | 2927-2974 |
+
+默认使用 BH 模式，可通过属性 `tx=timer` 切换。
+
+#### 异步发送完成
+
+```
+网络后端发送完成
+  │
+  ▼
+virtio_net_tx_complete() [virtio-net.c:2685-2715]
+  ├── virtqueue_push(tx_vq, async_tx.elem, 0)
+  ├── virtio_notify(vdev, tx_vq)
+  ├── async_tx.elem = NULL
+  └── 重新进入 flush_tx() 处理更多包
+```
+
+## 33. 控制队列
+
+virtio-net 的控制队列（ctrl_vq）用于配置网络行为：
+
+```
+virtio_net_handle_ctrl() [virtio-net.c:1593-1616]
+  └── virtio_net_handle_ctrl_iov() [1550-1591]
+        │
+        ├── 解析控制命令头: class + command
+        │
+        └── 分发到子处理器:
+              │
+              ├── VIRTIO_NET_CTRL_RX
+              │     └── virtio_net_handle_rx_mode() [1005-1036]
+              │           ├── PROMISC: 设置混杂模式
+              │           ├── ALLMULTI: 接收所有多播
+              │           ├── ALLUNI: 接收所有单播
+              │           ├── NOMULTI: 不接收多播
+              │           ├── NOUNI: 不接收单播
+              │           └── NOBCAST: 不接收广播
+              │
+              ├── VIRTIO_NET_CTRL_MAC
+              │     └── virtio_net_handle_mac() [1083-1177]
+              │           ├── ADDR_SET: 设置 MAC 地址
+              │           └── TABLE_SET: 批量设置 MAC 过滤表
+              │
+              ├── VIRTIO_NET_CTRL_VLAN
+              │     └── virtio_net_handle_vlan_table() [1179-1206]
+              │           ├── ADD: 添加 VLAN ID 到位图
+              │           └── DEL: 从位图删除 VLAN ID
+              │
+              ├── VIRTIO_NET_CTRL_ANNOUNCE
+              │     └── virtio_net_handle_announce() [1208-1222]
+              │           └── 触发 GARP 通告（迁移后）
+              │
+              ├── VIRTIO_NET_CTRL_MQ
+              │     └── virtio_net_handle_mq() [1497-1548]
+              │           └── 设置活跃队列对数
+              │
+              ├── VIRTIO_NET_CTRL_GUEST_OFFLOADS
+              │     └── virtio_net_handle_offloads() [1038-1081]
+              │           └── 动态调整 Guest 卸载特性
+              │
+              └── VIRTIO_NET_CTRL_RSS
+                    └── virtio_net_handle_rss() [1377-1495]
+                          └── 配置 RSS 哈希/indirection 表
+```
+
+## 34. 多队列与 RSS
+
+#### 多队列架构
+
+```
+Guest:
+  vCPU 0 ──► TX Queue 0 ──►┐
+  vCPU 0 ◄── RX Queue 0 ◄──┤── Queue Pair 0
+                            │
+  vCPU 1 ──► TX Queue 1 ──►┐
+  vCPU 1 ◄── RX Queue 1 ◄──┤── Queue Pair 1
+                            │
+  ...                       │
+                            │
+  所有 vCPU ──► Ctrl Queue  ── 控制命令
+```
+
+**队列编号规则**（virtio-net.c:141-144）：
+
+```c
+#define vq2q(queue_index) ((queue_index) / 2)
+// RX 队列: 偶数索引 (0, 2, 4, ...)
+// TX 队列: 奇数索引 (1, 3, 5, ...)
+// Ctrl 队列: 最后一个
+```
+
+**队列对管理**：
+- 启动时创建 `max_queue_pairs` 个队列对
+- Guest 通过 ctrl_vq 发送 `VIRTIO_NET_CTRL_MQ` 设置 `curr_queue_pairs`
+- `virtio_net_set_multiqueue()`（3056-3064）动态增减队列
+
+#### RSS（接收端缩放）
+
+RSS 允许根据数据包的流哈希将 RX 包分发到不同的队列：
+
+```
+收到数据包
+  │
+  ▼
+virtio_net_process_rss() [virtio-net.c:1848-1901]
+  │
+  ├── 计算流哈希（基于 IP + 端口等）
+  ├── 查 indirection table → 目标队列索引
+  └── 将包路由到对应 RX 队列
+```
+
+**eBPF RSS 加速**：
+- `virtio_net_attach_ebpf_rss()`（1245-1266）将 RSS 逻辑卸载到 eBPF 程序
+- eBPF 在 TAP fd 上直接执行哈希和分发，避免进入 QEMU 用户空间
+
+## 35. 特性协商
+
+`virtio_net_get_features()`（virtio-net.c:3073-3180）：
+
+| 特性 | 条件 | 说明 |
+|------|------|------|
+| `VIRTIO_NET_F_MAC` | 总是 | MAC 地址报告 |
+| `VIRTIO_NET_F_STATUS` | 总是 | 链路状态通知 |
+| `VIRTIO_NET_F_MRG_RXBUF` | 总是 | 可合并 RX 缓冲区 |
+| `VIRTIO_NET_F_HOST_TSO4/6` | peer 支持 vnet_hdr | 主机端 TSO 卸载 |
+| `VIRTIO_NET_F_GUEST_CSUM` | peer 支持 vnet_hdr | Guest 校验和卸载 |
+| `VIRTIO_NET_F_GUEST_TSO4/6` | peer 支持 vnet_hdr | Guest TSO 卸载 |
+| `VIRTIO_NET_F_MQ` | max_queue_pairs > 1 | 多队列 |
+| `VIRTIO_NET_F_RSS` | peer 支持 | 接收端缩放 |
+| `VIRTIO_NET_F_CTRL_VQ` | 总是 | 控制队列 |
+| `VIRTIO_NET_F_CTRL_RX` | 总是 | RX 模式控制 |
+| `VIRTIO_NET_F_CTRL_VLAN` | 总是 | VLAN 过滤 |
+| `VIRTIO_NET_F_CTRL_MAC_ADDR` | 总是 | MAC 地址设置 |
+
+**vnet_hdr 的作用**：vnet_hdr 是在包数据前附加的 virtio-net 头，包含 TSO/GSO/checksum 等卸载提示。只有当网络后端（如 TAP）支持 vnet_hdr 时，才能启用这些卸载特性。
+
+**git 趋势**：
+- commit 1c79ab6937：默认启用 UDP tunnel GSO 支持
+- commit 3a7741c3bd：实现扩展特性支持（>64 位特性）
+
+## 36. 网络后端与 vhost 集成
+
+#### 网络后端类型
+
+```
+virtio-net (VirtIODevice)
+  │
+  └── NICState → NetClientState
+        │
+        └── peer (NetClientState) ← 网络后端
+              │
+              ├── TAP 后端
+              │     └── TAP fd → 主机内核网桥/路由
+              │
+              ├── User 后端（SLIRP）
+              │     └── 用户空间 TCP/IP 栈（NAT 模式）
+              │
+              ├── Socket 后端
+              │     └── UDP/TCP socket → 另一个 QEMU 实例
+              │
+              └── vhost-net 后端
+                    └── 内核 vhost → 直接 TAP I/O
+```
+
+#### vhost-net 加速
+
+```
+标准路径:
+  Guest VirtQueue ←→ QEMU 用户空间 ←→ TAP fd
+  （每个包两次用户/内核切换）
+
+vhost-net 路径:
+  Guest VirtQueue ←→ vhost-net 内核模块 ←→ TAP fd
+  （零用户空间拷贝，内核直接处理）
+```
+
+**vhost 启动/停止**（virtio-net.c:282-340）：
+
+```c
+virtio_net_vhost_status(n, status)
+  ├── 条件满足（DRIVER_OK + vhost 可用）
+  │     └── vhost_net_start(vdev, n->nic->ncs, queues)
+  │           ├── 编程 vring 地址到内核
+  │           ├── 传递 kick/call eventfd
+  │           └── 数据面转移到内核
+  │
+  └── 条件不满足
+        └── vhost_net_stop() → 数据面回到 QEMU
+```
+
+## 37. CLI 使用与配置
+
+#### 基本用法
+
+```bash
+# TAP 后端（最常用，高性能）
+qemu-system-aarch64 -M virt \
+  -netdev tap,id=net0,ifname=tap0,script=no,downscript=no \
+  -device virtio-net-pci,netdev=net0,mac=52:54:00:12:34:56
+
+# 用户网络（无需特权，NAT 模式）
+qemu-system-aarch64 -M virt \
+  -netdev user,id=net0,hostfwd=tcp::2222-:22 \
+  -device virtio-net-pci,netdev=net0
+
+# MMIO 传输
+qemu-system-aarch64 -M virt \
+  -netdev user,id=net0 \
+  -device virtio-net-device,netdev=net0
+```
+
+#### 高级配置
+
+```bash
+# 多队列 + vhost
+qemu-system-aarch64 -M virt \
+  -netdev tap,id=net0,queues=4,vhost=on \
+  -device virtio-net-pci,netdev=net0,mq=on,vectors=10
+
+# 自定义 MTU
+-device virtio-net-pci,netdev=net0,host_mtu=9000
+
+# 关闭 TX 定时器（使用 BH 模式）
+-device virtio-net-pci,netdev=net0,tx=bh
+```
+
+#### 连接关系
+
+```
+-netdev tap,id=net0,...    → 创建 TAP NetClientState
+-device virtio-net-pci,netdev=net0  → 创建 NIC，peer = net0
+                                       realize 时: qemu_new_nic() 连接
+```
+
 
 ---
 

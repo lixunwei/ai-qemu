@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **35 篇文档**，总计 **~1500KB** 中文技术文档
+> 共 **34 篇文档**，总计 **~1500KB** 中文技术文档
 
 ---
 
@@ -12,7 +12,7 @@
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
 | [arm64/](#arm64-arm64-架构) | 17 | ~574KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展 |
-| [device-model/](#device-model-设备模型) | 8 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
+| [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
@@ -253,16 +253,6 @@ QEMU 设备模型框架（DeviceState/BusState/DeviceClass）、QOM 设备生命
 
 ---
 
-### [01-关键设备仿真分析-UART-磁盘-网卡.md](device-model/01-关键设备仿真分析-UART-磁盘-网卡.md)
-> **48KB · 30 节**
-
-三个典型设备的完整模拟实现：PL011 UART（寄存器模型、FIFO、中断）、virtio-blk（I/O 请求处理、后端对接）、virtio-net（收发路径、多队列、头部处理）。
-
-**适合读者**：学习设备模拟开发范式的开发者。  
-**关键源文件**：`hw/char/pl011.c`、`hw/block/virtio-blk.c`、`hw/net/virtio-net.c`
-
----
-
 ### [02-块层IO路径深度分析.md](device-model/02-块层IO路径深度分析.md)
 > **28KB · 14 节 + 4 附录**
 
@@ -284,9 +274,9 @@ QEMU 设备模型框架（DeviceState/BusState/DeviceClass）、QOM 设备生命
 ---
 
 ### [04-Block设备子系统深度分析.md](device-model/04-Block设备子系统深度分析.md)
-> **51KB · 28 节 + 3 附录**
+> **62KB · 38 节 + 3 附录**
 
-块设备创建与生命周期（-drive/-blockdev）、qcow2 格式内部（L1/L2 映射表、refcount、快照、L2/Refcount 缓存、压缩、加密、并行读优化）、QCOW_OFLAG_COPIED 语义与 COW 触发条件、块任务框架（mirror/commit/stream/backup）、增量备份 (dirty bitmap)、I/O 限速（Throttle）、块过滤器。
+块设备创建与生命周期（-drive/-blockdev）、qcow2 格式内部（L1/L2 映射表、refcount、快照、L2/Refcount 缓存、压缩、加密、并行读优化）、QCOW_OFLAG_COPIED 语义与 COW 触发条件、块任务框架（mirror/commit/stream/backup）、增量备份 (dirty bitmap)、I/O 限速（Throttle）、块过滤器。新增：virtio-blk 设备仿真（VirtIOBlock 结构体、请求处理管线、请求类型、I/O 完成路径、多队列/IOThread、特性协商）。
 
 **适合读者**：深入理解 qcow2 格式或使用高级块功能（快照/备份/迁移）的开发者。  
 **关键源文件**：`block/qcow2.c`、`block/qcow2-cluster.c`、`block/mirror.c`、`block/throttle-groups.c`
@@ -304,9 +294,9 @@ VFIO 框架（container/group/device 模型）、PCI 设备直通（BAR 映射�
 ---
 
 ### [06-网络后端深度分析-TAP-vhost-net-vhost-user.md](device-model/06-网络后端深度分析-TAP-vhost-net-vhost-user.md)
-> **59KB · 27 节 + 3 附录**
+> **76KB · 37 节 + 3 附录**
 
-网络后端全景：TAP 设备（多队列、vnet_hdr）、vhost-net 内核旁路、vhost-user 用户态旁路（DPDK 集成）、vDPA（硬件 vring）、slirp 用户态网络、socket 后端、Hub 虚拟交换、NetFilter 框架。
+网络后端全景：TAP 设备（多队列、vnet_hdr）、vhost-net 内核旁路、vhost-user 用户态旁路（DPDK 集成）、vDPA（硬件 vring）、slirp 用户态网络、socket 后端、Hub 虚拟交换、NetFilter 框架。新增：virtio-net 设备仿真（VirtIONet 结构体、RX/TX 路径、控制队列、RSS、多队列、特性协商、vhost 集成）。
 
 **适合读者**：优化网络 I/O 或集成网络后端的开发者。  
 **关键源文件**：`net/tap.c`、`hw/virtio/vhost-net.c`、`hw/virtio/vhost-user.c`
@@ -417,9 +407,9 @@ GDB 远程串行协议 (RSP) 完整实现分析。RSP 状态机、命令分发�
 
 ### I/O 路径路线
 1. `architecture/02-模拟执行循环与MMIO分发深度分析.md` — 执行 + MMIO
-2. `device-model/01-关键设备仿真分析-UART-磁盘-网卡.md` — 设备实例
-3. `device-model/02-块层IO路径深度分析.md` — 块 I/O 深入
-4. `device-model/06-网络后端深度分析-TAP-vhost-net-vhost-user.md` — 网络 I/O
+2. `device-model/02-块层IO路径深度分析.md` — 块 I/O 深入
+3. `device-model/04-Block设备子系统深度分析.md` — Block 子系统 + virtio-blk 设备
+4. `device-model/06-网络后端深度分析-TAP-vhost-net-vhost-user.md` — 网络 I/O + virtio-net 设备
 
 ### 调试专题
 1. `debug/00-GDB调试子系统深度分析.md` — GDB 接入分析

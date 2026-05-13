@@ -42,6 +42,17 @@
   - [§26 脏位图 (Dirty Bitmap)](#26-脏位图-dirty-bitmap)
   - [§27 Block 限流 (Throttle)](#27-block-限流-throttle)
   - [§28 Block 过滤器](#28-block-过滤器)
+- [第六部分：virtio-blk 设备仿真](#第六部分virtio-blk-设备仿真)
+  - [§29 virtio-blk 概述](#29-virtio-blk-概述)
+  - [§30 VirtIOBlock 结构体](#30-virtioblock-结构体)
+  - [§31 设备 Realize 流程](#31-设备-realize-流程)
+  - [§32 请求处理管线](#32-请求处理管线)
+  - [§33 请求类型详解](#33-请求类型详解)
+  - [§34 I/O 完成路径](#34-io-完成路径)
+  - [§35 多队列与 IOThread](#35-多队列与-iothread)
+  - [§36 BlockBackend 集成](#36-blockbackend-集成)
+  - [§37 特性协商](#37-特性协商)
+  - [§38 CLI 使用与配置](#38-cli-使用与配置)
 - [附录](#附录)
   - [附录A：Block 驱动一览](#附录ablock-驱动一览)
   - [附录B：关键源文件索引](#附录b关键源文件索引)
@@ -1120,6 +1131,355 @@ BdrvDirtyBitmap 结构:                     [dirty-bitmap.c:33]
   bdrv_drop_filter(filter_node, &errp)
     → 从图中移除 filter，恢复直连
 ```
+
+---
+
+
+## 第六部分：virtio-blk 设备仿真
+
+### §29 virtio-blk 概述
+
+virtio-blk 是 QEMU 中最常用的虚拟块设备，通过 virtio 框架提供高性能磁盘 I/O。它将 Guest 的块 I/O 请求转换为 QEMU 块层的异步操作。
+
+**QOM 类型层级**：
+
+```
+Object → DeviceState → VirtIODevice → VirtIOBlock
+
+传输层包装:
+  VirtIOBlockPCI  (virtio-blk-pci)  — PCI 传输
+  VirtIOMMIOProxy (virtio-blk-device) — MMIO 传输
+```
+
+### §30 VirtIOBlock 结构体
+
+定义于 `virtio-blk.h:37-93`：
+
+```c
+struct VirtIOBlock {
+    VirtIODevice parent_obj;       // virtio 设备基类
+
+    /* 块后端 */
+    BlockBackend *blk;             // 块后端（镜像文件/块设备）
+
+    /* 请求管理 */
+    void *rq;                      // 活跃请求链表
+    QemuMutex rq_lock;             // 请求锁
+
+    /* 配置 */
+    VirtIOBlkConf conf;            // 设备配置
+    uint64_t host_features;        // 主机特性
+    size_t config_size;            // 配置空间大小
+
+    /* 多队列 */
+    AioContext **vq_aio_context;   // 每队列 AioContext
+    uint64_t sector_mask;          // 扇区对齐掩码
+};
+```
+
+#### VirtIOBlkConf 配置（virtio-blk.h:37-55）
+
+```c
+struct VirtIOBlkConf {
+    BlockConf conf;                // 通用块配置（含 BlockBackend *blk）
+    IOThread *iothread;            // 单 IOThread（旧方式）
+    IOThreadVirtQueueMappingList *iothread_vq_mapping; // 每队列 IOThread 映射
+    char *serial;                  // 设备序列号
+    uint32_t request_merging;      // 请求合并使能
+    uint16_t num_queues;           // 队列数
+    uint16_t queue_size;           // 每队列深度
+    uint32_t max_discard_sectors;  // 最大 discard 扇区数
+    uint32_t max_write_zeroes_sectors;
+    // ... 更多可调参数
+};
+```
+
+#### VirtIOBlockReq 请求结构
+
+```c
+struct VirtIOBlockReq {
+    VirtQueueElement elem;         // virtqueue 元素（SG 列表）
+    VirtQueue *vq;                 // 所属队列
+    struct virtio_blk_outhdr out;  // 请求头（type, ioprio, sector）
+    QEMUIOVector qiov;             // I/O 向量
+    struct VirtIOBlockReq *next;   // 完成链表
+    struct VirtIOBlockReq *mr_next; // 合并链表
+    VirtIOBlock *dev;              // 所属设备
+};
+```
+
+### §31 设备 Realize 流程
+
+`virtio_blk_device_realize()`（virtio-blk.c:1723-1847）：
+
+```
+virtio_blk_device_realize(dev, errp)
+  │
+  ├── 1. 验证配置
+  │     ├── 检查 drive= 属性已设置                    [1732-1739]
+  │     ├── 验证 num_queues > 0                       [1740-1744]
+  │     └── 验证 queue_size 合法                      [1746-1758]
+  │
+  ├── 2. 配置后端
+  │     ├── blkconf_serial(&conf->conf, &conf->serial) [1760]
+  │     ├── blkconf_apply_backend_options()            [1762-1764]
+  │     ├── blkconf_geometry() → 读取磁盘几何          [1766]
+  │     └── blkconf_blocksizes() → 读取块大小          [1768-1772]
+  │
+  ├── 3. 初始化 virtio
+  │     └── virtio_init(vdev, VIRTIO_ID_BLOCK, config_size) [1801-1803]
+  │
+  ├── 4. 连接后端
+  │     ├── s->blk = conf->conf.blk                   [1807]
+  │     └── s->sector_mask = (s->conf.conf.logical_block_size / 512) - 1 [1809]
+  │
+  ├── 5. 创建 VirtQueue
+  │     └── for i in 0..num_queues:                    [1811-1813]
+  │           virtio_add_queue(vdev, queue_size, virtio_blk_handle_output)
+  │
+  ├── 6. 设置 IOThread 映射
+  │     └── virtio_blk_vq_aio_context_init()           [1821-1829]
+  │
+  └── 7. 注册块操作回调
+        └── blk_set_dev_ops(s->blk, &virtio_block_ops) [1838-1840]
+```
+
+### §32 请求处理管线
+
+这是 virtio-blk 最核心的数据路径：
+
+```
+Guest 驱动写入 QueueNotify
+  │
+  ▼
+virtio_blk_handle_output() [virtio-blk.c:1044-1059]
+  │
+  ├── 延迟启动 ioeventfd（首次 kick 时）
+  │
+  └── virtio_blk_handle_vq() [virtio-blk.c:1011-1042]
+        │
+        ├── while (true):
+        │     │
+        │     ├── virtio_blk_get_request() [virtio-blk.c:170-177]
+        │     │     └── virtqueue_pop(vq)
+        │     │           └── 取出一个请求的描述符链
+        │     │               构建 VirtQueueElement（in/out SG）
+        │     │
+        │     ├── virtio_blk_handle_request() [virtio-blk.c:821-1008]
+        │     │     │
+        │     │     ├── 解析请求头
+        │     │     │     └── 从 out SG 拷贝 virtio_blk_outhdr
+        │     │     │         ├── type:   IN/OUT/FLUSH/GET_ID/...
+        │     │     │         ├── ioprio: I/O 优先级
+        │     │     │         └── sector: 起始扇区号
+        │     │     │
+        │     │     └── 根据 type 分发（见下一节）
+        │     │
+        │     └── 如果队列空 → 退出循环
+        │
+        └── defer_call_end() → 批量完成通知
+```
+
+#### 读写请求详细路径（VIRTIO_BLK_T_IN / T_OUT）
+
+```
+virtio_blk_handle_request() — type == IN 或 OUT:
+  │
+  ├── 1. 计算 sector_num = virtio_ldq_p(&req->out.sector)     [866]
+  │
+  ├── 2. 构建 QEMUIOVector
+  │     └── 将 in_sg（读）或 out_sg（写）映射到 QIOV           [870-880]
+  │
+  ├── 3. 范围检查
+  │     └── sector_num + nb_sectors > 磁盘容量？→ 返回错误      [882-890]
+  │
+  ├── 4. 记账
+  │     └── block_acct_start()                                 [892]
+  │
+  ├── 5. 尝试合并请求
+  │     └── 如果启用合并 && 可与前一请求合并 → 链入 mr_next      [894-900]
+  │
+  └── 6. 提交 I/O
+        └── submit_requests() [virtio-blk.c:215-266]
+              │
+              ├── 写请求: blk_aio_pwritev(s->blk, sector_num * 512,
+              │               &req->qiov, 0, virtio_blk_rw_complete, req)
+              │                                                [257-260]
+              │
+              └── 读请求: blk_aio_preadv(s->blk, sector_num * 512,
+                              &req->qiov, 0, virtio_blk_rw_complete, req)
+                                                               [261-264]
+```
+
+### §33 请求类型详解
+
+virtio-blk 支持以下请求类型（`virtio_blk.h:162-205`）：
+
+| 类型 | 值 | 处理位置 | 说明 |
+|-----|---|---------|------|
+| `VIRTIO_BLK_T_IN` | 0 | 821-903 | 读数据 |
+| `VIRTIO_BLK_T_OUT` | 1 | 821-903 | 写数据 |
+| `VIRTIO_BLK_T_FLUSH` | 4 | 904-906, 337-351 | 刷新缓存 |
+| `VIRTIO_BLK_T_GET_ID` | 8 | 928-941 | 获取设备序列号 |
+| `VIRTIO_BLK_T_DISCARD` | 11 | 956-991 | 丢弃扇区（trim） |
+| `VIRTIO_BLK_T_WRITE_ZEROES` | 13 | 956-991 | 写零 |
+| `VIRTIO_BLK_T_ZONE_REPORT` | 16 | 907-909, 640-691 | Zoned 报告 |
+| `VIRTIO_BLK_T_ZONE_OPEN` | 18 | 910-924, 709-749 | 打开 Zone |
+| `VIRTIO_BLK_T_ZONE_CLOSE` | 20 | 910-924 | 关闭 Zone |
+| `VIRTIO_BLK_T_ZONE_FINISH` | 22 | 910-924 | 完成 Zone |
+| `VIRTIO_BLK_T_ZONE_RESET` | 24 | 910-924 | 重置 Zone |
+| `VIRTIO_BLK_T_ZONE_APPEND` | 26 | 943-950, 783-819 | Zone 追加写 |
+| `VIRTIO_BLK_T_SCSI_CMD` | 2 | 925-927 | SCSI 命令（已弃用） |
+
+**安全修复**：commit 4913ae36f9 修复了 zone report 中的缓冲区越界（CVE-2026-5761），攻击者可通过精心构造的 zone report 请求触发 QEMU 进程的内存溢出。
+
+### §34 I/O 完成路径
+
+所有异步 I/O 请求通过回调完成：
+
+```
+块层 I/O 完成
+  │
+  ▼
+virtio_blk_rw_complete() [virtio-blk.c:98-136]    ← 读/写
+virtio_blk_flush_complete() [virtio-blk.c:138-150] ← flush
+virtio_blk_discard_write_zeroes_complete() [152-168] ← discard/写零
+  │
+  ├── 记录 I/O 状态（成功/失败）
+  ├── block_acct_done/failed()     — 记账
+  │
+  └── virtio_blk_req_complete() [virtio-blk.c:57-69]
+        │
+        ├── 设置 in_hdr.status
+        │     ├── 成功: VIRTIO_BLK_S_OK (0)
+        │     ├── I/O 错误: VIRTIO_BLK_S_IOERR (1)
+        │     └── 不支持: VIRTIO_BLK_S_UNSUPP (2)
+        │
+        ├── virtqueue_push(vq, &req->elem, len)
+        │     └── 填充 used ring
+        │
+        └── virtio_notify(vdev, vq)
+              └── 触发中断/MSI-X 通知 Guest
+```
+
+### §35 多队列与 IOThread
+
+#### 多队列架构
+
+```
+Guest:
+  vCPU 0 ──► VirtQueue 0 ──► IOThread A ──► blk_aio_preadv()
+  vCPU 1 ──► VirtQueue 1 ──► IOThread B ──► blk_aio_preadv()
+  vCPU 2 ──► VirtQueue 2 ──► IOThread A ──► blk_aio_preadv()  (共享)
+  vCPU 3 ──► VirtQueue 3 ──► IOThread B ──► blk_aio_preadv()
+```
+
+**配置**：
+- `num-queues=N`：创建 N 个 VirtQueue
+- `iothread=iot0`：所有队列共享一个 IOThread
+- `iothread-vq-mapping`：精细的队列→IOThread 映射
+
+**初始化**（virtio-blk.c:1460-1513）：
+
+```c
+virtio_blk_vq_aio_context_init(s)
+  ├── 为每个 VirtQueue 分配 AioContext
+  ├── 根据 iothread-vq-mapping 或 iothread 设置
+  └── 如果无 IOThread → 使用 QEMU 主循环 AioContext
+```
+
+**ioeventfd 数据面**（virtio-blk.c:1536-1632）：
+
+当使用 KVM 加速时，ioeventfd 允许 Guest 的 QueueNotify 写操作直接由 KVM 内核处理，避免 VM Exit 到 QEMU 用户空间，显著降低 I/O 延迟。
+
+**git 改进**：
+- commit b50629c335：提取 `iothread-vq-mapping.h` 为通用 API
+- commit 2fa67a7b1d：清理 iothread_vq_mapping 函数
+
+### §36 BlockBackend 集成
+
+virtio-blk 通过 QEMU 块层（Block Layer）访问实际存储：
+
+```
+VirtIOBlock
+  │
+  └── s->blk (BlockBackend)
+        │
+        └── BlockDriverState (BDS) 链
+              │
+              ├── 格式层: qcow2 / raw / vmdk
+              │     └── bdrv_co_preadv() / bdrv_co_pwritev()
+              │
+              └── 协议层: file / nbd / iscsi / nvme
+                    └── 实际文件 I/O / 网络 I/O
+```
+
+**关键 API 调用**：
+
+| 操作 | 函数 | 位置 |
+|------|------|------|
+| 异步读 | `blk_aio_preadv()` | virtio-blk.c:261 |
+| 异步写 | `blk_aio_pwritev()` | virtio-blk.c:257 |
+| 异步 flush | `blk_aio_flush()` | virtio-blk.c:350 |
+| 异步 discard | `blk_aio_pdiscard()` | virtio-blk.c:427 |
+| 异步写零 | `blk_aio_pwrite_zeroes()` | virtio-blk.c:441 |
+
+### §37 特性协商
+
+`virtio_blk_get_features()`（virtio-blk.c:1270-1300）：
+
+| 特性 | 条件 | 说明 |
+|------|------|------|
+| `VIRTIO_BLK_F_SEG_MAX` | 总是 | 最大 SG 段数 |
+| `VIRTIO_BLK_F_GEOMETRY` | 总是 | 磁盘几何信息 |
+| `VIRTIO_BLK_F_TOPOLOGY` | 总是 | 块大小/对齐 |
+| `VIRTIO_BLK_F_BLK_SIZE` | 总是 | 逻辑块大小 |
+| `VIRTIO_BLK_F_WCE` | 后端启用写缓存 | 写缓存使能 |
+| `VIRTIO_BLK_F_RO` | 后端只读 | 只读设备 |
+| `VIRTIO_BLK_F_MQ` | num_queues > 1 | 多队列 |
+| `VIRTIO_BLK_F_DISCARD` | 配置启用 | Discard/TRIM |
+| `VIRTIO_BLK_F_WRITE_ZEROES` | 配置启用 | 写零 |
+| `VIRTIO_BLK_F_ZONED` | Zoned 后端 | 分区存储 |
+
+### §38 CLI 使用与配置
+
+#### 基本用法
+
+```bash
+# qcow2 镜像 + virtio-blk-pci
+qemu-system-aarch64 -M virt \
+  -drive file=disk.qcow2,id=hd0,format=qcow2,if=none \
+  -device virtio-blk-pci,drive=hd0
+
+# raw 镜像 + virtio-blk-device（MMIO 传输）
+qemu-system-aarch64 -M virt \
+  -drive file=disk.raw,id=hd0,format=raw,if=none \
+  -device virtio-blk-device,drive=hd0
+```
+
+#### 高级配置
+
+```bash
+# 多队列 + IOThread
+qemu-system-aarch64 -M virt \
+  -object iothread,id=iot0 \
+  -drive file=disk.qcow2,id=hd0,format=qcow2,if=none,aio=io_uring \
+  -device virtio-blk-pci,drive=hd0,num-queues=4,iothread=iot0
+
+# 只读 CD-ROM
+-drive file=install.iso,id=cd0,format=raw,if=none,readonly=on \
+-device virtio-blk-pci,drive=cd0
+```
+
+#### 连接关系
+
+```
+-drive file=X,id=hd0  →  创建 BlockBackend "hd0"
+-device virtio-blk-pci,drive=hd0  →  DEFINE_PROP_DRIVE("drive",...,blk)
+                                      realize 时: s->blk = conf->conf.blk
+```
+
+---
 
 ---
 
