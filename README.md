@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **40 篇文档**，总计 **~1727KB** 中文技术文档
+> 共 **41 篇文档**，总计 **~1750KB** 中文技术文档
 
 ---
 
@@ -15,7 +15,7 @@
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
-| [accel/](#accel-加速器) | 5 | ~200KB | TCG 翻译引擎全貌、优化递次（常量折叠/掩码追踪/活跃性/寄存器分配）、IR 设计与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译 |
+| [accel/](#accel-加速器) | 6 | ~223KB | TCG 翻译引擎全貌、优化递次（常量折叠/掩码追踪/活跃性/寄存器分配）、IR 设计与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -399,6 +399,14 @@ MTTCG 多线程 TCG 执行模型完整解析：MTTCG 启用配置（TCGState/mtt
 
 **适合读者**：需要理解 QEMU 多线程执行模型、调试并发问题、优化多核性能的开发者。
 **关键源文件**：`accel/tcg/tcg-accel-ops-mttcg.c`（138行）、`accel/tcg/tcg-accel-ops-rr.c`（349行）、`accel/tcg/tcg-accel-ops.c`、`cpu-common.c`、`system/cpus.c`
+
+### [05-Softmmu-TLB与内存访问深度分析.md](accel/05-Softmmu-TLB与内存访问深度分析.md)
+> **23KB · 27 节**
+
+Softmmu TLB 核心机制完整解析：CPUTLB 数据结构层次（CPUTLBEntry/CPUTLBDescFast/CPUTLBEntryFull/CPUTLBDesc/CPUTLBCommon/CPUTLB），CPUNegativeOffsetState 负偏移缓存优化布局，TLB 标志位两级体系（快路径 TLB_INVALID/NOTDIRTY/FORCE_SLOW + 慢路径 BSWAP/WATCHPOINT/CHECK_ALIGNED/DISCARD_WRITE/MMIO），TLB 索引计算与 MMU 模式反转，动态 TLB 大小调整（100ms 窗口/扩容翻倍/缩容减半），Victim TLB（8 条目全相联/swap 回主 TLB），tlb_set_page_full 条目填充（address_space_translate_for_iotlb/标志设置/victim 驱逐），AArch64 内联快路径 prepare_host_addr（LDP-AND-ADD-LDP-CMP ~8 条指令），慢路径 helper_ld/st_mmu 入口，tlb_fill_align TLB 重填（新旧接口），mmu_lookup1 核心查找（TLB hit/victim/refill），mmu_watch_or_dirty 特殊页处理，MMIO 分发（io_prepare/memory_region_dispatch_read/write/mr->ops），跨页访问拆分，字节序处理（TLB_BSWAP），脏页追踪（TLB_NOTDIRTY/notdirty_write），Watchpoint 集成，TLB 刷新（全局/按 mmuidx/单页/跨 CPU 同步），ARM64 页表遍历（arm_cpu_tlb_fill_align/get_phys_addr），完整地址翻译链路图。
+
+**适合读者**：需要理解 QEMU 内存虚拟化核心机制、优化 TLB 性能、调试内存访问问题的开发者。
+**关键源文件**：`accel/tcg/cputlb.c`（~2800行）、`tcg/aarch64/tcg-target.c.inc`（3592行）、`include/exec/tlb-common.h`、`include/exec/tlb-flags.h`、`include/hw/core/cpu.h`、`system/memory.c`、`system/physmem.c`、`target/arm/tcg/tlb_helper.c`
 
 ---
 
