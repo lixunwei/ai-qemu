@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **37 篇文档**，总计 **~1623KB** 中文技术文档
+> 共 **38 篇文档**，总计 **~1669KB** 中文技术文档
 
 ---
 
@@ -15,7 +15,7 @@
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
-| [accel/](#accel-加速器) | 2 | ~96KB | TCG 翻译引擎全貌、优化递次（常量折叠/掩码追踪/活跃性/寄存器分配） |
+| [accel/](#accel-加速器) | 3 | ~142KB | TCG 翻译引擎全貌、优化递次（常量折叠/掩码追踪/活跃性/寄存器分配）、IR 设计与前端翻译 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -375,6 +375,14 @@ TCG 优化管线深入分析：6 阶段管线流程（optimize→reachable→pas
 
 **适合读者**：深入理解 TCG 优化机制、需要添加新优化 pass 的开发者。
 **关键源文件**：`tcg/optimize.c`（3244行/76个fold函数）、`tcg/tcg.c`（活跃性+寄存器分配）
+
+### [02-TCG-IR设计与前端翻译深度分析.md](accel/02-TCG-IR设计与前端翻译深度分析.md)
+> **46KB · 32 节**
+
+TCG IR 类型系统完整解析：TCGTemp（13字段详解）/TCGOp（8字段+柔性数组）/TCGLabel/TCGContext（~100字段分组），TCGv 类型安全句柄设计（不完整类型指针+偏移编码），126 个操作码分类索引（控制/算术/逻辑/位域/转换/TB/内存/向量），临时变量 5 种生命周期（EBB/TB/GLOBAL/FIXED/CONST），ARM64 全局寄存器映射（cpu_X[32]/cpu_pc/cpu_NF/ZF/CF/VF），NZCV 缓存编码体系（反转 ZF/bit31 NF+VF），前端翻译架构（translator_loop/DisasContext/decodetree），ARM64 指令翻译模式（数据处理/内存/分支/异常），arm_test_cc 15 条件评估，CCMP/CSEL 翻译，Helper 机制，完整翻译示例。
+
+**适合读者**：理解 TCG IR 设计哲学、需要修改前端翻译器的开发者。
+**关键源文件**：`include/tcg/tcg.h`、`tcg/tcg-op.c`、`target/arm/tcg/translate-a64.c`（10961行/156个trans_函数）
 
 ---
 
