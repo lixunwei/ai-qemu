@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **42 篇文档**，总计 **~1777KB** 中文技术文档
+> 共 **43 篇文档**，总计 **~1800KB** 中文技术文档
 
 ---
 
@@ -15,7 +15,7 @@
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
-| [accel/](#accel-加速器) | 7 | ~250KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统 |
+| [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -415,6 +415,16 @@ TCG Plugin 动态二进制分析系统完整解析：Plugin API v6 版本体系�
 
 **适合读者**：需要编写 QEMU 插件进行动态分析、理解插件如何与 TCG 代码生成集成的开发者。
 **关键源文件**：`include/plugins/qemu-plugin.h`（~1400行）、`plugins/loader.c`（~420行）、`plugins/core.c`（~880行）、`plugins/api.c`（~740行）、`accel/tcg/plugin-gen.c`（~510行）、`accel/tcg/translator.c`
+
+---
+
+### [07-Linux-user用户模式翻译深度分析.md](accel/07-Linux-user用户模式翻译深度分析.md)
+> **23KB · 26 节**
+
+Linux-user 用户模式翻译完整解析：main() 初始化流程（QOM/TCG/CPU 创建/ELF 加载/信号初始化/cpu_loop 入口），ELF 二进制加载（load_elf_image/PT_INTERP 动态链接器/create_elf_tables auxv 构造/setup_arg_pages 栈分配），Guest 地址空间模型（guest_base 偏移/reserved_va/g2h/h2g 转换/无 TLB 直接映射），AArch64 CPU 循环（cpu_exec → trapnr switch → EXCP_SWI/DATA_ABORT/UDEF/ATOMIC），系统调用翻译（do_syscall ~380 个 case/AArch64 ABI X8+X0-X5/特殊返回值 ERESTARTSYS/ESIGRETURN），内存管理（target_mmap/munmap/mprotect → host mmap + page_set_flags），页面保护管理（PageFlagsNode 区间树/page_get/set_flags/page_unprotect），信号处理架构（signal_init/host_signal_handler → queue_signal → process_pending_signals），AArch64 信号帧构造（target_rt_sigframe/FPSIMD+SVE+MTE 上下文保存），线程与 Clone（do_fork/CLONE_VM→pthread_create/TLS→TPIDR_EL0），用户模式 TCG 差异（无 softmmu TLB/guest_base ADD 直接访问/1行 vs 8行开销），Thunk 层（stat/sockaddr/ioctl 结构体转换），文件系统仿真（/proc/self/maps 等），strace 模式，GDB 调试，ARM64 特性（SVE/SME/MTE/PAC/BTI 用户模式支持），系统模式 vs 用户模式全面对比表。
+
+**适合读者**：需要理解 QEMU 用户模式翻译原理、调试交叉编译程序、扩展系统调用支持的开发者。
+**关键源文件**：`linux-user/main.c`（~1040行）、`linux-user/syscall.c`（~14500行）、`linux-user/signal.c`（~1400行）、`linux-user/mmap.c`（~1250行）、`linux-user/elfload.c`（~2000行）、`linux-user/aarch64/cpu_loop.c`（~230行）、`accel/tcg/user-exec.c`（~750行）
 
 ---
 
