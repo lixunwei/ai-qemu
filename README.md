@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **36 篇文档**，总计 **~1592KB** 中文技术文档
+> 共 **37 篇文档**，总计 **~1623KB** 中文技术文档
 
 ---
 
@@ -15,7 +15,7 @@
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
-| [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
+| [accel/](#accel-加速器) | 2 | ~96KB | TCG 翻译引擎全貌、优化递次（常量折叠/掩码追踪/活跃性/寄存器分配） |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -367,6 +367,14 @@ TCG (Tiny Code Generator) 完整分析：IR 中间表示（TCGOp/TCGTemp/TCGLabe
 
 **适合读者**：研究二进制翻译技术或修改 TCG 的开发者。  
 **关键源文件**：`tcg/tcg.c`、`tcg/tcg-op.c`、`tcg/optimize.c`、`target/arm/tcg/translate-a64.c`
+
+### [01-TCG优化递次深度分析.md](accel/01-TCG优化递次深度分析.md)
+> **31KB · 29 节**
+
+TCG 优化管线深入分析：6 阶段管线流程（optimize→reachable→pass0/1/2→regalloc）、76 个 fold 函数完整索引、常量折叠框架（do_constant_folding_2）、拷贝传播（环形链表+find_better_copy）、z_mask/o_mask/s_mask 三掩码追踪系统、fold_masks_zosa_int 核心、代数简化模式（8 种 fold_xi/ix/xx 辅助）、分支条件折叠、位域/扩展优化、内存拷贝追踪、屏障合并、进位链优化、活跃性三遍分析（DEAD_ARG/SYNC_ARG 编码）、寄存器分配约束系统、Spill/Reload 策略、ARM64 延迟标志（cpu_NF/ZF/CF/VF）。
+
+**适合读者**：深入理解 TCG 优化机制、需要添加新优化 pass 的开发者。
+**关键源文件**：`tcg/optimize.c`（3244行/76个fold函数）、`tcg/tcg.c`（活跃性+寄存器分配）
 
 ---
 
