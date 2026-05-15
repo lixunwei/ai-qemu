@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **35 篇文档**，总计 **~1544KB** 中文技术文档
+> 共 **36 篇文档**，总计 **~1592KB** 中文技术文档
 
 ---
 
@@ -13,6 +13,7 @@
 | [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
 | [arm64/](#arm64-arm64-架构) | 18 | ~618KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
+| [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
@@ -323,6 +324,18 @@ DMA 核心 API（`dma_memory_read/write/map`）、QEMUSGList 散列聚合、PCI 
 
 ---
 
+## network/ 网络子系统
+
+### [00-网络子系统深度分析.md](network/00-网络子系统深度分析.md)
+> **48KB · 29 节**
+
+网络子系统完整分析：核心架构（NetClientState/NetClientInfo/NICState、peer 对等连接）、数据包收发路径（TX/RX 全链路追踪）、NetQueue 队列层、NetFilter 过滤器框架、TAP 后端（fd 事件驱动、vnet_hdr）、SLIRP 用户态 NAT（DHCP/DNS/端口转发）、Socket 后端（UDP/TCP/Multicast）、vhost-net 内核加速（eventfd 转移）、virtio-net 设备模型（VirtIONet 结构、特性协商、flush_tx/receive_rcu、offloading、MAC 过滤、多队列、RSS）。
+
+**适合读者**：网络虚拟化开发者、需要理解 QEMU 网络 I/O 路径的工程师。
+**关键源文件**：`include/net/net.h`、`net/net.c`、`net/tap.c`、`net/slirp.c`、`hw/net/virtio-net.c`、`hw/net/vhost_net.c`
+
+---
+
 ## memory/ 内存子系统
 
 ### [00-内存子系统深度分析.md](memory/00-内存子系统深度分析.md)
@@ -420,6 +433,7 @@ GDB 远程串行协议 (RSP) 完整实现分析。RSP 状态机、命令分发�
 2. `device-model/02-块层IO路径深度分析.md` — 块 I/O 深入
 3. `device-model/04-Block设备子系统深度分析.md` — Block 子系统 + virtio-blk 设备
 4. `device-model/06-网络后端深度分析-TAP-vhost-net-vhost-user.md` — 网络 I/O + virtio-net 设备
+5. `network/00-网络子系统深度分析.md` — 网络核心架构 + 完整收发路径追踪
 
 ### 调试专题
 1. `debug/00-GDB调试子系统深度分析.md` — GDB 接入分析
