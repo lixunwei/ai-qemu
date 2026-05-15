@@ -146,7 +146,7 @@ struct ARMISARegisters {
 ### 3.3 字段修改宏
 
 ```c
-// cpu.h:916+ — 修改 ID 寄存器的单个字段
+// cpu.h:869-875 — 修改 ID 寄存器的单个字段
 #define FIELD_DP64_IDREG(ISAR, REG, FIELD, VALUE)                       \
     ({                                                                  \
         ARMISARegisters *i_ = (ISAR);                                   \
@@ -687,7 +687,7 @@ QEMU 通过 QOM 属性系统允许用户在命令行控制 CPU 特性：
 ### 17.1 属性注册
 
 ```c
-// cpu.c:487-524 — SVE 属性注册
+// cpu64.c:487-524 — SVE 属性注册
 static void aarch64_add_sve_properties(Object *obj)
 {
     // sve=on/off（总开关）
@@ -701,17 +701,17 @@ static void aarch64_add_sve_properties(Object *obj)
     // sve-default-vector-length=N（默认向量长度）
 }
 
-// cpu.c:526-549 — SME 属性注册
+// cpu64.c:526-549 — SME 属性注册
 static void aarch64_add_sme_properties(Object *obj) { ... }
 
-// cpu.c:646-667 — PAuth 属性注册
+// cpu64.c:646-667 — PAuth 属性注册
 static void aarch64_add_pauth_properties(Object *obj) { ... }
 ```
 
 ### 17.2 属性如何修改 ID 寄存器
 
 ```c
-// cpu.c:333-337 — sve=off 处理
+// cpu64.c:333-337 — sve=off 处理
 static void cpu_arm_set_sve(Object *obj, bool value, Error **errp)
 {
     ARMCPU *cpu = ARM_CPU(obj);
@@ -769,7 +769,7 @@ void arm_cpu_finalize_features(ARMCPU *cpu, Error **errp)
 
 ### 18.2 PAuth 终化
 
-`arm_cpu_pauth_finalize()`（`cpu.c:551-635`）处理：
+`arm_cpu_pauth_finalize()`（`cpu64.c:551-635`）处理：
 - 用户指定 `pauth=off` → 清除所有 PAuth 字段
 - 用户指定 `pauth-impdef` → 设置 `ID_AA64ISAR1.API/GPI`
 - 用户指定 `pauth-qarma3` → 设置 `ID_AA64ISAR2.APA3/GPA3`
