@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **38 篇文档**，总计 **~1669KB** 中文技术文档
+> 共 **39 篇文档**，总计 **~1699KB** 中文技术文档
 
 ---
 
@@ -15,7 +15,7 @@
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
-| [accel/](#accel-加速器) | 3 | ~142KB | TCG 翻译引擎全貌、优化递次（常量折叠/掩码追踪/活跃性/寄存器分配）、IR 设计与前端翻译 |
+| [accel/](#accel-加速器) | 4 | ~172KB | TCG 翻译引擎全貌、优化递次（常量折叠/掩码追踪/活跃性/寄存器分配）、IR 设计与前端翻译、后端代码生成与 TB 管理 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -383,6 +383,14 @@ TCG IR 类型系统完整解析：TCGTemp（13字段详解）/TCGOp（8字段+�
 
 **适合读者**：理解 TCG IR 设计哲学、需要修改前端翻译器的开发者。
 **关键源文件**：`include/tcg/tcg.h`、`tcg/tcg-op.c`、`target/arm/tcg/translate-a64.c`（10961行/156个trans_函数）
+
+### [03-TCG后端代码生成与TB管理深度分析.md](accel/03-TCG后端代码生成与TB管理深度分析.md)
+> **30KB · 30 节**
+
+TCG 后端代码生成完整流程：tcg_gen_code() 8 阶段管线（优化→活跃性→寄存器分配→发射→后处理→重定位→icache 刷新），寄存器分配核心 tcg_reg_alloc_op()（~900行/约束满足/输入输出分配/DEAD+SYNC 处理），寄存器选择算法（两遍优先偏好策略/spill 驱逐），temp 加载/同步/保存策略（三态管理 REG/CONST/MEM），栈帧 spill 槽分配（对齐/溢出/子部分），约束系统（TCGArgConstraint 9 字段/后端定义→解析→查询→分配），进位链处理，AArch64 后端完整实现（3592行）：寄存器定义（64个/分配序/保留寄存器），指令编码体系（15+格式函数），常量加载策略（5 级递降：MOVZ→逻辑→ADR→ADRP+ADD→多条 MOVK），Prologue/Epilogue（BTI/保存恢复/guest_base），qemu_ld/st 快慢路径，TranslationBlock 结构（15 字段详解/cflags 标志），TB 完整生命周期（创建→注册→查找→链接→执行→失效→回收），TB 两级查找（jump cache + 全局哈希），TB 链接（goto_tb 修补），失效机制（6 种触发），代码缓冲区管理（region 分区/溢出/刷新），完整 ADD 指令后端之旅示例。
+
+**适合读者**：需要理解 TCG 如何将 IR 变为机器码、需要添加新后端或优化现有后端的开发者。
+**关键源文件**：`tcg/tcg.c`（~6770行）、`tcg/aarch64/tcg-target.c.inc`（3592行）、`accel/tcg/cpu-exec.c`、`accel/tcg/translate-all.c`、`accel/tcg/tb-maint.c`
 
 ---
 
