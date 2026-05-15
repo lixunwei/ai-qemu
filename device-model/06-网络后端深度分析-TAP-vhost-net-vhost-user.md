@@ -1733,7 +1733,7 @@ Object → DeviceState → VirtIODevice → VirtIONet
 
 ## 29. VirtIONet 结构体
 
-定义于 `virtio-net.h:158-233`：
+定义于 `virtio-net.h:169-233`：
 
 ```c
 struct VirtIONet {
@@ -1779,7 +1779,7 @@ struct VirtIONet {
 };
 ```
 
-#### VirtIONetQueue（virtio-net.h:147-157）
+#### VirtIONetQueue（virtio-net.h:157-164）
 
 ```c
 struct VirtIONetQueue {

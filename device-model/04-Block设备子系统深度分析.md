@@ -1153,7 +1153,7 @@ Object → DeviceState → VirtIODevice → VirtIOBlock
 
 ### §30 VirtIOBlock 结构体
 
-定义于 `virtio-blk.h:37-93`：
+定义于 `virtio-blk.h:54-93`：
 
 ```c
 struct VirtIOBlock {
