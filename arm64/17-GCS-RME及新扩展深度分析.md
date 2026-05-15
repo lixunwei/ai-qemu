@@ -240,14 +240,14 @@ if (s->gcs_en) {
 
 | 指令 | 功能 | 源码位置 |
 |------|------|---------|
-| **GCSPUSHM** | 手动推入值到 GCS | translate-a64.c:2568-2585 |
-| **GCSPOPM** | 手动从 GCS 弹出值 | translate-a64.c:2663+ |
+| **GCSPUSHM** | 手动推入值到 GCS | translate-a64.c:3050 |
+| **GCSPOPM** | 手动从 GCS 弹出值 | translate-a64.c:3055 |
 | **GCSPUSHX** | 推入异常返回记录 | translate-a64.c:2586-2613 |
 | **GCSPOPCX** | 弹出异常返回记录 | translate-a64.c:2615-2661 |
 | **GCSPOPX** | 弹出异常返回记录（不验证）| translate-a64.c:2663+ |
 | **GCSSS1/GCSSS2** | GCS 切换（Seal/Unseal）| translate-a64.c:2700-2742 |
 | **GCSSTR** | GCS Store（写入 GCS 内存）| translate-a64.c:4293-4326 |
-| **GCSLDR** | GCS Load（读取 GCS 内存）| cpregs-gcs.c:125-149 |
+| **GCSLDR** | GCS Load（读取 GCS 内存）| 代码库中未找到对应符号 |
 
 ### 5.2 GCSSTR 陷入控制
 

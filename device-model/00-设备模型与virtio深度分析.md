@@ -182,9 +182,9 @@ DeviceState (父设备)
 | 总线类型 | TYPE 常量 | 注册文件 | 用途 |
 |---------|----------|---------|------|
 | System Bus | `TYPE_SYSTEM_BUS` | sysbus.h:13 | 平台/MMIO 设备 |
-| PCI Bus | `TYPE_PCI_BUS` | pci.c:3457-3466 | PCI/PCIe 设备 |
-| I2C Bus | `TYPE_I2C_BUS` | core.c:425-429 | I2C 外设 |
-| USB Bus | `TYPE_USB_BUS` | bus.c:736-740 | USB 设备 |
+| PCI Bus | `TYPE_PCI_BUS` | pci.c:301 | PCI/PCIe 设备 |
+| I2C Bus | `TYPE_I2C_BUS` | core.c:26 | I2C 外设 |
+| USB Bus | `TYPE_USB_BUS` | bus.c:41 | USB 设备 |
 | virtio Bus | `TYPE_VIRTIO_BUS` | virtio-bus.c | virtio 设备后端 |
 
 ### 4. SysBusDevice — 平台设备基类
@@ -613,7 +613,7 @@ Guest 物理内存:
    ├── virtqueue_fill()  — 填充 used ring 条目
    └── virtqueue_flush() — 更新 used idx
 
-4. virtio_notify() [virtio.c:2246-2258]
+4. virtio_notify() [virtio.c:2730]
    ├── virtio_should_notify() — 检查是否需要通知
    └── virtio_notify_vector() — 触发中断/MSI-X
 ```

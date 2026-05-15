@@ -62,7 +62,7 @@ main()                                      [system/main.c:69-96]
   │   ├── 创建 CPU、内存、设备
   │   └── realize 所有设备
   │
-  └── qemu_default_main()                   [system/vl.c:44-55]
+  └── qemu_default_main()                   [system/main.c:44-55]
       ├── bql_lock()                        // 获取 Big QEMU Lock
       ├── status = qemu_main_loop()         // 进入大循环
       ├── qemu_cleanup()                    // 清理
@@ -71,7 +71,7 @@ main()                                      [system/main.c:69-96]
 
 ### 1.2 macOS 特殊处理
 
-`system/vl.c:87-95`：macOS 上 `qemu_main` 在独立线程运行（Cocoa UI 需要主线程）。
+`system/main.c:87-95`：macOS 上 `qemu_main` 在独立线程运行（Cocoa UI 需要主线程）。
 
 ## 2. 主循环总览图
 
@@ -900,7 +900,7 @@ do_st1_mmu()                              [:1820-1877]
 Guest 执行 MMIO 访问
   → EPT/Stage2 页表缺页
   → VM Exit → KVM_EXIT_MMIO
-  → kvm_cpu_exec() 处理              [kvm-all.c:3531-3538]
+  → kvm_cpu_exec() 处理              [kvm-all.c:3439]
   → address_space_rw(phys_addr, data, len, is_write)
     → flatview_translate()            // 查找目标 MemoryRegion
     → memory_region_dispatch_*()      // 调用设备 handler

@@ -147,10 +147,10 @@ struct Chardev {
 
 **ChardevClass（后端虚函数表）**
 
-**源文件**：`char.h:120-179`
+**源文件**：`char.h:252`
 
 ```c
-// char.h:120-179 (简化)
+// char.h:252 (简化)
 struct ChardevClass {
     ObjectClass parent_class;
 
@@ -243,8 +243,8 @@ static void char_class_init(ObjectClass *oc, void *data)
          │
          │  实际创建:
          │  qemu_chr_new_mux_mon()
-         │    └─ qemu_chr_new_noreplay()     [char.c:756]
-         │         └─ qemu_chr_new_from_name() [char.c:790]
+         │    └─ qemu_chr_new_noreplay()     [char.c:803]
+         │         └─ qemu_chr_new_from_name() [char.c:756]
          │              ├─ qemu_chr_parse_compat("stdio", opts)
          │              │    // 将简短名 "stdio" 转为 ChardevBackend
          │              └─ qemu_chardev_new(label, backend)
@@ -444,7 +444,7 @@ PL011 发送数据:
 
 stdio/fd 后端:
   main_loop_wait() → GLib poll → fd 可读
-    → fd_chr_read()                      [char-fd.c:64]
+    → fd_chr_read()                      [char-fd.c:48]
        ├─ s->max_size = qemu_chr_be_can_write(chr)
        │    → chr->be->chr_can_read(opaque)
        │    → pl011_can_receive(s) = fifo_depth - read_count
@@ -726,7 +726,7 @@ mux 架构:
 Ctrl-A X: 退出 QEMU
 
 实现:
-  mux_chr_write(): 只发送给底层后端     [char-mux.c:35]
+  mux_chr_write(): 只发送给底层后端     [char-mux.c:45]
   mux_chr_read(): 
     ├─ 解析 Ctrl-A 转义序列             [char-mux.c:68-130]
     │   Ctrl-A h: 帮助
@@ -962,7 +962,7 @@ Guest 执行: str x0, [UART_BASE]   (写 UARTDR)
     │       // 例如返回 15 (FIFO 还有空间)
     │
     ├─ io_watch_poll_dispatch()              fd 可读
-    │    → fd_chr_read()                     [char-fd.c:64]
+    │    → fd_chr_read()                     [char-fd.c:48]
     │         read(stdin_fd, buf, 15)        读出 'A'
     │         qemu_chr_be_write(chr, "A", 1) 投递给前端
     │

@@ -236,7 +236,7 @@ ioctl(MAP_DMA)          ────────►  建立 GPA→HPA 映射
 
 **代码路径**（`container-legacy.c`）：
 - `vfio_group_get()` 打开 `/dev/vfio/<groupid>`（`container-legacy.c:762-814`）
-- `vfio_connect_container()` 打开 `/dev/vfio/vfio`，绑定 IOMMU 类型（`container-legacy.c:630-760`）
+- `vfio_container_connect()` 打开 `/dev/vfio/vfio`，绑定 IOMMU 类型（`container-legacy.c:609`）
 - `vfio_legacy_dma_map()` 使用 `VFIO_IOMMU_MAP_DMA`（`container-legacy.c:199-229`）
 
 ### 4.3 IOMMUFD 容器路径
@@ -253,7 +253,7 @@ ioctl(ATTACH_IOAS)      ────────►  设备 → IOAS 关联
 ```
 
 **代码路径**（`iommufd.c` + `backends/iommufd.c`）：
-- `iommufd_backend_connect()` 打开 `/dev/iommu`（`backends/iommufd.c:31-47`）
+- `iommufd_backend_connect()` 打开 `/dev/iommu`（`backends/iommufd.c:125`）
 - `VFIO_DEVICE_BIND_IOMMUFD` 绑定设备（`hw/vfio/iommufd.c:130-173`）
 - `iommufd_backend_map_dma()` 建立映射（`backends/iommufd.c:167-233`）
 
@@ -327,7 +327,7 @@ vfio_pci_realize(pdev)
     │         └── IOMMUFD: BIND_IOMMUFD → IOAS → ATTACH
     │
     ├─4─ 获取设备信息
-    │    └── vfio_pci_populate_device()  (pci.c:3046-3098)
+    │    └── vfio_pci_populate_device()  (pci.c:3021)
     │         ├── 查询 region 信息（BARs, config, VGA）
     │         └── 查询 IRQ 能力（INTx, MSI, MSI-X, ERR, REQ）
     │
@@ -1227,7 +1227,7 @@ eventfd_signal(vector_eventfd)
 | `device.c` | 659 | `vfio_device_attach()` | 设备连接容器 |
 | `device.c` | | `vfio_device_prepare()` | 设备信息初始化 |
 | `container.c` | 352 | `vfio_container_dma_map/unmap()` | DMA 映射分发 |
-| `container-legacy.c` | 1269 | `vfio_connect_container()` | Legacy 容器连接 |
+| `container-legacy.c` | 609 | `vfio_container_connect()` | Legacy 容器连接 |
 | `container-legacy.c` | | `vfio_legacy_dma_map()` | Legacy DMA 映射 |
 | `container-legacy.c` | | `vfio_group_get()` | Group fd 打开 |
 | `iommufd.c` | 1021 | IOMMUFD 容器操作 | IOMMUFD DMA 映射 |

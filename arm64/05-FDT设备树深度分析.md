@@ -1182,8 +1182,8 @@ if (!virt_is_acpi_enabled(vms)) {
 
 | 选项 | 说明 | 实现 |
 |------|------|------|
-| `-machine dtb=file.dtb` | 使用用户提供的 DTB | `MachineState` 属性 `dtb`（`machine.c:280-293`） |
-| `-machine dumpdtb=out.dtb` | 导出生成的 DTB 到文件 | `handle_machine_dumpdtb()`（`machine.c:295-308`） |
+| `-machine dtb=file.dtb` | 使用用户提供的 DTB | `MachineState` 属性 `dtb`（`machine.c:1087`） |
+| `-machine dumpdtb=out.dtb` | 导出生成的 DTB 到文件 | `handle_machine_dumpdtb()`（`machine.c:1703`） |
 | `-machine acpi=off` | 禁用 ACPI，使用纯 FDT | `vms->acpi = ON_OFF_AUTO_OFF` |
 
 ### 29.2 使用外部 DTB

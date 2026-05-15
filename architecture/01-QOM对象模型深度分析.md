@@ -101,7 +101,7 @@ TypeImpl *type_register_static(const TypeInfo *info);
 
 ```
 type_init(fn)                              [include/qemu/module.h:56]
-  └─ module_init(fn, MODULE_INIT_QOM)      [module.h:54-63]
+  └─ module_init(fn, MODULE_INIT_QOM)      [module.h:35]
        └─ __attribute__((constructor))      # 生成构造函数
             └─ register_module_init(fn)     [util/module.c:70-113]
                  └─ 追加到 per-type 尾队列
@@ -199,7 +199,7 @@ type_initialize(TypeImpl *ti)
 1. Object.class_init          → 添加 "type" 属性              [object.c:2836-2840]
 2. DeviceState.class_init     → 设置 hotpluggable、resettable  [qdev.c:754-790]
                                  vmstate hooks、realized 属性
-3. MachineState.class_init    → 机器通用设置                   [boards.h:23-26]
+3. MachineState.class_init    → 机器通用设置                   [hw/core/machine.c:1043]
 4. virt_machine_class_init    → 设置 mc->init=machvirt_init    [virt.c:3820-4056]
                                  max_cpus、热插拔处理器
                                  secure/virt/highmem/GIC 属性
