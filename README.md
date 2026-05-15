@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **41 篇文档**，总计 **~1750KB** 中文技术文档
+> 共 **42 篇文档**，总计 **~1777KB** 中文技术文档
 
 ---
 
@@ -15,7 +15,7 @@
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
-| [accel/](#accel-加速器) | 6 | ~223KB | TCG 翻译引擎全貌、优化递次（常量折叠/掩码追踪/活跃性/寄存器分配）、IR 设计与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问 |
+| [accel/](#accel-加速器) | 7 | ~250KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -407,6 +407,14 @@ Softmmu TLB 核心机制完整解析：CPUTLB 数据结构层次（CPUTLBEntry/C
 
 **适合读者**：需要理解 QEMU 内存虚拟化核心机制、优化 TLB 性能、调试内存访问问题的开发者。
 **关键源文件**：`accel/tcg/cputlb.c`（~2800行）、`tcg/aarch64/tcg-target.c.inc`（3592行）、`include/exec/tlb-common.h`、`include/exec/tlb-flags.h`、`include/hw/core/cpu.h`、`system/memory.c`、`system/physmem.c`、`target/arm/tcg/tlb_helper.c`
+
+### [06-TCG-Plugin系统深度分析.md](accel/06-TCG-Plugin系统深度分析.md)
+> **27KB · 26 节**
+
+TCG Plugin 动态二进制分析系统完整解析：Plugin API v6 版本体系与类型层次（qemu_plugin_id_t/回调类型/qemu_plugin_install），Plugin 加载流程（g_module_open/符号查找/版本检查/ID分配/install调用），命令行 -plugin 选项解析（多插件支持），核心状态管理（qemu_plugin_state/ctx/cb 链），回调注册机制（do_plugin_register_cb/RCU/事件掩码），TB 翻译集成（translator.c 中 4 个 hook 点：tb_start/insn_start/insn_end/tb_end），plugin_gen_inject 代码注入（TB/指令/内存三级），内存回调插桩（gen_enable/disable_mem_helper/值捕获），Scoreboard per-vCPU 数据存储（GArray/find/u64 操作），内联操作（ADD_U64/STORE_U64/3 条宿主指令无 helper 调用），条件回调（scoreboard 值检查 + 条件分支），内存回调分发（qemu_plugin_vcpu_mem_cb/REGULAR+INLINE 两种 cb 类型），vCPU 生命周期回调（init/exit/idle/resume），Syscall 回调（call/ret/filter v6 新增），Plugin 与 cputlb 集成（force_mmio 强制慢路径），卸载清理（reset_destroy/TB flush/dlclose），线程安全（plugin.lock + RCU + start_exclusive），构建系统（meson.build 符号导出），14 个官方示例插件 + 11 个测试插件分析。
+
+**适合读者**：需要编写 QEMU 插件进行动态分析、理解插件如何与 TCG 代码生成集成的开发者。
+**关键源文件**：`include/plugins/qemu-plugin.h`（~1400行）、`plugins/loader.c`（~420行）、`plugins/core.c`（~880行）、`plugins/api.c`（~740行）、`accel/tcg/plugin-gen.c`（~510行）、`accel/tcg/translator.c`
 
 ---
 
