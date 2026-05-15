@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **34 篇文档**，总计 **~1500KB** 中文技术文档
+> 共 **35 篇文档**，总计 **~1544KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
-| [arm64/](#arm64-arm64-架构) | 17 | ~574KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展 |
+| [arm64/](#arm64-arm64-架构) | 18 | ~618KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 1 | ~65KB | TCG 翻译引擎全貌 |
@@ -212,6 +212,16 @@ ARM64 PMU 性能监控单元完整实现分析。差值快照计数模型（`pmu
 
 **适合读者**：分析性能计数器实现、PMU 中断或虚拟化 PMU 分区的开发者。  
 **关键源文件**：`target/arm/cpregs-pmu.c`、`target/arm/cpu.h`、`target/arm/internals.h`、`hw/arm/virt.c`、`target/arm/kvm.c`
+
+---
+
+### [14-CPU特性与ID寄存器仿真深度分析.md](arm64/14-CPU特性与ID寄存器仿真深度分析.md)
+> **44KB · 32 节 + 3 附录**
+
+ARM64 CPU 特性与 ID 寄存器仿真完整分析。ARMISARegisters.idregs[] 统一存储架构、FIELD_EX64_IDREG/SET_IDREG/GET_IDREG 宏体系。全部 ID_AA64* 寄存器字段定义（PFR0/1、ISAR0/1/2、MMFR0/1/2/3/4、DFR0/1、ZFR0、SMFR0）。168 个 isar_feature_aa64_*() 特性检查函数及映射表。14 种 CPU 模型定义（A35→Neoverse-N2）及 initfn 详解。-cpu max 双路径初始化（TCG: A57+全扩展叠加, KVM: host 透传）。QOM 属性系统（sve/sme/pauth/lpa2 等开关如何修改 ID 寄存器字段）。特性终化流程（finalize_features→SVE/SME/PAuth/LPA2 验证）。Guest MRS 读取路径（ARMCPRegInfo→access_tid3→GET_IDREG）。KVM 宿主特性发现（scratch vCPU + KVM_GET_ONE_REG）。翻译时检查（dc_isar_feature→TRANS_FEAT 宏）。TB Flags 特性编码（rebuild_hflags_a64 中 SVE/SME/PAuth/BTI/MTE 状态缓存）。FEAT_LSE/PAuth/MTE/BTI 四条完整实现追踪（ID 寄存器→特性检查→翻译门控→Guest 感知）。旧 ARM_FEATURE_* 位图系统与新 isar_feature 系统的共存与迁移。
+
+**适合读者**：分析 CPU 模型差异、特性检测机制、ID 寄存器仿真或 KVM 特性透传的开发者。  
+**关键源文件**：`target/arm/cpu.h`、`target/arm/cpu-features.h`、`target/arm/cpu-sysregs.h.inc`、`target/arm/cpu64.c`、`target/arm/tcg/cpu64.c`、`target/arm/cpu.c`、`target/arm/helper.c`、`target/arm/kvm.c`、`target/arm/tcg/hflags.c`
 
 ---
 
