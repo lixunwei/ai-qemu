@@ -1466,7 +1466,7 @@ static int cpu_exec_setjmp(CPUState *cpu, SyncClocks *sc) {
 `tlb-common.h:24-41` 定义 TLB 条目：
 
 ```c
-typedef struct CPUTLBEntry {
+typedef union CPUTLBEntry {
     /* 快速比较用的地址标记（包含页号+属性） */
     union {
         struct {
