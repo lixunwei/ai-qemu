@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **43 篇文档**，总计 **~1800KB** 中文技术文档
+> 共 **44 篇文档**，总计 **~1832KB** 中文技术文档
 
 ---
 
@@ -16,6 +16,7 @@
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
+| [arm/](#arm-arm-架构通用) | 1 | ~32KB | EL 状态管理、EL0-EL3 切换机制、安全状态、指令执行差异 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -425,6 +426,18 @@ Linux-user 用户模式翻译完整解析：main() 初始化流程（QOM/TCG/CPU
 
 **适合读者**：需要理解 QEMU 用户模式翻译原理、调试交叉编译程序、扩展系统调用支持的开发者。
 **关键源文件**：`linux-user/main.c`（~1040行）、`linux-user/syscall.c`（~14500行）、`linux-user/signal.c`（~1400行）、`linux-user/mmap.c`（~1250行）、`linux-user/elfload.c`（~2000行）、`linux-user/aarch64/cpu_loop.c`（~230行）、`accel/tcg/user-exec.c`（~750行）
+
+---
+
+## arm/ ARM 架构通用
+
+### [08-ARM64-EL状态管理与指令执行深度分析.md](arm/08-ARM64-EL状态管理与指令执行深度分析.md)
+> **32KB · 26 节**
+
+ARM64 Exception Level (EL0-EL3) 完整状态管理分析：PSTATE 位布局与分散存储架构、arm_current_el() EL 提取、异常进入流程（arm_cpu_do_interrupt → arm_cpu_do_interrupt_aarch64）、SPSR/ELR/ESR/FAR 状态保存、异常向量表偏移计算（来源×类型 4×4 矩阵）、PSTATE DAIF 掩码设置、ERET 异常返回（el_from_spsr → SPSR 目标 EL 提取 → AArch64/AArch32 返回路径）、SMC 路由决策（SCR_EL3.SMD/HCR_EL2.TSC/PSCI 条件表）、HVC 路由、安全状态管理（ARMSecuritySpace Secure/NonSecure/Root/Realm）、SCR_EL3/HCR_EL2 关键控制位、ARMMMUIdx EL→MMU 索引映射、系统寄存器 PL 访问控制（cp_access_ok 位编码）、特权指令行为差异（WFI/WFE/Cache/AT/TLBI 各 EL 权限）、TB flags MMUIDX 间接编码 EL、arm_rebuild_hflags EL 变化后重建、DisasContext EL 传播、PAN/UAO/SP 选择/SCTLR 差异、SVE/SME EL 变化影响、arm_el_is_aa64 执行状态级联控制（SCR.RW→HCR.RW）、EL 切换完整时序图、各 EL 指令执行差异对比表。
+
+**适合读者**：需要理解 ARM64 异常级别切换机制、安全状态管理、指令权限控制的开发者。
+**关键源文件**：`target/arm/helper.c`（~10200行）、`target/arm/internals.h`（~1600行）、`target/arm/cpu.h`（~3500行）、`target/arm/tcg/helper-a64.c`（~800行）、`target/arm/tcg/op_helper.c`（~1200行）、`target/arm/tcg/translate-a64.c`（~11000行）、`target/arm/tcg/hflags.c`（~650行）、`target/arm/mmuidx.h`（~200行）
 
 ---
 
