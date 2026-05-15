@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **39 篇文档**，总计 **~1699KB** 中文技术文档
+> 共 **40 篇文档**，总计 **~1727KB** 中文技术文档
 
 ---
 
@@ -15,7 +15,7 @@
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
-| [accel/](#accel-加速器) | 4 | ~172KB | TCG 翻译引擎全貌、优化递次（常量折叠/掩码追踪/活跃性/寄存器分配）、IR 设计与前端翻译、后端代码生成与 TB 管理 |
+| [accel/](#accel-加速器) | 5 | ~200KB | TCG 翻译引擎全貌、优化递次（常量折叠/掩码追踪/活跃性/寄存器分配）、IR 设计与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -391,6 +391,14 @@ TCG 后端代码生成完整流程：tcg_gen_code() 8 阶段管线（优化→�
 
 **适合读者**：需要理解 TCG 如何将 IR 变为机器码、需要添加新后端或优化现有后端的开发者。
 **关键源文件**：`tcg/tcg.c`（~6770行）、`tcg/aarch64/tcg-target.c.inc`（3592行）、`accel/tcg/cpu-exec.c`、`accel/tcg/translate-all.c`、`accel/tcg/tb-maint.c`
+
+### [04-MTTCG多线程翻译深度分析.md](accel/04-MTTCG多线程翻译深度分析.md)
+> **28KB · 28 节**
+
+MTTCG 多线程 TCG 执行模型完整解析：MTTCG 启用配置（TCGState/mttcg_supported/AUTO-ON-OFF决策），vCPU 线程模型（MTTCG 每 vCPU 独立线程 vs RR 单线程轮转），模式选择分发（tcg_accel_ops_init），TCGContext 线程管理（TLS tcg_ctx/tcg_ctxs数组/tcg_register_thread），代码缓冲区 Region 分区（无锁翻译），TB 哈希表并发访问（QHT 无锁读+bucket锁写），jmp_lock 跳转链保护，TB 刷新同步（exclusive context），CF_PARALLEL 标志影响范围（原子操作/内存屏障/TB缓存），TCG 内存屏障体系（TCGBar 类型/tcg_gen_mb/ARM64 DMB-DSB-ISB 映射），原子操作翻译（helper模板/CF_PARALLEL降级/LDXR-STXR），cpu_exec_step_atomic 原子单步（全局串行化），TLB 线程安全（per-vCPU/跨CPU异步刷新），ARM64 Exclusive Monitor，vCPU Kick 机制（exit_request/SIG_IPI/pthread_kill），中断投递（tcg_handle_interrupt/cpu_handle_interrupt），BQL 使用模式，Exclusive 上下文（start/end_exclusive 全局串行化），cpu_exec_start/end 执行区间管理，Safe Work 跨vCPU操作，icount 指令计数模式，EXCP_ATOMIC 完整处理流程，RR vs MTTCG 全面对比表。
+
+**适合读者**：需要理解 QEMU 多线程执行模型、调试并发问题、优化多核性能的开发者。
+**关键源文件**：`accel/tcg/tcg-accel-ops-mttcg.c`（138行）、`accel/tcg/tcg-accel-ops-rr.c`（349行）、`accel/tcg/tcg-accel-ops.c`、`cpu-common.c`、`system/cpus.c`
 
 ---
 
