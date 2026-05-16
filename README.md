@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **102 篇文档**，总计 **~2917KB** 中文技术文档
+> 共 **103 篇文档**，总计 **~2945KB** 中文技术文档
 
 ---
 
@@ -586,6 +586,14 @@ ARM64 EL 切换时 TCG 翻译器完整行为变化分析：CPUARMTBFlags 96 位�
 
 **适合读者**：需要理解 ARM64 EL 切换如何影响 TCG 翻译缓存、hflags 构建细节、TB 链断裂原理或寄存器组切换实现的开发者。  
 **关键源文件**：`target/arm/tcg/hflags.c`（~700行）、`target/arm/cpu.h`（~2550行）、`target/arm/tcg/translate-a64.c`（~10750行）、`target/arm/helper.c`（~10190行）、`target/arm/tcg/helper-a64.c`（~750行）、`target/arm/internals.h`（~1500行）
+
+### [42-ARM64-TCG前端后端代码生成深度分析-IR中间表示-翻译循环-优化Pass-寄存器分配与AArch64代码发射.md](arm64/42-ARM64-TCG前端后端代码生成深度分析-IR中间表示-翻译循环-优化Pass-寄存器分配与AArch64代码发射.md)
+> **28KB · 17 节**
+
+ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTemp 五种生命周期 EBB/TB/GLOBAL/FIXED/CONST、TCGOp 链表结构、TCGContext 全局上下文 350+ 行字段）、TCGOpcode 操作码全景（tcg-opc.h 180+ 标量/向量指令：控制流/算术/逻辑/移位/位操作/比较/加载存储/进位链/类型转换/TB 控制/guest 内存/向量运算）、translator_loop 通用翻译循环（init_disas_context→tb_start→insn_start→translate_insn→tb_stop 五回调、DISAS_NEXT/TOO_MANY/NORETURN/EXIT 终止条件、tcg_op_buf_full/max_insns 限制）、ARM64 TranslatorOps（aarch64_translator_ops 回调表、aarch64_tr_translate_insn 单步/对齐/解码流程、aarch64_tr_tb_stop DISAS 分支处理：goto_tb/exit_tb/lookup_and_goto_ptr/WFI）、decodetree 解码（a64.decode→trans_* 函数→tcg_gen_* IR 生成）、tcg_gen_* 前端 API（tcg_emit_op 追加 ops 链表、mov/add/sub/ld/st/brcond/goto_tb/exit_tb/lookup_and_goto_ptr）、tb_gen_code 入口（translate-all.c:261-420 物理地址转换→TB 分配→setjmp_gen_code→溢出重试三种错误码 -1/-2/-3）、tcg_optimize 优化 Pass（OptContext/TempOptInfo 拷贝链+z/o/s_mask 追踪、copy_propagate→fold_*→常量折叠/条件折叠/死代码消除/内存拷贝追踪 IntervalTree）、liveness_pass_1 活性分析（反向遍历 ops、la_bb_end 块末状态、DEAD_ARG/SYNC_ARG 位图、纯函数无用输出删除）、寄存器分配器（AArch64 分配顺序 X20-X28 callee-saved 优先→X8-X15→X0-X7、tcg_reg_alloc 单/双寄存器分配、temp_sync 溢出到栈帧、tcg_reg_alloc_mov/call 特殊路径）、AArch64 后端代码发射（tcg_out_mov/movi/ld/st/call 指令编码、tcg_out_insn 宏编码层）、guest 内存访问翻译（prepare_host_addr TLB 内联查找：LDP mask+table→AND 索引→ADD 地址→LDR 比较值+addend→AND+CMP 页匹配→B.NE 慢路径、tcg_out_qemu_ld_direct LDRB/LDRH/LDRW/LDR 选择、慢路径 helper_ld*_mmu 调用）、TB 链接与运行时补丁（tcg_out_goto_tb B+BR 双指令、tb_target_set_jmp_target ±128MB 直接 B vs LDR+BR 间接、qatomic_set+flush_idcache 原子补丁）、Prologue/Epilogue（tcg_target_qemu_prologue STP FP/LR→保存 X19-X28→SUB SP→MOV AREG0→BR TB→tb_ret_addr→恢复→RET）、代码缓冲区管理（tcg_init→tcg_context_init+tcg_region_init、tcg_tb_alloc highwater 检查、tb_flush 全量刷新）。
+
+**适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
+**关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
