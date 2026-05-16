@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **99 篇文档**，总计 **~2854KB** 中文技术文档
+> 共 **100 篇文档**，总计 **~2870KB** 中文技术文档
 
 ---
 
@@ -570,6 +570,14 @@ ARM64 EL3/Secure 世界切换全栈分析：SMC 指令翻译（trans_SMC 两步�
 
 **适合读者**：需要理解 ARM64 安全世界切换实现、SMC/ERET 异常路径、EL3 Monitor 执行环境、SCR_EL3 安全配置或 PSCI 固件接口的开发者。  
 **关键源文件**：`target/arm/tcg/translate-a64.c`（~3205行）、`target/arm/tcg/op_helper.c`（~1200行）、`target/arm/helper.c`（~10190行）、`target/arm/tcg/helper-a64.c`（~785行）、`target/arm/tcg/hflags.c`（~575行）、`target/arm/tcg/psci.c`（~120行）
+
+### [40-ARM64-EL1-EL2交互深度分析-HVC陷入-VHE重定向-Stage2控制与嵌套虚拟化.md](arm64/40-ARM64-EL1-EL2交互深度分析-HVC陷入-VHE重定向-Stage2控制与嵌套虚拟化.md)
+> **16KB · 15 节**
+
+ARM64 EL1/EL2 交互全栈分析：HVC 指令翻译（trans_HVC target_el=2/3 分支、pre_hvc 决策：PSCI 旁路 > SCR_EL3.HCE > HCR_EL2.HCD > 安全态检查）、异常进入 EL2（VBAR_EL2 + 向量偏移 +0x400/+0x600、HCR_RW 决定低 EL 宽度、ESR_EL2/ELR_EL2/SPSR_EL2 保存）、HCR_EL2 位域全景（60+ 位：VM/FMO/IMO/AMO/DC/TWI/TWE/TSC/TVM/TRVM/TGE/HCD/RW/E2H/NV/NV1/NV2/FWB 分六大类）、arm_hcr_el2_eff 有效值计算（安全态无 SEL2→返回 0、TGE+E2H 清除虚拟化位、TGE 非 E2H 强制 FMO/IMO/AMO）、VHE 寄存器重定向（28 对 vhe_redir_to_el2/el01：SCTLR/TTBR0/TTBR1/TCR/VBAR/ELR/SPSR/FAR/ESR/MAIR_EL1→EL2、EL12 编码访问原始 EL1）、el_is_in_host（EL0 需 E2H+TGE、EL2 需 E2H）、VHE 对 MMU 索引影响（E20_0/E20_2 vs E10_0/E2、双范围 TTBR）、Stage-2 使能（HCR_VM→两阶段翻译、HCR_DC→默认可缓存、VHE 模式清除 VM/DC）、陷阱访问函数（access_tvm_trvm→CP_ACCESS_TRAP_EL2、影响 SCTLR/TCR/TTBR 等 EL1 寄存器）、细粒度陷阱 FGT（HFGRTR/HFGWTR/HDFGRTR/HDFGWTR/HFGITR_EL2、SCR_FGTEN 门控、HFGITR.ERET 陷阱位→TRAP_ERET hflag）、WFE/WFI 陷阱链（SCTLR.nTWE/nTWI→EL1 > HCR_TWE/TWI→EL2 > SCR_TWE/TWI→EL3 三级优先级）、ERET 从 EL2（HCR_TGE 禁止返回 EL1、hflags 从 E2/E20_2 切换到 E10_1）、EL2 hflags（E2H/UNPRIV/NV/NV1/NV2/NV2_MEM_BE/TRAP_ERET/FGT_ACTIVE 标志差异表）、嵌套虚拟化 NV/NV2（NV EL1 访问 EL2 寄存器陷入、NV2 通过 VNCR_EL2 内存后备避免 VM Exit、nv2_redirect_offset 固定偏移、ERET/SMC/AT/TLBI 陷阱路由）。
+
+**适合读者**：需要理解 ARM64 Hypervisor 陷阱机制、VHE 寄存器重定向、HCR_EL2 位域效果、Stage-2 控制或嵌套虚拟化 NV/NV2 实现的开发者。  
+**关键源文件**：`target/arm/tcg/translate-a64.c`（~3205行）、`target/arm/tcg/op_helper.c`（~1200行）、`target/arm/helper.c`（~10190行）、`target/arm/tcg/hflags.c`（~575行）、`target/arm/cpu.h`（~1755行）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
