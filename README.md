@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **97 篇文档**，总计 **~2816KB** 中文技术文档
+> 共 **98 篇文档**，总计 **~2834KB** 中文技术文档
 
 ---
 
@@ -554,6 +554,14 @@ ARM64 安全状态转换全栈分析：ARMSecuritySpace 四域安全模型（Sec
 
 **适合读者**：需要理解 ARM64 安全世界切换、SCR_EL3/HCR_EL2 联动控制、中断路由优先级、SMC/HVC 异常路由或 Secure EL2 实现的开发者。  
 **关键源文件**：`include/hw/arm/arm-security.h`（~37行）、`target/arm/cpu.h`（~2250行）、`target/arm/internals.h`（~490行）、`target/arm/helper.c`（~10190行）、`target/arm/tcg/helper-a64.c`（~730行）、`target/arm/tcg/op_helper.c`（~1200行）、`target/arm/cpu-irq.c`（~165行）
+
+### [38-ARM64内存管理深度分析-页表遍历-TLB-Stage2翻译与属性合并.md](arm64/38-ARM64内存管理深度分析-页表遍历-TLB-Stage2翻译与属性合并.md)
+> **18KB · 16 节**
+
+ARM64 内存管理全栈分析：ARMMMUIdx 翻译体制索引（E10_0/E10_1/E20_0/E20_2/E2/E3/Stage2/Stage2_S/Phys 共 22 种索引 + Stage1_E0/E1 仅 AT 指令使用）、arm_mmu_idx_el 翻译体制选择（EL0→E10_0/E20_0/E30_0、EL1→E10_1/PAN、EL2→E2/E20_2/PAN、EL3→E3/PAN + VHE 重定向）、get_phys_addr 入口（构建 S1Translate → get_phys_addr_gpc）、ARMMMUFaultInfo 故障信息（type/level/stage2/s1ptw/s1ns/ea/dirtybit）、aa64_va_parameters TCR 解析（T0SZ/T1SZ 地址空间大小、TG0/TG1 粒度 4K/16K/64K、HA/HD 硬件访问标志管理、TTBR 选择基于 VA[55]）、get_phys_addr_lpae LPAE 逐级遍历（regime_tcr→regime_ttbr→起始级别计算→描述符读取→Table/Block/Page 分支→AF/DBM 自动管理→权限检查）、描述符格式（AttrIndx/AP/SH/AF/DBM/PXN/UXN + S2AP/MemAttr）、get_S1prot 权限检查（PAN/PAN3/EPAN 用户页特权阻止、WXN 写蕴含不可执行、安全域 SIF/Root/Realm 取指限制）、get_S2prot Stage-2 权限（S2AP[1:0] 读写 + XN 执行控制）、get_phys_addr_twostage 两阶段翻译（S1 VA→IPA → 切换 Stage2 MMU 索引 → S2 IPA→PA → prot 交集 → 属性合并 → 最小页面大小）、S1_ptw_translate（S1 描述符地址的 S2 翻译 + s1ptw 故障标记）、属性合并（无 FWB 取更强约束 + FWB S2 覆盖 S1 + 共享属性取最大值）、SoftMMU TLB（CPUTLBEntry addr_read/write/code+addend + Victim TLB 8 条目 + tlb_set_page_full 填充）、arm_cpu_tlb_fill_align TLB miss 处理（对齐检查→get_phys_addr→成功填充/probe 返回/arm_deliver_fault）、TLBI 指令模拟（VMALLE1/VAE1/ALLE1/IPAS2E1 + ASID/VMID 过滤 + alle1_tlbmask 掩码）、AT 指令（do_ats_write → get_phys_addr_for_at → PAR_EL1 构建成功/失败格式）、TBI 地址标签（aa64_va_parameter_tbi + hflags 缓存）。
+
+**适合读者**：需要理解 ARM64 页表遍历实现、Stage-1/Stage-2 翻译交互、TLB 管理、TLBI/AT 指令模拟或内存属性合并机制的开发者。  
+**关键源文件**：`target/arm/ptw.c`（~3950行）、`target/arm/mmuidx.h`（~200行）、`target/arm/internals.h`（~1500行）、`target/arm/helper.c`（~10100行）、`target/arm/tcg/tlb_helper.c`（~380行）、`target/arm/tcg/tlb-insns.c`（~740行）、`target/arm/tcg/cpregs-at.c`（~360行）、`accel/tcg/cputlb.c`（~2600行）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
