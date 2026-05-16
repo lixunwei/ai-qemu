@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **81 篇文档**，总计 **~2416KB** 中文技术文档
+> 共 **82 篇文档**，总计 **~2431KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 13 | ~297KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行 |
-| [arm64/](#arm64-arm64-架构) | 35 | ~836KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现、EL 状态切换与 PSTATE |
+| [arm64/](#arm64-arm64-架构) | 36 | ~851KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -420,6 +420,14 @@ ARM64 异常级别状态切换全解：CPUARMState 中 PSTATE/ELR/SPSR/SP 的分
 
 **适合读者**：需要理解 ARM 异常机制、实现安全监控/虚拟化或调试 EL 切换问题的开发者。  
 **关键源文件**：`target/arm/helper.c`、`target/arm/tcg/helper-a64.c`、`target/arm/cpu.h`、`target/arm/syndrome.h`、`target/arm/tcg/translate-a64.c`
+
+### [36-ARM64不同EL下指令执行流变化深度分析.md](arm64/36-ARM64不同EL下指令执行流变化深度分析.md)
+> **15KB · 12 节**
+
+ARM64 不同异常级别（EL0-EL3）下指令执行流差异全解：rebuild_hflags_a64() EL 敏感的 TB 标志计算（E2H/UNPRIV/SVE/SME/NV/MTE/FGT）、DisasContext EL 感知翻译（current_el/mmu_idx/fp_excp_el 等）、ARMCPRegInfo 权限模型（PL0-PL3/accessfn）、access_tvm_trvm/tsw/tacr 系统寄存器陷阱路由、arm_mmu_idx_el() MMU 体制映射（E10/E20/E2/E3 七种模式）、PAN/UAO 内存访问权限控制、FP/SIMD/SVE/SME 三级陷阱控制（CPACR/CPTR_EL2/CPTR_EL3）与向量长度随 EL 变化、DAIF/ALLINT 中断屏蔽、debug_helper.c 调试寄存器三级路由（TDOSA/TDRA/TDA）、VHE 寄存器重定向表、各 EL 指令可用性与 MMU/陷阱层次对比。
+
+**适合读者**：需要理解不同 EL 下 CPU 行为差异、实现虚拟化陷阱或调试权限问题的开发者。  
+**关键源文件**：`target/arm/tcg/hflags.c`、`target/arm/tcg/translate.h`、`target/arm/cpregs.h`、`target/arm/helper.c`、`target/arm/debug_helper.c`
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
