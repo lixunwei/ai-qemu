@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **63 篇文档**，总计 **~2181KB** 中文技术文档
+> 共 **65 篇文档**，总计 **~2208KB** 中文技术文档
 
 ---
 
@@ -11,12 +11,12 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
-| [arm64/](#arm64-arm64-架构) | 25 | ~714KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI |
+| [arm64/](#arm64-arm64-架构) | 26 | ~730KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
-| [arm/](#arm-arm-架构通用) | 13 | ~285KB | EL 状态管理、AArch32 异常、CP15/MMU、GICv3、Cache、Timer、PMU、调试、SVE/SME、TrustZone、内存模型、TZ 安全组件模拟、RME/Realm |
+| [arm/](#arm-arm-架构通用) | 14 | ~296KB | EL 状态管理、AArch32 异常、CP15/MMU、GICv3、Cache、Timer、PMU、调试、SVE/SME、TrustZone、内存模型、TZ 安全组件模拟、RME/Realm、GICv2 vs GICv3 对比 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -284,6 +284,14 @@ GICv3 ITS（中断翻译服务）和 LPI（局部性外设中断）实现深度�
 
 **适合读者**：需要理解 MSI/MSI-X 如何通过 ITS 翻译为 LPI、ITS 命令队列和表管理、LPI 配置和 pending 机制的开发者。
 **关键源文件**：`hw/intc/arm_gicv3_its.c`（~2050行）、`hw/intc/arm_gicv3_its_common.c`（~130行）、`hw/intc/arm_gicv3_redist.c`（~1200行）、`include/hw/intc/arm_gicv3_its_common.h`（~380行）
+
+### [26-GICv3寄存器模拟与状态机深度分析.md](arm64/26-GICv3寄存器模拟与状态机深度分析.md)
+> **16KB · 11 节**
+
+GICv3 寄存器模拟与状态机深度分析：GICD 分发器寄存器（CTLR 读写、DS 单向转换、TYPER 动态计算、NS 访问过滤 RAZ/WI）、GICD_IPRIORITYR NS 优先级空间分离（NS 读 (prio<<1)&0xff、NS 写 0x80|(value>>1)、安全 [0x00-0xFF] vs 非安全 [0x80-0xFF]）、GICR 重分发器寄存器（TYPER affinity/Last/PLPIS、PROPBASER/PENDBASER LPI 配置/pending 表、WAKER 处理器睡眠协议）、ICC CPU 接口系统寄存器（gicv3_cpuif_reginfo[] 2463+ 注册表、ARMCPRegInfo opc0/opc1/crn/crm/opc2、accessfn 访问控制 gicv3_fiq/irq_access、readfn/writefn 读写回调）、ICV 虚拟化重定向（icv_access() 85-106 检查 NS EL1+HCR.IMO/FMO、透明转发到 icv_* 虚拟寄存器）、ICH 虚拟化控制寄存器（ich_hcr/vmcr/lr/ap1r、List Register 64 位 state/prio/group/vINTID）、状态位存储架构（SPI 位图 GICD、SGI/PPI 位图 GICR、per-CPU 组合打包）、VMSTATE 迁移（vmstate_gicv3_cpu 187-222 主状态、virt/sre_el1/gicv4/nmi 条件子段）、写入副作用级联（GICD_CTLR→gicv3_full_update、组/使能/pending→部分 update、GICR→per-CPU redist_update、ICC→per-CPU cpuif_update）。
+
+**适合读者**：需要理解 GICv3 各级寄存器的 QEMU 实现细节、NS/S 隔离机制、ICV 虚拟化重定向、迁移状态保存的开发者。
+**关键源文件**：`hw/intc/arm_gicv3_dist.c`（~820行）、`hw/intc/arm_gicv3_cpuif.c`（~2700行）、`hw/intc/arm_gicv3_redist.c`（~1200行）、`hw/intc/arm_gicv3_common.c`（~680行）
 
 ---
 
@@ -596,6 +604,14 @@ ARM Realm Management Extension（RME/FEAT_RME）完整实现分析：四世界�
 
 **适合读者**：需要理解 ARM RME 四世界模型、GPT 颗粒保护表、GPC 故障机制、Realm 机密计算架构的开发者。
 **关键源文件**：`include/hw/arm/arm-security.h`（~37行）、`target/arm/helper.c`（~10188行）、`target/arm/ptw.c`（~2600行）、`target/arm/internals.h`（~1100行）、`target/arm/cpu-features.h`（~1200行）
+
+### [24-ARM中断控制器架构GICv2与GICv3对比分析.md](arm/24-ARM中断控制器架构GICv2与GICv3对比分析.md)
+> **11KB · 11 节**
+
+ARM GIC 两代架构全面对比：核心差异总览（CPU 数 8→无限、MMIO→系统寄存器、位图路由→亲和性路由、无 LPI→原生 ITS）、QOM 类型层次（arm_gic_common→arm_gic/kvm-arm-gic vs arm-gicv3-common→arm-gicv3/kvm-arm-gicv3）、状态结构对比（GICState 统一结构 vs GICv3State+GICv3CPUState 分层、irq_target[] 8 位位图 vs gicd_irouter[] 64 位亲和性、sgi_pending[][] 源追踪 vs 无源追踪、MMIO MemoryRegion vs ARMCPRegInfo 系统寄存器）、中断流转对比（gic_set_irq vs gicv3_set_irq、gic_update_internal 全局扫描 vs gicv3_update 增量更新、SGI IAR 源 CPU<<10|ID vs 仅 INTID）、分发器/CPU 接口寄存器对比（GICD_ITARGETSR vs GICD_IROUTER、GICC_* MMIO vs ICC_*_ELx 系统寄存器、GICV_* vs ICV_* 虚拟化）、机器模型选择（virt.c finalize_gic_version_do NOSEL/host/max/2/3/4、CPU≤8 默认 v2、>8 强制 v3）、GICv2m MSI 桥接（arm-gicv2m 写入→SPI 转换）、KVM 加速对比（设备类型/MMIO 拦截/状态迁移差异）、VMSTATE 迁移差异（v2 统一 vs v3 分层+条件子段）、演进趋势（MMIO→寄存器、位图→亲和性、外挂→原生 ITS、单文件→分层架构）。
+
+**适合读者**：需要理解 GICv2/v3 架构差异、QEMU 如何选择和创建 GIC、两代实现的代码组织和状态管理差异的开发者。
+**关键源文件**：`hw/intc/arm_gic.c`（~2200行）、`include/hw/intc/arm_gic_common.h`（~166行）、`hw/intc/arm_gicv2m.c`（~199行）、`hw/arm/virt.c`（~4300行）、`hw/intc/arm_gic_kvm.c`、`hw/intc/arm_gicv3_kvm.c`
 
 ---
 
