@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **57 篇文档**，总计 **~2090KB** 中文技术文档
+> 共 **58 篇文档**，总计 **~2103KB** 中文技术文档
 
 ---
 
@@ -16,7 +16,7 @@
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
-| [arm/](#arm-arm-架构通用) | 11 | ~256KB | EL 状态管理、AArch32 异常、CP15/MMU、GICv3、Cache、Timer、PMU、调试、SVE/SME、TrustZone、内存模型 |
+| [arm/](#arm-arm-架构通用) | 12 | ~269KB | EL 状态管理、AArch32 异常、CP15/MMU、GICv3、Cache、Timer、PMU、调试、SVE/SME、TrustZone、内存模型、TZ 安全组件模拟 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -542,6 +542,16 @@ ARM SMMUv3 与 QEMU IOMMU 框架完整实现分析：通用 IOMMU 框架（IOMMU
 
 **适合读者**：需要理解 IOMMU 地址翻译框架、SMMUv3 流表/页表遍历、TLB 管理、VFIO IOMMU 交互的开发者。
 **关键源文件**：`include/system/memory.h`（~600行）、`hw/arm/smmuv3.c`（~2100行）、`hw/arm/smmu-common.c`（~850行）、`include/hw/arm/smmu-common.h`（~180行）、`hw/arm/smmuv3-internal.h`（~300行）
+
+---
+
+### [22-ARM-TrustZone安全组件模拟深度分析.md](arm/22-ARM-TrustZone安全组件模拟深度分析.md)
+> **13KB · 11 节**
+
+ARM TrustZone 安全组件硬件模拟深度分析：TZ-MPC 内存保护控制器（IOMMU 双索引 S/NS、BLK_LUT 块级位图安全配置、tz_mpc_cfg_ns 查找、tz_mpc_translate 翻译核心、tz_mpc_handle_block 违规捕获与 IRQ、tz_mpc_attrs_to_index 属性映射、寄存器映射 CTRL/BLK_MAX/BLK_IDX/BLK_LUT/INT_*）、TZ-PPC 外设保护控制器（tz_ppc_check 三层安全检查 nonsec_mask/cfg_nonsec/cfg_ap、代理读写转发/阻塞、per-port 独立配置）、TZ-MSC 主设备安全控制器（MSCAction 四种决策、IDAU 接口集成、cfg_nonsec 判定）、安全内存架构（virt 机器 secure_sysmem 容器+优先级覆盖、Secure RAM 映射、PSCI conduit 选择）、MMU 安全态处理（S1Translate in_space/cur_space/out_space 三空间追踪、NSTable 降级机制、Stage-2 物理索引选择、TTBR Banking）、中断安全路由（target_el_table 6 维查表、SCR_EL3 路由位、GICv3 安全组 Group0/G1S/G1NS）、世界切换（SMC→Monitor 模式/SCR.NS 清除、switch_mode 寄存器 banking R8-R14/SPSR、ERET 返回）、完整安全事务路径追踪（Secure/NS CPU 访问 MPC 保护内存全流程）。
+
+**适合读者**：需要理解 TrustZone 硬件安全模拟、MPC/PPC/MSC 设备原理、安全内存架构、MMU 安全态追踪的开发者。
+**关键源文件**：`hw/misc/tz-mpc.c`（~560行）、`hw/misc/tz-ppc.c`（~360行）、`hw/misc/tz-msc.c`（~300行）、`target/arm/ptw.c`（~2600行）、`target/arm/helper.c`（~10188行）
 
 ---
 
