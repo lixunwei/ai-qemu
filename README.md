@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **74 篇文档**，总计 **~2305KB** 中文技术文档
+> 共 **75 篇文档**，总计 **~2314KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 8 | ~213KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动 |
-| [arm64/](#arm64-arm64-架构) | 33 | ~808KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS |
+| [arm64/](#arm64-arm64-架构) | 34 | ~817KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -364,6 +364,14 @@ CPACR_EL1 三级 FP/SIMD 陷阱链（FPEN/ZEN/SMEN → CPTR_EL2 → CPTR_EL3）�
 
 **适合读者**：需要理解 ARM 硬件调试机制、断点/观察点实现原理或 RAS 错误处理的开发者。
 **关键源文件**：`target/arm/debug_helper.c`（寄存器定义/访问控制）、`target/arm/tcg/debug.c`（匹配逻辑/异常处理）、`target/arm/helper.c`（RAS/MDCR）
+
+### [34-ARM64-ID寄存器与特性发现机制深度分析.md](arm64/34-ARM64-ID寄存器与特性发现机制深度分析.md)
+> **9KB · 12 节**
+
+ARM64 ID 寄存器完整体系：4 组 ×8 个 AArch64 ID 空间（PFR/DFR/ISAR/MMFR + ZFR/SMFR）、ARMISARegisters 统一存储与 GET_IDREG 宏、isar_feature_aa64_* 数百个内联特性检查函数与 cpu_isar_feature 宏、CPU 模型初始化（具名模型 vs `-cpu max` TCG 全特性填充）、HCR_EL2.TID0-TID5 分组陷阱控制（access_tid3 核心 ID 陷阱→Hypervisor 可伪造值）、用户态 exported_bits/fixed_bits 过滤机制（modify_arm_cp_regs）、未实现 ID 寄存器 RAZ 处理、ID_AA64PFR0.GIC 动态字段运行时填充。
+
+**适合读者**：需要理解 ARM 特性发现机制、实现新 CPU 模型或分析 ID 寄存器虚拟化的开发者。
+**关键源文件**：`target/arm/helper.c`（ID 寄存器注册 6240-6760）、`target/arm/cpu-features.h`（isar_feature 检查）、`target/arm/cpu64.c`（CPU 模型初始化）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
