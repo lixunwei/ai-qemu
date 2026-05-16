@@ -123,7 +123,7 @@ static inline bool arm_is_el2_enabled_secstate(CPUARMState *env,
 ARM TrustZone 的核心是寄存器分组（Banking）：同一个系统寄存器在 Secure 和 Non-Secure 世界有不同的物理拷贝。
 
 ```c
-// helper.c:7538-7548 — add_cpreg_to_hashtable() 处理分组
+// helper.c:7615-7649 — add_cpreg_to_hashtable_aa32() 处理分组
 {
     bool isbanked = r->bank_fieldoffsets[0] && r->bank_fieldoffsets[1];
     if (isbanked) {
@@ -420,7 +420,7 @@ uint64_t mfar_el3;    // Memory Fault Address Register
 EL3 入口点 (Reset)
   │
   ├── QEMU 加载固件到安全Flash/RAM
-  │   hw/arm/virt.c:1703-1732 — load_bios()
+  │   hw/arm/virt.c:1685-1732 — virt_firmware_init()
   │
   ├── CPU 从 EL3 开始执行
   │   ├── BL1 (Trusted ROM) → 初始化安全世界

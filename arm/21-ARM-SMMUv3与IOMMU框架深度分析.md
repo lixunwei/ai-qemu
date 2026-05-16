@@ -95,7 +95,7 @@ typedef struct SMMUv3State {
 ### 3.2 设备实现
 
 ```c
-// smmuv3.c:2016-2056 — smmuv3_realize()
+// smmuv3.c:2016-2056 — smmu_realize()
 ```
 
 realize 阶段：
