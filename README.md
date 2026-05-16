@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **96 篇文档**，总计 **~2794KB** 中文技术文档
+> 共 **97 篇文档**，总计 **~2816KB** 中文技术文档
 
 ---
 
@@ -246,6 +246,14 @@ Block Layer I/O 子系统全栈分析：BlockDriverState 核心结构（drv/opaq
 
 **适合读者**：需要理解 QEMU Block Layer 架构、BDS 节点图与父子关系、块设备 I/O 协程路径、请求追踪与串行化机制、Copy-on-Read 实现、I/O 限流与 Drain、Block Job 状态机或 bdrv_open 打开路径的开发者。  
 **关键源文件**：`include/block/block_int-common.h`（~1300行）、`include/block/block-common.h`（~600行）、`block/block-backend.c`（~2400行）、`block/io.c`（~3500行）、`block.c`（~8000行）、`block/throttle-groups.c`（~700行）、`include/qemu/job.h`（~400行）
+
+### [26-VirtIO设备模型深度分析-VirtQueue-通知机制-virtio-blk-net与PCI传输.md](architecture/26-VirtIO设备模型深度分析-VirtQueue-通知机制-virtio-blk-net与PCI传输.md)
+> **22KB · 15 节**
+
+VirtIO 设备模型全栈分析：VirtIODevice 核心结构（status/isr/queue_sel 状态寄存器、host_features/guest_features/backend_features 三级 Feature 集、config_len/config/config_vector 配置空间、nvectors/vq VirtQueue 数组、device_id 设备类型、started/start_on_kick 启动状态、use_guest_notifier_mask 通知掩码、dma_as DMA 地址空间、device_iotlb_enabled IOTLB）、VirtIODeviceClass 回调（realize/unrealize 生命周期、get_features/set_features/validate_features Feature 协商、get_config/set_config 配置空间、set_status/reset 状态控制、queue_reset/queue_enable 队列管理、guest_notifier_pending/mask 通知、start/stop_ioeventfd、save/load 迁移、get_vhost/toggle_device_iotlb）、VirtQueue 结构（vring VRing 描述符环、used_elems Used 缓存、last_avail_idx/shadow_avail_idx 消费者索引、used_idx/used_wrap_counter Used 索引、signalled_used/signalled_used_valid 通知抑制、notification 启用标志、queue_index/inuse/vector、handle_output kick 回调、guest_notifier/host_notifier EventNotifier）、VRing 描述符环（Split 格式 VRingDesc addr/len/flags/next→VRingAvail flags/idx/ring→VRingUsed flags/idx/ring、VRing num/num_default/align/desc/avail/used GPA+caches、内存布局 desc_table→avail_ring→used_ring）、VirtQueueElement 请求元素（index/len/ndescs/out_num/in_num/in_order_filled、in_addr/out_addr GPA 数组、in_sg/out_sg iovec HVA）、Virtqueue 操作循环（virtqueue_pop 从 Avail 环取请求→遍历描述符链→address_space_map GPA→HVA、virtqueue_fill 写入 Used、virtqueue_flush 更新 used->idx+内存屏障、virtqueue_push=fill+flush 一步完成→virtio_notify 通知 Guest）、通知机制（Guest→Host Kick：无 ioeventfd→MMIO 退出→virtio_queue_notify→handle_output/有 ioeventfd→KVM eventfd→host_notifier→AioContext→handle_output、Host→Guest Notify：virtio_notify→virtio_should_notify 通知抑制→virtio_irq→主线程 virtio_notify_vector MSI-X/IOThread defer_call→irqfd 批量延迟、EVENT_IDX 通知抑制 avail_event/used_event 减少 VM Exit 和中断）、Packed Virtqueue（VRingPackedDesc addr/len/id/flags AVAIL/USED 嵌入描述符+wrap counter、VRingPackedDescEvent off_wrap/flags、virtqueue_packed_pop/fill/flush、无独立 avail/used 环 cache 友好）、VirtIO-PCI 传输层（VirtIOPCIProxy pci_dev/bar/common/isr/device/notify/notify_pio MemoryRegion、guest_features/vqs/vector_irqfd/bus、virtio_pci_realize PCI 初始化+MSI-X+BAR 注册、virtio_pci_common_read/write MMIO 配置访问、virtio_pci_ioeventfd_assign kick 路径设置）、VirtioBus 总线抽象（VirtioBusClass notify/save_config/load_config/set_guest_notifiers/device_plugged/unplugged/ioeventfd_enabled/assign/get_dma_as/iommu_enabled、VirtioBusState ioeventfd_started/grabbed）、virtio-blk 块设备（VirtIOBlock blk BlockBackend/conf/dataplane、VirtIOBlockReq sector_num/dev/vq/in/outhdr/qiov/elem、virtio_blk_device_realize virtio_init+关联 blk+virtio_add_queue、virtio_blk_handle_vq 循环 virtqueue_pop→解析请求→virtio_blk_submit_multireq 批量合并→blk_aio_preadv/pwritev）、virtio-net 网络设备（VirtIONet nic/vqs/max_queue_pairs/curr_queue_pairs 多队列、virtio_net_device_realize 队列对分配+rx/tx VirtQueue 创建、virtio_net_handle_rx 接收、virtio_net_handle_tx_timer/tx_bh timer/BH 两种发送模式）、IOThread Dataplane 集成（virtio_blk_vq_aio_context_init 每队列 AioContext 设置、blk_set_aio_context BlockBackend 绑定 IOThread、ioeventfd Guest kick 直达 IOThread→handle_output→blk_aio→I/O 完成→virtqueue_push→defer_call→irqfd MSI-X、避免 BQL 竞争）、Feature 协商（VIRTIO_F_VERSION_1/RING_PACKED/IN_ORDER/NOTIFICATION_DATA/RING_F_INDIRECT_DESC/EVENT_IDX、协商流程 host_features→Guest 读取→Guest 写 guest_features→FEATURES_OK→validate）。
+
+**适合读者**：需要理解 VirtIO 规范在 QEMU 中的实现、VirtQueue 描述符环操作、Split/Packed 两种队列模式、Guest↔Host 双向通知机制（ioeventfd/irqfd/defer_call）、VirtIO-PCI 传输层、virtio-blk/net 设备处理流程或 IOThread dataplane 集成的开发者。  
+**关键源文件**：`include/hw/virtio/virtio.h`（~450行）、`hw/virtio/virtio.c`（~4300行）、`include/hw/virtio/virtio-pci.h`（~160行）、`hw/virtio/virtio-pci.c`（~2400行）、`include/hw/virtio/virtio-bus.h`（~120行）、`hw/block/virtio-blk.c`（~1900行）、`hw/net/virtio-net.c`（~4000行）
 
 ---
 
