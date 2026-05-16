@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **79 篇文档**，总计 **~2373KB** 中文技术文档
+> 共 **80 篇文档**，总计 **~2397KB** 中文技术文档
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
-| [architecture/](#architecture-架构) | 12 | ~273KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统 |
+| [architecture/](#architecture-架构) | 13 | ~297KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行 |
 | [arm64/](#arm64-arm64-架构) | 34 | ~817KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
@@ -128,6 +128,14 @@ QEMU 内存子系统全解：MemoryRegion 四种类型（RAM/MMIO/别名/容器�
 
 **适合读者**：需要理解 QEMU 内存管理架构、设备 MMIO 注册或内存热插拔机制的开发者。  
 **关键源文件**：`include/system/memory.h`、`system/memory.c`、`system/physmem.c`、`include/system/ramblock.h`
+
+### [12-多线程TCG深度分析-MTTCG并行执行TB失效与内存屏障.md](architecture/12-多线程TCG深度分析-MTTCG并行执行TB失效与内存屏障.md)
+> **24KB · 12 节**
+
+QEMU MTTCG（Multi-Threaded TCG）全解：TCGState 与 MTTCG 初始化决策（mttcg_supported/icount 互斥）、per-vCPU 线程主循环（mttcg_cpu_thread_fn）、TB 失效机制（单 TB/范围/全局 flush）、自修改代码（SMC）精确检测与回退、PageDesc 页面级 TB 追踪（自旋锁保护）、TCGBar 内存排序屏障枚举与 AArch64 DMB 映射、原子操作模板与 EXCP_ATOMIC 串行回退、独占执行上下文（start_exclusive/end_exclusive 与 pending_cpus 协调）、TB 链接的多线程安全（jmp_lock/CAS/CF_INVALID）、icount 确定性模式与 MTTCG 互斥原因。
+
+**适合读者**：需要理解 QEMU 多线程 TCG 并行执行、TB 生命周期管理或客户机内存模型模拟的开发者。  
+**关键源文件**：`accel/tcg/tcg-all.c`、`accel/tcg/tcg-accel-ops-mttcg.c`、`accel/tcg/tb-maint.c`、`accel/tcg/cpu-exec.c`、`cpu-common.c`、`include/tcg/tcg-mo.h`
 
 ---
 
