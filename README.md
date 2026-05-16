@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **101 篇文档**，总计 **~2896KB** 中文技术文档
+> 共 **102 篇文档**，总计 **~2917KB** 中文技术文档
 
 ---
 
@@ -578,6 +578,14 @@ ARM64 EL1/EL2 交互全栈分析：HVC 指令翻译（trans_HVC target_el=2/3 �
 
 **适合读者**：需要理解 ARM64 Hypervisor 陷阱机制、VHE 寄存器重定向、HCR_EL2 位域效果、Stage-2 控制或嵌套虚拟化 NV/NV2 实现的开发者。  
 **关键源文件**：`target/arm/tcg/translate-a64.c`（~3205行）、`target/arm/tcg/op_helper.c`（~1200行）、`target/arm/helper.c`（~10190行）、`target/arm/tcg/hflags.c`（~575行）、`target/arm/cpu.h`（~1755行）
+
+### [41-ARM64-EL切换TCG翻译变化深度分析-hflags位域全景-TB键与链断裂-寄存器组切换与行为效应.md](arm64/41-ARM64-EL切换TCG翻译变化深度分析-hflags位域全景-TB键与链断裂-寄存器组切换与行为效应.md)
+> **21KB · 15 节**
+
+ARM64 EL 切换时 TCG 翻译器完整行为变化分析：CPUARMTBFlags 96 位布局（flags 32 位 + flags2 64 位）、TBFLAG_ANY 共享 14 位（AARCH64_STATE/SS_ACTIVE/PSTATE__SS/BE_DATA/MMUIDX/FPEXC_EL/ALIGN_MEM/PSTATE__IL/FGT_ACTIVE/FGT_SVC）、TBFLAG_A64 专用 45 位（TBII/SVEEXC_EL/VL/PAUTH_ACTIVE/BT/BTYPE/TBID/UNPRIV/ATA/TCMA/MTE_ACTIVE/SMEEXC_EL/PSTATE_SM/ZA/SVL/TRAP_ERET/NAA/NV/NV1/NV2/E2H/AH/NEP/GCS_EN/GCSSTR_EL）、rebuild_hflags_a64 十大构建阶段（TBI→E2H→SVE/SME→SCTLR 对齐/端序/PAuth/BTI/NAA→UNPRIV→PSTATE_IL/FGT/TRAP_ERET→NV/NV1/NV2→MTE→GCS→FPCR）、rebuild_hflags_internal 模式分发（a64/a32/m32）、arm_rebuild_hflags 缓存写入、HELPER(rebuild_hflags_a64) EL 切换调用版本、arm_get_tb_cpu_state TB 键生成（PC+flags+flags2 三元组、BTYPE/PSTATE__SS 动态填充）、异常入口完整流程（save_sp→save ELR→save SPSR→PSTATE_DAIF 全置位→PAN/TCO/SSBS/ALLINT 设置→pstate_write→restore_sp→arm_rebuild_hflags→设置 VBAR+向量偏移 PC）、ERET 恢复流程（save_sp→pstate_write(spsr)→清除 SS→restore_sp→helper_rebuild_hflags_a64→TBI 处理→设置 PC）、TB 链断裂机制（CPU_INTERRUPT_EXITTB/DISAS_EXIT/PC 变化/hflags 变化四重保障）、gen_goto_tb 链接决策（use_goto_tb 同页链接 vs lookup_and_goto_ptr）、寄存器组切换（sp_el[4]/elr_el[4]/banked_spsr[8]、aarch64_save_sp/restore_sp 按 PSTATE.SP 选择 SP_ELn vs SP_EL0）、DisasContext 初始化（MMUIDX→current_el 间接推导、80+ 行 hflag 提取）、SCTLR 影响表（A→ALIGN_MEM/EE→BE_DATA/EnIA→PAUTH_ACTIVE/BT0→BT/nAA→NAA）、HCR_EL2 影响表（E2H→VHE/TGE→UNPRIV/NV→TRAP_ERET/NV2→NV2_MEM_BE/FGT→FGT_SVC）、EL 相关指令行为差异（HVC/SMC/ERET 最低 EL 检查、系统寄存器 EL 路由/VHE 重定向）、单步调试跨 EL 处理（SS_ACTIVE/PSTATE_SS 状态机、SPSR 保存/恢复 SS 位）、EL0↔EL1 hflags 差异对比表。
+
+**适合读者**：需要理解 ARM64 EL 切换如何影响 TCG 翻译缓存、hflags 构建细节、TB 链断裂原理或寄存器组切换实现的开发者。  
+**关键源文件**：`target/arm/tcg/hflags.c`（~700行）、`target/arm/cpu.h`（~2550行）、`target/arm/tcg/translate-a64.c`（~10750行）、`target/arm/helper.c`（~10190行）、`target/arm/tcg/helper-a64.c`（~750行）、`target/arm/internals.h`（~1500行）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
