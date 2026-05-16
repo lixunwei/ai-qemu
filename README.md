@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **92 篇文档**，总计 **~2701KB** 中文技术文档
+> 共 **93 篇文档**，总计 **~2724KB** 中文技术文档
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
-| [architecture/](#architecture-架构) | 14 | ~319KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译 |
+| [architecture/](#architecture-架构) | 15 | ~342KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程 |
 | [arm64/](#arm64-arm64-架构) | 36 | ~851KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
@@ -222,6 +222,14 @@ QOM 对象模型全栈分析：TypeInfo 类型定义（name/parent/instance_size
 
 **适合读者**：需要理解 QEMU 类型系统、对象生命周期管理、类继承与接口机制、设备模型 realize 流程或 QOM 属性系统的开发者。  
 **关键源文件**：`include/qom/object.h`（~700行）、`qom/object.c`（~2800行）、`include/qemu/module.h`（~80行）、`include/hw/core/qdev.h`（~300行）、`hw/core/qdev.c`（~800行）、`include/hw/core/sysbus.h`（~90行）、`hw/core/sysbus.c`（~340行）、`target/arm/cpu.c`（~2590行）
+
+### [23-主事件循环与协程深度分析-AioContext-BH-定时器-Coroutine-defer_call与IOThread.md](architecture/23-主事件循环与协程深度分析-AioContext-BH-定时器-Coroutine-defer_call与IOThread.md)
+> **23KB · 12 节**
+
+主事件循环与协程全栈分析：AioContext 异步 I/O 上下文（GSource 集成、AioHandlerList fd 处理器链表、notify_me/notifier 跨线程唤醒、BHList Bottom Half 链表、scheduled_coroutines 协程调度链表、QEMUTimerListGroup 定时器组、poll_ns/poll_max_ns 自适应轮询参数、epollfd/fdmon_ops 三种监控后端 epoll/io_uring/poll）、AioHandler fd 处理器（io_read/io_write 回调、io_poll 用户态轮询、aio_set_fd_handler 注册→fdmon_ops->update 更新 epoll）、主事件循环（qemu_main_loop while 循环→main_loop_wait 单次迭代：gpollfds 重置→poll 观察者通知→timerlistgroup_deadline_ns 定时器截止→os_host_main_loop_wait ppoll 阻塞→qemu_clock_run_all_timers）、aio_poll 核心轮询（aio_compute_timeout→try_poll_mode 用户态 busy-polling→notify_me 设置→notified 检查→fdmon_ops->wait 内核态等待→aio_bh_poll BH 分发→aio_dispatch_ready_handlers fd 回调→timerlistgroup_run_timers 定时器→aio_free_deleted_handlers 清理、自适应轮询 poll_grow/poll_shrink 动态调整）、Bottom Half 延迟回调（QEMUBH ctx/name/cb/opaque/flags、aio_bh_enqueue 原子 fetch_or BH_PENDING→QSLIST_INSERT_HEAD_ATOMIC 无锁插入→aio_notify eventfd 唤醒、aio_bh_poll QSLIST_MOVE_ATOMIC 批量取出→逐个 aio_bh_call 执行→BH_DELETED/BH_ONESHOT 清理）、定时器系统（QEMUClockType REALTIME/VIRTUAL/HOST/VIRTUAL_RT 四种时钟、QEMUTimer expire_time/timer_list/cb/opaque/next/scale、QEMUTimerList 有序链表、QEMUTimerListGroup 每种时钟一个列表、timer_new/timer_mod/timer_del 操作、timerlist_run_timers 遍历→expire_time 比较→cb 调用、AioContext.tlg 集成→影响 aio_poll 阻塞超时）、Coroutine 协程核心（CoroutineAction YIELD/TERMINATE/ENTER 三状态、Coroutine entry/entry_arg/caller/ctx/locks_held/scheduled/co_queue_wakeup、qemu_coroutine_create 对象池获取→entry 绑定、qemu_coroutine_enter 上下文切换→执行→yield/terminate 返回、ucontext 后端 makecontext/swapcontext、sigaltstack 后端、Windows Fiber 后端、对象池回收 pool_get/pool_put 避免频繁分配）、CoMutex/CoQueue 协程同步（CoMutex locked/holder/queue、co_mutex_lock CAS 快速路径→co_queue_wait 慢速路径→yield、co_mutex_unlock holder 清除→co_queue_next→aio_co_wake 唤醒、CoQueue 协程等待队列 co_queue_wait_impl→QSIMPLEQ_INSERT_TAIL→yield、co_queue_next/restart_all 唤醒）、协程与 AioContext 集成（aio_co_schedule 设置 ctx→QSLIST_INSERT_HEAD_ATOMIC→qemu_bh_schedule co_schedule_bh 跨线程调度、co_schedule_bh_cb QSLIST_MOVE_ATOMIC→逐个 qemu_aio_coroutine_enter、aio_co_wake 同线程直接 enter/跨线程 aio_co_schedule）、defer_call 批量延迟调用（DeferredCall fn/opaque、DeferCallThreadState nesting_level/deferred_call_array 每线程、defer_call nesting=0 立即执行→否则去重+追加、defer_call_begin nesting++ 嵌套支持、defer_call_end nesting→0 时遍历执行+清空、VirtIO IOThread 中断批处理 virtio_irq→defer_call→单次 event_notifier_set）、EventNotifier（rfd/wfd eventfd 或 pipe 封装、event_notifier_init→eventfd/pipe2、event_notifier_set write 触发、event_notifier_test_and_clear read 消费、aio_set_event_notifier 封装为 fd handler 集成 AioContext）、IOThread 独立事件循环线程（IOThread QemuThread/ctx/worker_context/main_loop/running/run_gcontext、iothread_run rcu_register→g_main_context_push→qemu_set_current_aio_context→while(running) aio_poll→可选 g_main_loop_run、每 IOThread 独立 AioContext 实现 I/O 并行化避免 BQL 竞争）。
+
+**适合读者**：需要理解 QEMU 事件驱动架构、异步 I/O 上下文、Bottom Half 延迟回调、定时器系统、协程生命周期与同步原语、IOThread 多线程模型或 defer_call 批处理优化的开发者。  
+**关键源文件**：`include/qemu/aio.h`（~340行）、`util/aio-posix.c`（~800行）、`util/async.c`（~730行）、`util/main-loop.c`（~610行）、`system/runstate.c`（~955行）、`include/qemu/timer.h`（~550行）、`util/qemu-timer.c`（~610行）、`include/qemu/coroutine_int.h`（~72行）、`util/qemu-coroutine.c`（~400行）、`util/coroutine-ucontext.c`（~360行）、`util/qemu-coroutine-lock.c`（~470行）、`util/defer-call.c`（~157行）、`iothread.c`（~200行）
 
 ---
 
