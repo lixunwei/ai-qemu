@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **60 篇文档**，总计 **~2134KB** 中文技术文档
+> 共 **61 篇文档**，总计 **~2147KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
-| [arm64/](#arm64-arm64-架构) | 22 | ~666KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行 |
+| [arm64/](#arm64-arm64-架构) | 23 | ~679KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -260,6 +260,14 @@ ARM64 异常级别（EL0-EL3）切换时 CPU 指令执行行为变化深度分�
 
 **适合读者**：需要理解 ARM64 EL 状态转换如何改变指令执行行为、TB Flags 编码、异常入口/返回完整机制的开发者。
 **关键源文件**：`target/arm/tcg/hflags.c`（~500行）、`target/arm/tcg/translate-a64.c`（~11000行）、`target/arm/tcg/translate.h`（~210行）、`target/arm/tcg/helper-a64.c`（~800行）、`target/arm/helper.c`（~10188行）、`target/arm/cpregs.h`（~600行）
+
+### [23-ARM64安全与非安全中断路由流转深度分析.md](arm64/23-ARM64安全与非安全中断路由流转深度分析.md)
+> **13KB · 11 节**
+
+ARM64 安全/非安全中断在不同异常级别和安全状态下的完整路由与流转深度分析：GICv3 三个中断组模型（Group 0/G1S/G1NS → FIQ/IRQ 信号映射规则、跨安全世界始终 FIQ）、GIC 分发器安全访问限制（mask_group_and_nsacr NS 对 G0/G1S 的 RAZ/WI 过滤、GICD_CTLR.DS 安全禁用）、CPU 接口核心路由决策（gicv3_cpuif_update 组→信号映射表、优先级抢占 icc_hppi_can_preempt、PMR 屏蔽、无 EL3 降级 G1S→G0）、中断目标 EL 确定（arm_phys_excp_target_el 六维 target_el_table 查表、SCR_EL3.IRQ/FIQ/EA + HCR_EL2.IMO/FMO/AMO + TGE 折叠）、中断屏蔽机制（arm_excp_unmasked PSTATE.DAIF、高 EL 路由不可屏蔽规则、NMI/ALLINT/SPINTMASK、E2H+TGE 例外）、CPU 中断调度优先级（arm_cpu_exec_interrupt NMI→VINMI→VFNMI→FIQ→IRQ→VIRQ→VFIQ→VSERR、NMI 降级处理）、虚拟中断机制（icv_access HCR.IMO/FMO 触发 ICC→ICV 重定向、ICH_LR List Registers 注入、HCR.VI/VF 直接注入、虚拟中断 target_el=1）、五大完整中断流转场景（NS IRQ 在 NS EL1 正常路径、Secure FIQ 在 NS EL1 跨世界、NS IRQ 在 Secure EL1、虚拟化 NS EL1 Guest + EL2 Hypervisor、Secure G1S 在 NS EL2）、优先级空间分离（NS [0x80-0xFF] 半空间、Secure 天然高优先级）、中断向量偏移（IRQ +0x80、FIQ +0x100、SError +0x180）。
+
+**适合读者**：需要理解 ARM64 安全/非安全中断在不同 EL 和安全状态下如何路由、屏蔽、流转，以及虚拟中断注入机制的开发者。
+**关键源文件**：`hw/intc/arm_gicv3_cpuif.c`（~2300行）、`hw/intc/arm_gicv3_dist.c`（~2000行）、`target/arm/cpu-irq.c`（~270行）、`target/arm/helper.c`（~10188行）
 
 ---
 
