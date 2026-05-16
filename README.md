@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **90 篇文档**，总计 **~2645KB** 中文技术文档
+> 共 **91 篇文档**，总计 **~2674KB** 中文技术文档
 
 ---
 
@@ -204,6 +204,14 @@ PCI/PCIe 子系统全栈分析：PCIDeviceClass 设备类方法表（realize/exi
 
 **适合读者**：需要理解 PCI/PCIe 设备虚拟化、配置空间访问机制、BAR MMIO 映射、MSI/MSI-X 中断投递路径或 ARM virt PCIe 拓扑集成的开发者。  
 **关键源文件**：`include/hw/pci/pci_device.h`（~205行）、`include/hw/pci/pci_bus.h`（~70行）、`hw/pci/pci.c`（~3500行）、`hw/pci/pci_host.c`（~200行）、`hw/pci/pcie_host.c`（~110行）、`hw/pci/msi.c`（~440行）、`hw/pci/msix.c`（~640行）、`hw/pci-host/gpex.c`（~260行）、`hw/arm/virt.c`
+
+### [21-VirtIO设备模型深度分析-VirtQueue-VRing-通知机制-PCI-MMIO传输与vhost加速.md](architecture/21-VirtIO设备模型深度分析-VirtQueue-VRing-通知机制-PCI-MMIO传输与vhost加速.md)
+> **29KB · 13 节**
+
+VirtIO 子系统全栈分析：VirtIODevice 核心结构（status/isr/queue_sel 状态寄存器、host_features/guest_features/backend_features Feature 三层模型、VirtQueue 数组 1024 槽位、config 设备配置空间、generation 配置代数、dma_as DMA 地址空间）、VirtioDeviceClass 虚函数表（realize/unrealize 生命周期、get_features_ex/set_features_ex Feature 协商、get/set_config 配置空间、reset/set_status 状态管理、guest_notifier_pending/mask 通知控制、get_vhost vhost 加速接口）、VRing 数据结构 Split 格式（VRingDesc 16 字节描述符 addr/len/flags/next、VRingAvail flags/idx/ring[] Available Ring、VRingUsed id/len Used Ring、VRing num/desc/avail/used GPA 映射）、Packed 格式（VRingPackedDesc id 替代 next 链、AVAIL/USED 位 + wrap 计数、VRingPackedDescEvent 事件抑制）、VirtQueue 队列状态（last_avail_idx/shadow_avail_idx 消费索引、used_idx/signalled_used 生产索引、handle_output 回调、guest_notifier/host_notifier EventNotifier）、描述符链处理（virtqueue_split_pop Available Ring 读取→描述符链遍历→间接描述符→VirtQueueElement 构造、virtqueue_packed_pop wrap 计数管理、virtqueue_fill/flush Used Ring 写回 + smp_wmb 内存屏障）、通知与中断机制（virtio_queue_notify Guest kick→ioeventfd/handle_output、virtio_notify→virtio_should_notify 抑制检查→virtio_irq ISR 设置→IOThread defer_call/virtio_notify_vector 中断注入、EVENT_IDX Split 阈值抑制、PACKED_EVENT_FLAG_DESC 精确控制、virtio_notify_config generation 递增 + ISR bit1）、Feature 协商状态机（ACKNOWLEDGE→DRIVER→FEATURES_OK→DRIVER_OK 四阶段、virtio_set_status FEATURES_OK 验证 + DRIVER_OK started 转换、virtio_reset 全状态清零 + vhost_reset_device + 队列逐一复位）、VirtioBus 总线层（VirtioBusClass notify/device_plugged/ioeventfd_assign 传输层接口、virtio_bus_device_plugged pre_plugged→get_features→device_plugged→dma_as 设置、virtio_bus_start_ioeventfd/set_host_notifier EventNotifier 管理）、VirtIO-PCI 传输层（VirtIOPCIProxy PCIDevice 基类 + 5 个 VirtIOPCIRegion common/isr/device/notify/notify_pio + modern_bar BAR 布局 + VirtIOPCIQueue 队列 PCI 状态、virtio_pci_notify MSI-X→msix_notify / Legacy→pci_set_irq 中断投递、common_read/write Feature 读写/STATUS 状态转换/队列地址设置/Q_ENABLE 激活、notify_write queue_index 解码→virtio_queue_notify Kick）、VirtIO-MMIO 传输层（寄存器布局 MAGIC_VALUE/VERSION/DEVICE_ID/FEATURES/QUEUE_SEL/QUEUE_NOTIFY/STATUS/CONFIG、平台 IRQ vs MSI-X、设备树发现 vs PCI 枚举）、vhost 加速框架（vhost_dev 后端状态 memory_listener/vqs/features/acked_features/protocol_features/vhost_ops、vhost_dev_init 后端选择→SET_OWNER→Feature 读取→内存监听注册、vhost_dev_start Feature 设置→IOMMU 监听→内存表推送→vhost_virtqueue_start 逐队列 SET_VRING_NUM/BASE/ADDR/KICK/CALL 卸载、ioeventfd→vhost 内核线程→irqfd→KVM 直接注入 完全绕过 QEMU）、vhost 后端类型（vhost-kernel ioctl 封装 kernel_ops、vhost-user Unix Socket VhostUserRequest 协议 SET_MEM_TABLE fd 传递/SET_VRING_KICK/CALL eventfd 传递 user_ops、vhost-vdpa /dev/vhost-vdpa-N 硬件加速）、vhost-net 网络加速（vhost_net_init nvqs=2 TX+RX、vhost_net_start Guest/Host Notifier 设置→vhost_net_start_one→VHOST_NET_SET_BACKEND TAP fd 绑定）。
+
+**适合读者**：需要理解 VirtIO 设备虚拟化原理、VirtQueue 描述符链处理、中断抑制优化、PCI/MMIO 传输层实现或 vhost 数据面卸载加速的开发者。  
+**关键源文件**：`include/hw/virtio/virtio.h`（~250行）、`hw/virtio/virtio.c`（~3700行）、`hw/virtio/virtio-bus.c`（~315行）、`hw/virtio/virtio-pci.c`（~2400行）、`hw/virtio/virtio-mmio.c`（~665行）、`include/hw/virtio/vhost.h`（~140行）、`hw/virtio/vhost.c`（~2300行）、`hw/virtio/vhost-user.c`（~3050行）、`hw/net/vhost_net.c`（~510行）
 
 ---
 
