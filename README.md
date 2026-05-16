@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **103 篇文档**，总计 **~2945KB** 中文技术文档
+> 共 **104 篇文档**，总计 **~2968KB** 中文技术文档
 
 ---
 
@@ -594,6 +594,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [43-ARM64-TCG-softmmu-TLB深度分析-数据结构-快慢路径-页表遍历-TLBI指令与MMIO分发.md](arm64/43-ARM64-TCG-softmmu-TLB深度分析-数据结构-快慢路径-页表遍历-TLBI指令与MMIO分发.md)
+> **23KB · 20 节**
+
+ARM64 TCG 内存访问子系统完整分析：softmmu TLB 五层数据结构体系（CPUTLBEntry 快速路径 32 字节条目 addr_read/write/code+addend、CPUTLBDescFast 16 字节 mask+table 对齐加载、CPUTLBEntryFull 完整条目 xlat_offset/section/phys_addr/attrs/prot/slow_flags/ARM-extra 缓存属性、CPUTLBDesc 每 MMU 模式描述符含大页追踪/动态调整窗口/8 条目 victim cache、CPUTLB 顶层 22 个 MMU 模式分区）、TLB 索引计算与 addend 技巧（(addr>>PAGE_BITS)&mask 索引、host=guest+addend 一次加法直达 host 地址）、TLB 标志位双层系统（快速路径 TLB_INVALID_MASK/TLB_NOTDIRTY/TLB_FORCE_SLOW 三位 addr_idx 低位、慢路径 TLB_BSWAP/TLB_WATCHPOINT/TLB_CHECK_ALIGNED/TLB_DISCARD_WRITE/TLB_MMIO 五位 slow_flags）、ARMMMUIdx 22 种 MMU 索引（E10_0/E10_1/E20_0/E20_2/E2/E3 六组常规+GCS/PAN 变体、Stage2/Stage2_S 二阶段、Phys_S/NS/Root/Realm 四物理空间）、快速路径 TLB 内联查找（AArch64 后端 prepare_host_addr LDP+AND+ADD+LDR+CMP+B.NE ~6 条指令、probe_access_internal 检查与分发）、慢路径填充（arm_cpu_tlb_fill_align 对齐检查→get_phys_addr PTW→tlb_set_page_full 安装、victim cache 8 条目全关联查找+swap 策略）、ARM 页表遍历（get_phys_addr 入口→get_phys_addr_gpc GPC 检查→get_phys_addr_nogpc 分派 disabled/PMSA/VMSA-short/LPAE/twostage、get_phys_addr_lpae LPAE 四级遍历 L0-L3 描述符解析/AF 检查/DBM 处理/权限检查）、两阶段翻译 S1→S2（VA→IPA→PA 两次遍历、权限 AND 合并、combine_cacheattrs 缓存属性组合 FWB vs 传统取弱）、tlb_set_page_full TLB 安装（section 映射/标志计算/addend 计算/条目填充/victim 驱逐）、MMIO 分发（io_prepare→memory_region_dispatch_read/write→mr->ops 设备回调）、TLBI 指令（AArch32 TLBIALL/TLBIMVA/TLBIASID、AArch64 VMALLE1/ALLE1-3/VAE1-2/IPAS2E1/Range-TLBI、IS 变体跨 CPU 广播）、AT 指令（do_ats_write→get_phys_addr→PAR_EL1、ats_write64 S1E1R/W/S1E0R/W/S12E1R/W）、原子操作 atomic_mmu_lookup（TLB 查找+对齐检查+host 地址返回→host 原生原子指令）、脏页追踪 notdirty_write（TLB_NOTDIRTY 首次写通知迁移/VGA 子系统→清除标志后续直走快速路径）、TLB 动态调整（256-4096 条目范围、窗口统计自适应大小）、arm_deliver_fault 异常生成（target_el 选择、GPC/Stage2 路由、syndrome 构建 insn_abort/data_abort、raise_exception）。
+
+**适合读者**：需要理解 QEMU softmmu 内存访问全貌、TLB 数据结构设计、快慢路径实现、ARM PTW 细节或 TLBI/AT 指令实现的开发者。
+**关键源文件**：`include/exec/tlb-common.h`（~56行）、`include/hw/core/cpu.h`（TLB 部分 ~130行）、`include/exec/tlb-flags.h`（~86行）、`accel/tcg/cputlb.c`（~2600行）、`target/arm/ptw.c`（~4100行）、`target/arm/tcg/tlb_helper.c`（~380行）、`target/arm/tcg/tlb-insns.c`（~900行）、`target/arm/tcg/cpregs-at.c`（~420行）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
