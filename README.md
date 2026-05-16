@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **69 篇文档**，总计 **~2250KB** 中文技术文档
+> 共 **70 篇文档**，总计 **~2266KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 8 | ~213KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动 |
-| [arm64/](#arm64-arm64-架构) | 28 | ~753KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC |
+| [arm64/](#arm64-arm64-架构) | 29 | ~769KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -324,6 +324,14 @@ KVM vGIC 设备后端完整实现分析：KVM GICv2 后端（kvm_arm_gic_realize
 
 **适合读者**：需要理解 KVM vGIC 工作原理、中断注入路径、KVM 迁移状态管理的开发者。
 **关键源文件**：`hw/intc/arm_gic_kvm.c`（~610行）、`hw/intc/arm_gicv3_kvm.c`（~975行）、`hw/intc/arm_gicv3_its_kvm.c`（~265行）、`hw/arm/virt.c`（~4300行）
+
+### [29-ARM64系统寄存器模拟框架深度分析.md](arm64/29-ARM64系统寄存器模拟框架深度分析.md)
+> **16KB · 14 节**
+
+ARM64 系统寄存器完整模拟框架：ARMCPRegInfo 结构体（编码/权限/回调/存储偏移/FGT/VHE重定向）、AArch64/AArch32 编码宏与哈希查找（O(1) GHashTable）、寄存器表组织（v8_cp_reginfo/el2/el3 数组）、MSR/MRS 翻译路径（handle_sys → Helper 分发 → writefn 回调）、四级访问控制（PLx 权限 + accessfn + FGT + HSTR）、关键寄存器写副作用（SCTLR→TLB刷新、HCR→虚拟中断+TLB、TCR/TTBR→条件TLB刷新、DAIF→中断掩码）、PSTATE 寄存器（NZCV/DAIF/SPSel）、迁移保存恢复（cpreg_vmstate 变长数组）、完整 MSR 执行流程图。
+
+**适合读者**：需要理解系统寄存器访问如何被拦截、分发和处理的开发者，或需要添加新系统寄存器支持的开发者。
+**关键源文件**：`target/arm/cpregs.h`（~1100行）、`target/arm/helper.c`（~8500行）、`target/arm/tcg/translate-a64.c`、`target/arm/tcg/op_helper.c`、`target/arm/machine.c`
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
