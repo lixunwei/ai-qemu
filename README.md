@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **100 篇文档**，总计 **~2870KB** 中文技术文档
+> 共 **101 篇文档**，总计 **~2896KB** 中文技术文档
 
 ---
 
@@ -646,6 +646,16 @@ DMA 核心 API（`dma_memory_read/write/map`）、QEMUSGList 散列聚合、PCI 
 
 **适合读者**：理解设备 DMA 路径或开发 DMA 密集型设备的开发者。  
 **关键源文件**：`include/system/dma.h`、`system/dma-helpers.c`、`hw/dma/pl330.c`
+
+---
+
+### [08-ARM-Generic-Timer深度分析-计数器-7类定时器-EL访问控制-VHE重定向与KVM集成.md](device-model/08-ARM-Generic-Timer深度分析-计数器-7类定时器-EL访问控制-VHE重定向与KVM集成.md)
+> **26KB · 17 节**
+
+ARM Generic Timer 完整实现分析：ARMGenericTimer 数据结构（cval/ctl 双字段）、7种定时器变体枚举（PHYS/VIRT/HYP/SEC/HYPVIRT/S_EL2_PHYS/S_EL2_VIRT 与 NUM_GTIMERS=7）、物理/虚拟计数器实现（QEMU_CLOCK_VIRTUAL/gt_cntfrq_period_ns 纳秒→tick 转换）、CNTPCT/CNTVCT 计数器偏移（CNTVOFF_EL2 虚拟偏移、CNTPOFF_EL2 FEAT_ECV 物理偏移、直接/间接访问偏移差异）、定时器频率（1GHz 默认/62.5MHz 兼容）、CTL/CVAL/TVAL 寄存器操作（ENABLE/IMASK/ISTATUS 位域、TVAL 动态计算非独立存储）、VHE 定时器重定向（gt_phys_redir_timeridx→GTIMER_HYP、gt_virt_redir_timeridx→GTIMER_HYPVIRT、EL02 编码绕过重定向）、四级 EL 访问控制（CNTKCTL_EL1 EL0 门控、CNTHCTL_EL2 EL1 陷阱、SCR_EL3.ST 安全定时器门控、gt_sel2timer_access NV 陷阱）、定时器重算核心（gt_recalc_timer ISTATUS 计算+QEMUTimer 调度、gt_update_irq IRQ 输出+RME CNTVMASK/CNTPMASK 覆盖）、7个回调函数、QEMUTimer 基础设施、CPU 定时器创建（7×timer_new）、GPIO 输出注册、virt 机器 GIC PPI 接线（7×ARCH_TIMER_*_IRQ→PPI 3-14）、DTB /timer 节点生成、迁移 vmstate（PHYS/VIRT QEMUTimer + cpreg 自动迁移）、KVM 定时器同步（kvm_vtime/KVM_REG_ARM_TIMER_CNT pre_save/post_load）、WFxT 超时定时器。
+
+**适合读者**：需要理解 ARM 架构定时器在 QEMU 中完整实现、EL 访问控制规则、VHE 重定向机制或调试定时器中断的开发者。  
+**关键源文件**：`target/arm/helper.c`（~1100行定时器代码）、`target/arm/cpu.c`（定时器创建）、`target/arm/gtimer.h`（枚举）、`hw/arm/virt.c`（GIC 接线+DTB）、`include/hw/arm/bsa.h`（IRQ 常量）
 
 ---
 
