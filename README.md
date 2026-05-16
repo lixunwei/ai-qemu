@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **51 篇文档**，总计 **~2016KB** 中文技术文档
+> 共 **54 篇文档**，总计 **~2055KB** 中文技术文档
 
 ---
 
@@ -16,7 +16,7 @@
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
-| [arm/](#arm-arm-架构通用) | 8 | ~217KB | EL 状态管理、AArch32 异常处理、CP15/MMU、GICv3、Cache、Generic Timer、PMU、调试架构 |
+| [arm/](#arm-arm-架构通用) | 11 | ~256KB | EL 状态管理、AArch32 异常、CP15/MMU、GICv3、Cache、Timer、PMU、调试、SVE/SME、TrustZone、内存模型 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -494,6 +494,30 @@ ARM 自托管调试架构完整实现分析：CPUARMState 调试寄存器（dbgb
 
 **适合读者**：需要理解 ARM 自托管调试、硬件断点/监视点、调试异常路由的开发者。
 **关键源文件**：`target/arm/debug_helper.c`（~530行）、`target/arm/tcg/debug.c`（~760行）、`target/arm/cpu.h`（~3500行）、`target/arm/tcg/translate-a64.c`（~10000行）
+
+### [16-ARM-SVE-SME可伸缩向量矩阵扩展深度分析.md](arm/16-ARM-SVE-SME可伸缩向量矩阵扩展深度分析.md)
+> **15KB · 33 节**
+
+ARM SVE/SME 完整实现分析：CPUARMState 向量状态（vfp.zregs[32]/pregs[17]/FFR/zcr_el[4]/smcr_el[4]）、ARMVectorReg 固定分配（最大 2048 位）、SVCR 寄存器（PSTATE.SM/ZA）、ZA 矩阵存储（256×256 字节/Tile 行交错映射）、ZT0 (SME2)、sve_vqm1_for_el_sm() 有效 VL 计算（ZCR_EL1/2/3 嵌套取最小值 + sve_vq.map 位图匹配）、zcr_write() VL 缩小处理（aarch64_sve_narrow_vq）、arm_cpu_sve_finalize() 属性验证（sve-max-vq/sve\<N\> 配置/2 次幂自动启用/KVM VL 发现）、sve_exception_el() 陷阱判断三层（CPACR_EL1.ZEN/CPTR_EL2.TZ/CPTR_EL3.EZ）、sme_exception_el()（CPACR_EL1.SMEN/CPTR_EL2.TSM/CPTR_EL3.ESM）、sve_access_check() 翻译检查（SM 模式分支/FP 检查）、SMCR_ELx 寄存器（FA64/EZT0）、aarch64_set_svcr() Streaming 模式切换（SM 切换→reset SVE/ZA 使能→清零矩阵）、arm_reset_sve_state()（zregs/pregs 清零/FPSR 重置）、aarch64_sve_change_el() EL 切换处理（AArch64↔AArch32+SM→reset/VL 缩小→narrow）、SVE 指令翻译（translate-sve.c/gen_helper_sve_*）、KVM SVE 直通（KVM_ARM_VCPU_SVE/寄存器保存恢复）、陷阱控制完整表、VL 生命周期流程图、ZA Tile 映射详解。
+
+**适合读者**：需要理解 SVE 向量长度管理、SME Streaming 模式、SVE/SME 陷阱控制的开发者。
+**关键源文件**：`target/arm/cpu.h`（~3500行）、`target/arm/helper.c`（~10200行）、`target/arm/tcg/translate-sve.c`（~8000行）、`target/arm/tcg/sve_helper.c`（~7000行）、`target/arm/cpu64.c`（~1000行）
+
+### [17-ARM-TrustZone安全扩展深度分析.md](arm/17-ARM-TrustZone安全扩展深度分析.md)
+> **12KB · 32 节**
+
+ARM TrustZone 安全扩展完整实现分析：ARMSecuritySpace 枚举（Secure/NonSecure/Root/Realm 四状态）、arm_security_space()/arm_is_secure() 查询体系、SCR_EL3 关键位（NS/IRQ/FIQ/EA/HCE/SIF/RW/EEL2/NSE）、NSE:NS 组合与四种安全空间映射、Secure EL2 使能（SCR.EEL2/FEAT_SEL2）、安全/非安全寄存器分组 Banking（bank_fieldoffsets/ARM_CP_SECSTATE_S/NS/BOTH）、add_cpreg_to_hashtable_aa32() 分组注册（_S 后缀副本）、arm_phys_excp_target_el() 中断安全路由（SCR.IRQ/FIQ/EA + HCR.IMO/FMO/AMO + TGE 查表）、GICv3 Group 0/1 路由、AArch32 SMC→Monitor 模式（清除 SCR.NS）、PSCI（arm_handle_psci_call/CPU_ON/OFF/RESET）、virt 机器 PSCI conduit 选择（SMC/HVC/DISABLED）、virt 机器安全内存（secure-memory 容器/virt.secure-ram/CPU secure-memory 链接）、tz-mpc 内存保护控制器（IOMMU_IDX_S/NS/安全区域划分）、tz-ppc 外设保护控制器（端口安全配置/违规中断）、RME 寄存器（GPCCR_EL3/GPTBR_EL3/MFAR_EL3）、TF-A 安全启动流程（BL1→BL31→BL33）、Monitor 模式异常向量表、安全世界切换完整流程（NS→S/S→NS）、安全状态与地址空间映射表。
+
+**适合读者**：需要理解 TrustZone 安全/非安全世界切换、安全中断路由、PSCI 电源管理的开发者。
+**关键源文件**：`include/hw/arm/arm-security.h`（~35行）、`target/arm/cpu.h`（~3500行）、`target/arm/helper.c`（~10200行）、`hw/arm/virt.c`（~3000行）、`hw/misc/tz-mpc.c`（~400行）、`hw/misc/tz-ppc.c`（~300行）
+
+### [18-ARM内存模型与内存序深度分析.md](arm/18-ARM内存模型与内存序深度分析.md)
+> **14KB · 40 节**
+
+ARM 内存模型完整实现分析：DMB/DSB 实现（trans_DSB_DMB→tcg_gen_mb()/TCG_BAR_SC+TCG_MO_LD_LD 等/DSB 与 DMB 等价处理）、ISB 实现（TB 结束/非内存屏障/gen_goto_tb）、SB 推测屏障（MB+TB 结束）、TCG 内存序位定义（TCG_MO_LD_LD/ST_LD/LD_ST/ST_ST/ALL + TCG_BAR_LDAQ/STRL/SC）、tcg_gen_mb() 条件生成（仅 parallel_cpus 时有效）、STLR Store-Release（屏障在存储前/TCG_BAR_STRL）、LDAR Load-Acquire（屏障在加载后/TCG_BAR_LDAQ）、LDAPR (FEAT_LRCPC)、gen_load_exclusive() 独占加载（记录 exclusive_addr/val/MTE 检查）、gen_store_exclusive() 独占存储（地址匹配+atomic_cmpxchg/Rd=0 成功/1 失败）、LDXR/STXR/LDXP/STXP/STLXR/LDAXR 变体（lasr Acquire/Release 附加）、CLREX 清除监视、CAS/CASP 比较交换（atomic_cmpxchg_i64/i128）、LSE 原子 Fetch 操作（LDADD/LDCLR/LDEOR/LDSET/SWP 等→tcg_gen_atomic_*）、内存类型与属性（arm_mmu_idx_el()/Device vs Normal/S1_attrs_are_device()）、MAIR 属性间接（attrindx×8 提取 8 位）、Stage 1/2 属性合并（combine_cacheattrs）、MMU 禁用默认属性、MTE 标签检查（gen_mte_check1/HELPER(mte_check)/对齐优先/mte_check_fail 同步/异步/DC ZVA 特殊路径）、PAC 指针认证（5 密钥/HELPER(pacia/pacib/pacda/pacdb/pacga)/SCTLR 使能位/认证失败延迟检测）、BTI 分支目标标识（btype_destination_ok()/PSTATE.BTYPE/BTI c/j/jc 兼容矩阵）、MTTCG 内存序（单线程 NOP/多线程真屏障/后端映射）、页表遍历顶层流程、监视点与屏障独立性。
+
+**适合读者**：需要理解 ARM 内存屏障映射、独占访问机制、LSE 原子操作、MTE/PAC/BTI 安全特性的开发者。
+**关键源文件**：`target/arm/tcg/translate-a64.c`（~10800行）、`include/tcg/tcg-mo.h`（~50行）、`tcg/tcg-op.c`（~3000行）、`target/arm/tcg/mte_helper.c`（~1020行）、`target/arm/tcg/pauth_helper.c`（~620行）、`target/arm/ptw.c`（~3600行）
 
 ---
 
