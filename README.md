@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **54 篇文档**，总计 **~2055KB** 中文技术文档
+> 共 **57 篇文档**，总计 **~2090KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
-| [arm64/](#arm64-arm64-架构) | 18 | ~618KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展 |
+| [arm64/](#arm64-arm64-架构) | 21 | ~651KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -518,6 +518,30 @@ ARM 内存模型完整实现分析：DMB/DSB 实现（trans_DSB_DMB→tcg_gen_mb
 
 **适合读者**：需要理解 ARM 内存屏障映射、独占访问机制、LSE 原子操作、MTE/PAC/BTI 安全特性的开发者。
 **关键源文件**：`target/arm/tcg/translate-a64.c`（~10800行）、`include/tcg/tcg-mo.h`（~50行）、`tcg/tcg-op.c`（~3000行）、`target/arm/tcg/mte_helper.c`（~1020行）、`target/arm/tcg/pauth_helper.c`（~620行）、`target/arm/ptw.c`（~3600行）
+
+### [19-VirtIO设备模型与传输层深度分析.md](arm/19-VirtIO设备模型与传输层深度分析.md)
+> **10KB · 12 节**
+
+VirtIO 半虚拟化 I/O 完整实现分析：VirtIODevice 核心结构（status/isr/queue_sel/host_features/guest_features/vq 数组）、VirtQueue 与 Vring 机制（Split 三环 VRingDesc/VRingAvail/VRingUsed + Packed 单环 VRingPackedDesc/VIRTIO_F_RING_PACKED 协商）、VRingMemoryRegionCaches 预映射加速、设备生命周期（virtio_init 初始化 VIRTIO_QUEUE_MAX 个队列/virtio_add_queue 注册回调/feature 协商流程）、MMIO 传输层（平坦寄存器 0x000-0x100+/Magic/Version/DeviceID/QueueSel/QueueNotify/ioeventfd 加速）、PCI 传输层（VirtIOPCIProxy/Modern Capability 结构/Legacy I/O BAR/MSI-X 每队列独立向量）、通知机制双路径（Guest→Device: ioeventfd 或 handle_output 回调; Device→Guest: ISR+IRQ 或 MSI-X 或 irqfd）、virtio-net/virtio-blk 实例、vhost 数据面卸载（vhost-net 内核/vhost-user 用户进程/ioeventfd+irqfd 旁路 QEMU）、ARM virt 集成（create_virtio_devices 创建 32 个 virtio-mmio 连接 GIC SPI）。
+
+**适合读者**：需要理解 VirtIO 设备模型、virtqueue 数据面路径、MMIO/PCI 传输差异、vhost 卸载机制的开发者。
+**关键源文件**：`include/hw/virtio/virtio.h`（~300行）、`hw/virtio/virtio.c`（~4300行）、`hw/virtio/virtio-mmio.c`（~700行）、`hw/virtio/virtio-pci.c`（~2500行）、`hw/virtio/vhost.c`（~2300行）
+
+### [20-PCI-PCIe子系统深度分析.md](arm/20-PCI-PCIe子系统深度分析.md)
+> **8KB · 14 节**
+
+PCI/PCIe 总线子系统完整实现分析：PCIDevice 核心结构（config[]/wmask[]/w1cmask[]/devfn/io_regions[7]/irq_state/cap_present）、配置空间管理（PCI 256B/PCIe 4KB/pci_default_read/write_config/wmask 过滤）、BAR 机制（pci_register_bar 注册/I/O vs MMIO 地址空间选择/64-bit BAR 跨寄存器/pci_bar_address 计算/pci_update_mappings 动态映射）、PCIBus 总线模型（pci_register_root_bus/address_space_mem/io）、GPEX Host Bridge（gpex_host_realize/ECAM+MMIO+PIO 三窗口/pcie.0 根总线/INTx swizzle 路由）、ECAM 配置访问（bus<<20|dev<<15|fn<<12|reg 编址/每功能 4KB）、INTx 中断路由（pci_irq_handler→bus IRQ→GIC SPI/swizzle 旋转）、MSI（msi_init/msi_notify 消息构造）、MSI-X（独立 BAR Table/PBA/msix_init/每队列独立向量/KVM irqfd）、PCIe Capability（pcie_cap_init/Device/Link Capabilities）、AER 错误报告、ARM virt PCIe 集成（create_pcie/ECAM+MMIO+MMIO_HIGH+PIO 布局/4 INTx→GIC）、VFIO 设备直通（BAR 直映/MSI-X irqfd/IOMMU DMA）、热插拔（SHPC/Native PCIe Slot）。
+
+**适合读者**：需要理解 PCI 设备模型、BAR 映射机制、MSI-X 中断、GPEX Host Bridge、VFIO 直通的开发者。
+**关键源文件**：`include/hw/pci/pci_device.h`（~200行）、`hw/pci/pci.c`（~2000行）、`hw/pci-host/gpex.c`（~250行）、`hw/pci/pcie.c`（~600行）、`hw/pci/msix.c`（~500行）、`hw/pci/pcie_host.c`（~150行）
+
+### [21-ARM-SMMUv3与IOMMU框架深度分析.md](arm/21-ARM-SMMUv3与IOMMU框架深度分析.md)
+> **9KB · 13 节**
+
+ARM SMMUv3 与 QEMU IOMMU 框架完整实现分析：通用 IOMMU 框架（IOMMUMemoryRegion/IOMMUTLBEntry/translate() 接口/address_space_translate_iommu 集成）、SMMUv3 设备模型（SMMUv3State 寄存器/队列/IRQ/MMIO 处理）、流表查找（线性/2级流表 STE 查找 smmu_find_ste/L1→L2 稀疏优化/STE 解码 Bypass/S1/S2/Nested 模式/CD 查找与解码 TTB0/TTB1/ASID/配置缓存）、页表遍历（smmuv3_translate 入口/IOTLB 缓存查找/smmu_ptw_64_s1 Stage-1 IOVA→IPA 逐级遍历/smmu_ptw_64_s2 Stage-2 IPA→PA/嵌套翻译 S1 表地址需 S2 翻译）、命令队列（CFGI 配置无效/TLBI TLB 无效/CMD_SYNC 同步/PROD-CONS 环形缓冲区）、事件队列（翻译/权限/配置错误记录/EVENTQ IRQ）、IOTLB 缓存（GHashTable 实现/ASID+VMID+IOVA 键/多粒度无效化 inv_all/iova/ipa/asid_vmid/vmid）、IRQ（GERROR/EVENTQ/CMD_SYNC/PRI 四类中断/pulse 模式）、ARM virt 集成（create_smmu 链接 GPEX/iommu-map BDF→SID）、VFIO 交互（map/unmap 通知/iommufd 嵌套翻译）。
+
+**适合读者**：需要理解 IOMMU 地址翻译框架、SMMUv3 流表/页表遍历、TLB 管理、VFIO IOMMU 交互的开发者。
+**关键源文件**：`include/system/memory.h`（~600行）、`hw/arm/smmuv3.c`（~2100行）、`hw/arm/smmu-common.c`（~850行）、`include/hw/arm/smmu-common.h`（~180行）、`hw/arm/smmuv3-internal.h`（~300行）
 
 ---
 
