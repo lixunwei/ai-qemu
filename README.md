@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **46 篇文档**，总计 **~1893KB** 中文技术文档
+> 共 **48 篇文档**，总计 **~1955KB** 中文技术文档
 
 ---
 
@@ -16,7 +16,7 @@
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
-| [arm/](#arm-arm-架构通用) | 3 | ~93KB | EL 状态管理、AArch32 异常处理、CP15 系统寄存器、MMU 页表管理 |
+| [arm/](#arm-arm-架构通用) | 5 | ~155KB | EL 状态管理、AArch32 异常处理、CP15/MMU、GICv3 中断控制器、Cache 管理 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -454,6 +454,22 @@ ARM CP15 协处理器寄存器框架与 MMU 页表管理完整分析：ARMCPRegI
 
 **适合读者**：需要理解 ARM 系统寄存器框架、MMU 页表遍历实现、地址翻译机制的开发者。
 **关键源文件**：`target/arm/cpregs.h`（~1250行）、`target/arm/helper.c`（~10200行）、`target/arm/ptw.c`（~4000行）、`target/arm/cpu.h`（~3500行）、`target/arm/tcg/translate.c`（~7000行）、`target/arm/tcg/tlb-insns.c`（~900行）
+
+### [11-GICv3中断控制器深度分析.md](arm/11-GICv3中断控制器深度分析.md)
+> **39KB · 41 节**
+
+ARM GICv3 通用中断控制器完整实现分析：GICv3 设备模型与 QOM 类型注册（TYPE_ARM_GICV3/属性定义）、GICv3State 全局状态（Distributor 位图/IROUTER 路由/优先级数组）、GICv3CPUState 每 CPU 状态（ICC 寄存器/ICH 虚拟化控制/HPPI 缓存）、PendingIrq 结构、中断类型与编号空间（SGI 0-15/PPI 16-31/SPI 32-1019/LPI 8192+）、Distributor 寄存器实现（GICD_CTLR/ISENABLER/ISPENDR/IPRIORITYR/IROUTER/ICFGR）、NSACR 安全控制与位图管理、亲和路由（GICD_IROUTER→CPU 缓存）、Redistributor 实现（GICR_WAKER/SGI/PPI 管理）、LPI 支持（PROPBASER/PENDBASER/内存表扫描）、CPU Interface 系统寄存器（ICC_PMR/IAR/EOIR/HPPIR/BPR/CTLR/IGRPEN/SGI1R/DIR）、icv_access() 虚拟化重定向（HCR.IMO/FMO 检查）、优先级模型（8 位优先级/Binary Point/Group Priority/Subpriority）、irqbetter() 优先级比较、icc_hppi_can_preempt() 抢占判断（PMR/NMI/APR）、icc_highest_active_prio() 运行优先级计算、gicv3_cpuif_update() 物理信号（G0→FIQ/G1→IRQ 映射）、完整中断注入路径（设备→GIC→CPU 7 步流程）、gicv3_set_irq() SPI/PPI 分发、gicv3_update() 增量+全量重计算优化、arm_cpu_set_irq() CPU 端接收（irq_line_state/VIRQ 合并）、arm_cpu_has_work() 工作检查、arm_cpu_exec_interrupt() 调度优先级（NMI>FIQ>IRQ>VIRQ>VFIQ>VSERR）、arm_excp_unmasked() 屏蔽检查（PSTATE.I/F/ALLINT/HCR 路由）、异常向量计算（VBAR_ELn+EL 偏移+类型偏移）、ICC_IAR1 确认（icc_hppir1_value/icc_activate_irq）、ICC_EOIR1 结束（icc_drop_prio/icc_deactivate_irq）、Split EOI（EOImode/ICC_DIR）、虚拟中断 ICH 接口（List Registers/VMCR/维护中断）、gicv3_cpuif_virt_irq_fiq_update()、SGI 跨 CPU 中断生成、GIC KVM 支持（kvm_gicd/gicr/gicc_access/kvm_arm_gicv3_realize）、Timer→GIC 连接示例、端到端中断流程图、GICv2 vs GICv3 对比表。
+
+**适合读者**：需要理解 ARM GICv3 架构、QEMU GIC 设备模型、中断注入完整路径的开发者。
+**关键源文件**：`hw/intc/arm_gicv3.c`（~480行）、`hw/intc/arm_gicv3_cpuif.c`（~2500行）、`hw/intc/arm_gicv3_dist.c`（~760行）、`hw/intc/arm_gicv3_redist.c`（~900行）、`hw/intc/arm_gicv3_kvm.c`（~950行）、`include/hw/intc/arm_gicv3_common.h`（~300行）、`target/arm/cpu-irq.c`（~280行）
+
+### [12-ARM-Cache管理与维护操作深度分析.md](arm/12-ARM-Cache管理与维护操作深度分析.md)
+> **24KB · 30 节**
+
+ARM Cache 管理在 QEMU 中的完整实现分析：QEMU 缓存模型概述（不模拟真实缓存/DC 操作全 NOP/DC ZVA 唯一例外）、Cache ID 寄存器体系（CCSIDR/CLIDR/CTR/DCZID）、make_ccsidr() 构造函数（Legacy/CCIDX 32/64 位格式）、ccsidr_read()（CSSELR 索引+Secure/NS bank）、CSSELR 缓存级别选择（bank_fieldoffsets）、CLIDR 缓存级别标识（每 3 位类型编码）、CTR_EL0（DminLine/IminLine/CWG/ERG/DIC/IDC）、DCZID_EL0 与 DC ZVA 块大小（get_dczid_bs）、ARMCPU 缓存参数（ccsidr[16]/ctr/dcz_blocksize）、CPU 模型缓存配置（A57/A72/A53/Neoverse）、arm_cpu_realizefn 缓存初始化（块大小验证）、AArch64 缓存操作注册（v8_cp_reginfo 数组/ARM_CP_NOP）、IC 操作（IALLUIS/IALLU/IVAU）、DC 操作（IVAC/ISW/CVAC/CSW/CVAU/CIVAC/CISW 全 NOP）、DC ZVA 实现（ARM_CP_DC_ZVA 特殊类型/translate 层生成 helper 调用）、HELPER(dc_zva) 详细分析（blocklen 计算/tlb_vaddr_to_host 快速路径/probe_write 慢速路径/I/O 逐字节写零）、PoC/PoU 访问控制（SCTLR.UCI/HCR.TPCP/TPU/TSW/TICAB/TOCU 陷阱）、自修改代码与 IC IVAU（JIT 双映射/W^X）、ic_ivau_write() TB 失效（CTR.IminLine/tb_invalidate_phys_range）、AArch32 CP15 缓存操作（MCR p15 c7 全表）、分支预测操作（BPIALLUIS/BPIALL NOP）、HCR_EL2 缓存陷阱控制表、SCTLR 缓存控制位（M/C/I/UCI）、QEMU TLB 交互（sctlr_write TLB 刷新）、内存类型属性简化、完整指令映射表、缓存模拟策略总结图。
+
+**适合读者**：需要理解 QEMU 缓存处理策略、DC ZVA 实现、缓存 ID 寄存器配置的开发者。
+**关键源文件**：`target/arm/helper.c`（~10200行）、`target/arm/tcg/helper-a64.c`（~1000行）、`target/arm/cpu.h`（~3500行）、`target/arm/cpu-features.h`（~1700行）、`target/arm/cpu64.c`（~1000行）
 
 ---
 
