@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **77 篇文档**，总计 **~2342KB** 中文技术文档
+> 共 **78 篇文档**，总计 **~2358KB** 中文技术文档
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
-| [architecture/](#architecture-架构) | 10 | ~241KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB |
+| [architecture/](#architecture-架构) | 11 | ~257KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost |
 | [arm64/](#arm64-arm64-架构) | 34 | ~817KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
@@ -112,6 +112,14 @@ TCG 优化遍详解：OptContext/TempOptInfo 数据结构、80+ fold_* 按操作
 
 **适合读者**：需要理解 TCG 优化策略、向量指令模拟机制或 Softmmu 地址翻译性能的开发者。  
 **关键源文件**：`tcg/optimize.c`、`tcg/tcg-op-vec.c`、`tcg/tcg-op-gvec.c`、`tcg/aarch64/tcg-target.c.inc`、`accel/tcg/cputlb.c`、`include/exec/tlb-common.h`、`include/exec/tlb-flags.h`
+
+### [10-VirtIO设备深度分析-Virtqueue实现vhost-user与IOMMU集成.md](architecture/10-VirtIO设备深度分析-Virtqueue实现vhost-user与IOMMU集成.md)
+> **16KB · 12 节**
+
+VirtIO 设备框架全解：VirtIODevice 三层特性协商、VRing 描述符/avail/used 环结构、Split/Packed 两种 Virtqueue 模式、virtqueue_pop/push/notify 请求处理流程、VirtIOPCIProxy PCI 传输层（Modern BAR/MSI-X/ioeventfd）、VirtIO-Net 收发路径、vhost-user 协议（43 种消息类型/Unix Socket + fd 传递/内存 mmap 共享）、vhost 数据路径优化（eventfd/irqfd 绕过 QEMU）、VirtIO IOMMU 设备（GTree 域端点管理/virtio_iommu_translate 地址翻译）、DMA 地址空间 IOMMU 集成。
+
+**适合读者**：需要理解 VirtIO 设备模型、优化虚拟化 I/O 性能或开发 vhost-user 后端的开发者。  
+**关键源文件**：`hw/virtio/virtio.c`、`include/hw/virtio/virtio.h`、`hw/virtio/virtio-pci.c`、`hw/virtio/vhost.c`、`hw/virtio/vhost-user.c`、`hw/virtio/virtio-iommu.c`
 
 ---
 
