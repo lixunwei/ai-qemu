@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **45 篇文档**，总计 **~1866KB** 中文技术文档
+> 共 **46 篇文档**，总计 **~1893KB** 中文技术文档
 
 ---
 
@@ -16,7 +16,7 @@
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
-| [arm/](#arm-arm-架构通用) | 2 | ~66KB | EL 状态管理、AArch32 异常处理、模式切换、banked 寄存器、寄存器同步 |
+| [arm/](#arm-arm-架构通用) | 3 | ~93KB | EL 状态管理、AArch32 异常处理、CP15 系统寄存器、MMU 页表管理 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -446,6 +446,14 @@ AArch32 异常处理完整分析：CPSR 位布局（M/T/F/I/A/E/GE/IT/NZCV）与
 
 **适合读者**：需要理解 AArch32 异常模式切换、banked 寄存器机制、CPSR 管理、AArch32/AArch64 互操作的开发者。
 **关键源文件**：`target/arm/helper.c`（~10200行）、`target/arm/cpu.h`（~3500行）、`target/arm/internals.h`（~1600行）、`target/arm/tcg/translate.c`（~7000行）、`target/arm/tcg/op_helper.c`（~1200行）、`target/arm/syndrome.h`（~300行）
+
+### [10-CP15系统寄存器与MMU页表管理深度分析.md](arm/10-CP15系统寄存器与MMU页表管理深度分析.md)
+> **27KB · 31 节**
+
+ARM CP15 协处理器寄存器框架与 MMU 页表管理完整分析：ARMCPRegInfo 寄存器描述结构（name/cp/crn/crm/opc/access/fieldoffset/readfn/writefn 全字段）、CPAccessResult 访问权限模型（OK/TRAP_EL1-3/UNDEFINED）、cp_access_ok() 位编码（EL×读写=8 位位图）、寄存器注册系统（register_cp_regs_for_features 条件注册/哈希表存储）、MRC/MCR 解码路径（do_coproc_insn/gen_helper_access_check_cp_reg）、运行时访问检查（accessfn/FGT/HSTR）、env->cp15 存储结构（union EL 索引+S/NS 别名）、A32_BANKED 宏、SCTLR 位定义（M/A/C/I/WXN/EE/TE/AFE/TRE 40+位）、sctlr_write() 回调（值比较优化+TLB 刷新）、TTBR0/TTBR1（bank_fieldoffsets/ASID 刷新）、TCR/TTBCR（T0SZ/T1SZ/TG0/TG1/IPS）、MAIR（AttrIndx→8 位属性映射）、翻译禁用判断（SCTLR.M/HCR.TGE/HCR.DC）、get_phys_addr_nogpc() 总调度（物理直通/两阶段/PMSA/VMSA 分发）、ARMv5/v6 短描述符遍历（L1/L2/Domain/DACR）、TTBR0/1 选择（TTBCR.N 分界）、LPAE/AArch64 长描述符遍历（4KB/16KB/64KB 粒度/Block/Table/Page）、Stage 2 遍历（VTTBR/VTCR/IPA→PA）、get_S1prot() 权限检查（AP/XN/PXN/WXN/PAN/PAN3）、TLBI 实现（TLBIALL/VAE/ASIDE/IPAS2E1）、翻译 Regime 概念（regime_sctlr/tcr/ttbr）、HCR_EL2 对 MMU 影响（VM/DC/TGE）、QEMU TLB 缓存（tlb_set_page_full）、关键寄存器注册表、完整页表遍历流程图、AArch32 vs AArch64 MMU 对比表。
+
+**适合读者**：需要理解 ARM 系统寄存器框架、MMU 页表遍历实现、地址翻译机制的开发者。
+**关键源文件**：`target/arm/cpregs.h`（~1250行）、`target/arm/helper.c`（~10200行）、`target/arm/ptw.c`（~4000行）、`target/arm/cpu.h`（~3500行）、`target/arm/tcg/translate.c`（~7000行）、`target/arm/tcg/tlb-insns.c`（~900行）
 
 ---
 
