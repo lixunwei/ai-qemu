@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **44 篇文档**，总计 **~1832KB** 中文技术文档
+> 共 **45 篇文档**，总计 **~1866KB** 中文技术文档
 
 ---
 
@@ -16,7 +16,7 @@
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
-| [arm/](#arm-arm-架构通用) | 1 | ~32KB | EL 状态管理、EL0-EL3 切换机制、安全状态、指令执行差异 |
+| [arm/](#arm-arm-架构通用) | 2 | ~66KB | EL 状态管理、AArch32 异常处理、模式切换、banked 寄存器、寄存器同步 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -438,6 +438,14 @@ ARM64 Exception Level (EL0-EL3) 完整状态管理分析：PSTATE 位布局与�
 
 **适合读者**：需要理解 ARM64 异常级别切换机制、安全状态管理、指令权限控制的开发者。
 **关键源文件**：`target/arm/helper.c`（~10200行）、`target/arm/internals.h`（~1600行）、`target/arm/cpu.h`（~3500行）、`target/arm/tcg/helper-a64.c`（~800行）、`target/arm/tcg/op_helper.c`（~1200行）、`target/arm/tcg/translate-a64.c`（~11000行）、`target/arm/tcg/hflags.c`（~650行）、`target/arm/mmuidx.h`（~200行）
+
+### [09-AArch32异常处理与模式切换深度分析.md](arm/09-AArch32异常处理与模式切换深度分析.md)
+> **34KB · 30 节**
+
+AArch32 异常处理完整分析：CPSR 位布局（M/T/F/I/A/E/GE/IT/NZCV）与分散存储架构（uncached_cpsr + 缓存标志字段）、cpsr_read()/cpsr_write() 重组与拆分机制、9 种处理器模式（USR/FIQ/IRQ/SVC/MON/ABT/HYP/UND/SYS）与 EL 映射、banked 寄存器架构（banked_r13/r14/spsr[8] + usr_regs/fiq_regs[5]）、bank_number()/r14_bank_number() 索引映射（HYP LR 特殊处理）、switch_mode() 模式切换（FIQ R8-R12 交换）、arm_cpu_do_interrupt_aarch32() 异常分发（UDEF/SWI/BKPT/Abort/IRQ/FIQ/VIRQ/VFIQ/VSERR/SMC/MON_TRAP 完整分发表）、向量偏移与返回偏移、向量基地址选择（MVBAR/高向量/VBAR）、take_aarch32_exception() 核心流程（SPSR 保存/IT 清除/模式位设置/大端/DAIF/PAN/Thumb 状态/LR 保存）、HYP 异常进入（0x14 统一入口/SCR 控制屏蔽/HVBAR）、SVC 完整路径（trans_SVC → DISAS_SWI → syndrome）、Abort 路径（DFSR/IFSR/DFAR/IFAR vs ESR/FAR 对比）、IRQ/FIQ 路由（SCR.IRQ/FIQ → Monitor）、SMC/HVC 路由、异常返回机制（MOVS PC,LR / RFE / LDM{^}）、cpsr_write_eret() 实现、Thumb/IT 块处理、AArch32↔AArch64 寄存器同步（aarch64_sync_32_to_64/64_to_32 完整映射表）、SPSR AArch64 bank 索引、syndrome 编码、AArch32 vs AArch64 异常处理对比表、完整异常进入/返回时序图、各模式寄存器可见性总表。
+
+**适合读者**：需要理解 AArch32 异常模式切换、banked 寄存器机制、CPSR 管理、AArch32/AArch64 互操作的开发者。
+**关键源文件**：`target/arm/helper.c`（~10200行）、`target/arm/cpu.h`（~3500行）、`target/arm/internals.h`（~1600行）、`target/arm/tcg/translate.c`（~7000行）、`target/arm/tcg/op_helper.c`（~1200行）、`target/arm/syndrome.h`（~300行）
 
 ---
 
