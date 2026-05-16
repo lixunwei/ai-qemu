@@ -1052,7 +1052,7 @@ FEAT_NV2 通过 `VNCR_EL2` 寄存器指定的内存区域替代 trap，Guest Hyp
 ### 25.5 QEMU NV 状态
 
 QEMU 在 TCG 模式下部分支持 FEAT_NV/NV2：
-- ID 寄存器暴露：`ID_AA64MMFR1.VH=1`、`ID_AA64MMFR2.NV=2`（`cpu64.c:1309,1326`）
+- ID 寄存器暴露：`ID_AA64MMFR1.VH=1`、`ID_AA64MMFR2.NV=2`（`tcg/cpu64.c:1309,1326`）
 - 寄存器 trap 和 NV2 内存重定向已实现
 - 完整的嵌套虚拟化（Guest 中运行 Hypervisor）功能持续完善中
 

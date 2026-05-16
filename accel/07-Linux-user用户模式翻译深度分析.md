@@ -278,7 +278,7 @@ void cpu_loop(CPUARMState *env)
 
 ## 6. 系统调用翻译 — do_syscall()
 
-**定义**：`linux-user/syscall.c:14426-14490`
+**定义**：`linux-user/syscall.c:14426-14485`
 
 ```
 do_syscall(cpu_env, num, arg1..arg8)
