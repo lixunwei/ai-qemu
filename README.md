@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **65 篇文档**，总计 **~2208KB** 中文技术文档
+> 共 **67 篇文档**，总计 **~2231KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
-| [arm64/](#arm64-arm64-架构) | 26 | ~730KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机 |
+| [arm64/](#arm64-arm64-架构) | 28 | ~753KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -293,9 +293,21 @@ GICv3 寄存器模拟与状态机深度分析：GICD 分发器寄存器（CTLR �
 **适合读者**：需要理解 GICv3 各级寄存器的 QEMU 实现细节、NS/S 隔离机制、ICV 虚拟化重定向、迁移状态保存的开发者。
 **关键源文件**：`hw/intc/arm_gicv3_dist.c`（~820行）、`hw/intc/arm_gicv3_cpuif.c`（~2700行）、`hw/intc/arm_gicv3_redist.c`（~1200行）、`hw/intc/arm_gicv3_common.c`（~680行）
 
----
+### [27-ARM64中断虚拟化ICH-ICV-LR状态机深度分析.md](arm64/27-ARM64中断虚拟化ICH-ICV-LR状态机深度分析.md)
+> **13KB · 12 节**
 
-## device-model/ 设备模型
+ARM GICv3 中断虚拟化完整实现分析：ICV 重定向机制（icv_access() 85-106 检查 NS EL1+HCR.IMO/FMO、四类寄存器重定向规则、Guest 完全无感知）、List Register 格式与状态机（GICv3 ICH_LR 64 位 State/HW/Group/NMI/Priority/EOI/pINTID/vINTID、GICv2 GICH_LR 32 位对比、四状态 Invalid→Pending→Active→PendingActive）、ICV 寄存器模拟（icv_iar_read 800-842 虚拟应答 hppvi_index+icv_activate_irq、icv_eoir_write 1584-1645 icv_drop_prio+icv_deactivate_irq、icv_dir_write 1551-1582 split EOI deactivate、ICV_PMR/BPR/CTLR/IGRPEN 映射到 ICH_VMCR）、ICH 控制寄存器（ICH_HCR En/UIE/NPIE/LRENPIE/TC/TALL0/TALL1/TDIR/EOIcount、ICH_VMCR VENG0/VENG1/VPMR/VBPR）、虚拟中断投递（gicv3_cpuif_virt_irq_fiq_update 471-524 G0→vFIQ/G1→vIRQ/NMI→vNMI）、维护中断（6 种触发条件 EOI/U/NP/LRENP/VGRP、maintenance_interrupt_state 434-469、递归回 GIC PPI）、最高优先级选择（hppvi_index 179-256 LR+vLPI 比较、ich_highest_active_virt_prio 154-177 APR 扫描）、GICv2 虚拟接口（GICH MMIO gic_hyp_read/write 1909-2020、GICV 共用读写函数、gic_update_internal(true)）、GICv4 vLPI 直接注入（绕过 LR、VPROPBASER/VPENDBASER 配置表）、完整虚拟中断生命周期 8 步流程。
+
+**适合读者**：需要理解 ARM 中断虚拟化实现、ICH/ICV 寄存器交互、LR 状态机、维护中断机制的开发者。
+**关键源文件**：`hw/intc/arm_gicv3_cpuif.c`（~2700行）、`hw/intc/gicv3_internal.h`、`hw/intc/arm_gic.c`（~2200行）、`hw/intc/gic_internal.h`
+
+### [28-KVM-vGIC设备后端与中断直通深度分析.md](arm64/28-KVM-vGIC设备后端与中断直通深度分析.md)
+> **10KB · 11 节**
+
+KVM vGIC 设备后端完整实现分析：KVM GICv2 后端（kvm_arm_gic_realize 490-585 KVM_DEV_TYPE_ARM_VGIC_V2 创建、GICD/GICC MMIO 委托、kvm_arm_gic_set_irq 44-73 中断注入转换、kvm_arm_gic_put/get 288-474 DIST_REGS+CPU_REGS 迁移）、KVM GICv3 后端（kvm_arm_gicv3_realize 786-950 KVM_DEV_TYPE_ARM_VGIC_V3 创建、五组状态访问 DIST/REDIST/CPU_SYSREGS/LEVEL_INFO/ITS、kvm_arm_gicv3_put/get 317-620 完整 GICD+GICR+ICC 迁移）、KVM ITS 后端（kvm_arm_its_realize 92-128 独立 KVM 设备、SAVE/RESTORE_TABLES 命令、irqfd MSI 直通）、机器模型 GIC 创建（create_gic 1122-1293 类型选择+MMIO 映射+中断连线）、KVM IRQ 注入（kvm_arm_set_irq→KVM_IRQ_LINE ioctl+irqfd 高速路径）、TCG vs KVM 功能对比（安全扩展/NMI/性能/调试差异）、9 组迁移状态总览、完整 GICv3 KVM 迁移保存/恢复流程。
+
+**适合读者**：需要理解 KVM vGIC 工作原理、中断注入路径、KVM 迁移状态管理的开发者。
+**关键源文件**：`hw/intc/arm_gic_kvm.c`（~610行）、`hw/intc/arm_gicv3_kvm.c`（~975行）、`hw/intc/arm_gicv3_its_kvm.c`（~265行）、`hw/arm/virt.c`（~4300行）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
