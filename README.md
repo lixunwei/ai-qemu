@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **76 篇文档**，总计 **~2326KB** 中文技术文档
+> 共 **77 篇文档**，总计 **~2342KB** 中文技术文档
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
-| [architecture/](#architecture-架构) | 9 | ~225KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端 |
+| [architecture/](#architecture-架构) | 10 | ~241KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB |
 | [arm64/](#arm64-arm64-架构) | 34 | ~817KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
@@ -104,6 +104,14 @@ TCG JIT 编译器全流程：TCGTemp/TCGOp/TCGContext 数据结构、tcg_gen_* �
 
 **适合读者**：需要深入理解 TCG JIT 编译器内部实现、优化代码生成或扩展新后端的开发者。  
 **关键源文件**：`tcg/tcg.c`、`include/tcg/tcg.h`、`tcg/optimize.c`、`tcg/region.c`、`tcg/aarch64/tcg-target.c.inc`、`accel/tcg/translate-all.c`、`accel/tcg/cpu-exec.c`
+
+### [09-TCG深入分析-优化遍向量指令与Softmmu-TLB机制.md](architecture/09-TCG深入分析-优化遍向量指令与Softmmu-TLB机制.md)
+> **16KB · 12 节**
+
+TCG 优化遍详解：OptContext/TempOptInfo 数据结构、80+ fold_* 按操作码分发（常量折叠/拷贝传播/条件简化/死代码消除）、z_mask/o_mask/s_mask 三元组比特级值范围追踪。向量指令翻译：55+ 向量操作码（V64/V128/V256）、tcg_gen_gvec_* 高级 API（自动向量 IR/标量展开/OOL helper 选择）、AArch64 后端 tcg_expand_vec_op 复杂操作展开。Softmmu TLB：CPUTLBEntry/CPUTLBDescFast 快速路径结构、6 条内联指令 TLB 查找、TLB 标志位（INVALID/NOTDIRTY/MMIO/FORCE_SLOW）、8 路全关联 Victim TLB 机制、tlb_set_page_full 填充与多粒度刷新。
+
+**适合读者**：需要理解 TCG 优化策略、向量指令模拟机制或 Softmmu 地址翻译性能的开发者。  
+**关键源文件**：`tcg/optimize.c`、`tcg/tcg-op-vec.c`、`tcg/tcg-op-gvec.c`、`tcg/aarch64/tcg-target.c.inc`、`accel/tcg/cputlb.c`、`include/exec/tlb-common.h`、`include/exec/tlb-flags.h`
 
 ---
 
