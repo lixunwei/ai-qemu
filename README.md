@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **88 篇文档**，总计 **~2579KB** 中文技术文档
+> 共 **89 篇文档**，总计 **~2611KB** 中文技术文档
 
 ---
 
@@ -188,6 +188,14 @@ ARM 调试子系统全栈分析：CPUARMState 调试状态（dbgbvr[16]/dbgbcr[1
 
 **适合读者**：需要理解 ARM 调试架构虚拟化、硬件断点/Watchpoint 机制、TCG 单步实现或 GDB/KVM 调试集成的开发者。  
 **关键源文件**：`target/arm/tcg/debug.c`、`target/arm/debug_helper.c`、`target/arm/tcg/translate.h`、`target/arm/syndrome.h`、`target/arm/kvm.c`
+
+### [19-SMMUv3-IOMMU深度分析-Stream-Table页表遍历命令队列与DMA地址翻译.md](architecture/19-SMMUv3-IOMMU深度分析-Stream-Table页表遍历命令队列与DMA地址翻译.md)
+> **32KB · 13 节**
+
+SMMUv3/IOMMU 全栈分析：IOMMU 核心框架（IOMMUTLBEntry 翻译结果、IOMMUNotifier MAP/UNMAP/DEVIOTLB_UNMAP 通知机制、IOMMUMemoryRegionClass 虚函数表 translate/notify_flag_changed/replay/get_attr）、SMMUv3State 设备状态（cr[3]/gbpa/strtab_base/cmdq/eventq 寄存器、4 种 IRQ、stage/accel/ril/ats/oas/ssidsize 属性）、SMMU 通用基础层（SMMUState 基类 configs 配置缓存/iotlb TLB 缓存/devices_with_notifiers 通知列表、SMMUDevice 每设备 IOMMU 上下文、smmu_get_sid() = PCI_BUILD_BDF 派生 Stream ID）、Stream Table Entry（STE 512 位 CONFIG S1/S2/Bypass/Abort、线性与两级 Stream Table 查找 smmu_find_ste、decode_ste 多层验证）、Context Descriptor（CD TTB0/TTB1/TSZ/TG/ASID/IPS、smmu_get_cd Nested 下 CD 地址 S2 翻译、decode_cd TTB Nested S2 翻译）、翻译主路径（smmuv3_translate 入口 → smmuv3_get_config 配置缓存 → smmuv3_do_translate 三类 CLASS_CD/TT/IN → smmu_translate TLB 查找 + PTW）、页表遍历（smmu_ptw 调度 S1/S2/Nested、smmu_ptw_64_s1 select_tt→逐级遍历→Nested 表地址 S2 翻译、smmu_ptw_64_s2 拼接表→S2AP 权限、combine_tlb 合并）、IOTLB 缓存（Jenkins Hash 5 字段键、逐级查找 smmu_iotlb_lookup_all_levels、256 条容量、6 种粒度失效）、命令队列（20+ 命令类型、smmuv3_cmdq_consume 主循环、smmuv3_range_inval RIL 范围失效）、事件队列（18 种事件类型、smmuv3_record_event→smmuv3_propagate_event→write_eventq→EVTQ IRQ、队列满→GERROR）、中断机制（EVTQ/PRIQ/CMD_SYNC/GERROR 四种 IRQ、GERROR toggle 协议）、IOMMU Notifier（smmuv3_notify_iova 按 ASID/VMID 过滤→memory_region_notify_iommu_one、仅支持 UNMAP 通知）、virt 机器集成（create_smmu stage=nested、primary-bus/memory/secure-memory 关联、DT iommu-map 绑定）。
+
+**适合读者**：需要理解 ARM SMMUv3 IOMMU 虚拟化实现、DMA 地址翻译路径、嵌套翻译机制或 VFIO 直通设备 IOMMU 集成的开发者。  
+**关键源文件**：`hw/arm/smmuv3.c`、`hw/arm/smmu-common.c`、`include/hw/arm/smmuv3.h`、`include/hw/arm/smmu-common.h`、`include/hw/arm/smmuv3-common.h`、`hw/arm/smmuv3-internal.h`、`include/system/memory.h`
 
 ---
 
