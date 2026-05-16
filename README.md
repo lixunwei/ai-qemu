@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **94 篇文档**，总计 **~2745KB** 中文技术文档
+> 共 **95 篇文档**，总计 **~2770KB** 中文技术文档
 
 ---
 
@@ -230,6 +230,14 @@ QOM 对象模型全栈分析：TypeInfo 类型定义（name/parent/instance_size
 
 **适合读者**：需要理解 QEMU 事件驱动架构、异步 I/O 上下文、Bottom Half 延迟回调、定时器系统、协程生命周期与同步原语、IOThread 多线程模型或 defer_call 批处理优化的开发者。  
 **关键源文件**：`include/qemu/aio.h`（~340行）、`util/aio-posix.c`（~800行）、`util/async.c`（~730行）、`util/main-loop.c`（~610行）、`system/runstate.c`（~955行）、`include/qemu/timer.h`（~550行）、`util/qemu-timer.c`（~610行）、`include/qemu/coroutine_int.h`（~72行）、`util/qemu-coroutine.c`（~400行）、`util/coroutine-ucontext.c`（~360行）、`util/qemu-coroutine-lock.c`（~470行）、`util/defer-call.c`（~157行）、`iothread.c`（~200行）
+
+### [24-MemoryRegion-AddressSpace内存子系统深度分析-区域树-FlatView-地址分发与内存监听.md](architecture/24-MemoryRegion-AddressSpace内存子系统深度分析-区域树-FlatView-地址分发与内存监听.md)
+> **25KB · 16 节**
+
+MemoryRegion/AddressSpace 内存子系统全栈分析：MemoryRegion 核心结构（romd_mode/ram/readonly/is_iommu 类型标志、ops/opaque MMIO 回调、container/subregions 父子树、alias/alias_offset 别名窗口、priority 重叠优先级、size/addr 地址范围、terminates 分发终止、enabled 启用控制、dirty_log_mask 脏页跟踪）、MemoryRegionOps 回调接口（read/write 基础回调、read_with_attrs/write_with_attrs 带属性变体→MemTxResult 错误返回、endianness 字节序、valid.min/max_access_size Guest 可见约束、impl.min/max_access_size 内部实现约束→自动拆分/合并）、MemoryRegion 初始化函数族（memory_region_init 容器、memory_region_init_io MMIO 设备→ops/opaque/terminates、memory_region_init_ram 宿主内存→RAMBlock mmap、memory_region_init_alias 别名窗口→alias/alias_offset、memory_region_init_rom 只读 RAM→readonly=true、memory_region_init_iommu IOMMU 翻译层）、AddressSpace 地址空间（root 根 MemoryRegion、current_map FlatView RCU 快照、listeners MemoryListener 列表、max_bounce_buffer_size DMA bounce 上限、address_space_init 初始化→memory_region_ref→update_topology→update_ioeventfds）、FlatView 扁平化（FlatRange mr/offset_in_region/addr/dirty_log_mask/romd_mode/readonly、FlatView ref/ranges/nr/dispatch/root、MemoryRegionSection size/mr/fv/offset_within_region/offset_within_address_space）、拓扑生成（generate_memory_topology flatview_new→render_memory_region 递归渲染→flatview_simplify 合并→address_space_dispatch_new 构建基数树→flatview_add_to_dispatch→address_space_dispatch_compact、render_memory_region 递归遍历子区域和别名→高优先级覆盖低优先级→产出不重叠 FlatRange）、事务机制（memory_region_transaction_begin depth++、memory_region_transaction_commit depth→0 时→flatviews_reset 重生成→MEMORY_LISTENER_CALL_GLOBAL begin→address_space_set_flatview 对比新旧→region_add/region_del/region_nop→MEMORY_LISTENER_CALL_GLOBAL commit）、PhysPageEntry 基数树分发（skip:6 跳过位+ptr:26 索引、P_L2_SIZE=512 每节点、PhysPageMap nodes/sections 数组、AddressSpaceDispatch mru_section MRU 缓存+phys_map 根节点）、地址翻译路径（address_space_translate_internal 基数树查找→section→xlat 计算→plen 边界限制、flatview_do_translate 内部翻译→IOMMU 检测→address_space_translate_iommu 二次翻译、flatview_translate 顶层入口）、内存访问入口（flatview_write 翻译→memory_access_is_direct→RAM memcpy+invalidate_and_set_dirty/MMIO memory_region_dispatch_write、flatview_read 类似→RAM memcpy/MMIO dispatch_read、address_space_map RAM 直接返回宿主指针/MMIO bounce buffer、address_space_unmap bounce flush→write→释放）、MemoryListener 变更通知（begin/commit 事务回调、region_add/region_del/region_nop 区域增删、log_start/log_stop/log_sync/log_clear 脏页日志、log_global_start/log_global_stop 全局日志、eventfd_add/eventfd_del ioeventfd、priority 优先级排序、memory_listener_register 按优先级插入→通知现有区域、KVM 监听器 kvm_set_user_memory_region 创建/删除 memslot+KVM_MEM_LOG_DIRTY_PAGES）、子区域管理（memory_region_add_subregion priority=0 默认、memory_region_add_subregion_overlap 显式优先级、memory_region_update_container_subregions 按优先级降序插入→transaction_commit 触发拓扑更新）、RAMBlock 宿主内存（host 宿主虚拟地址 mmap、offset 全局 RAM 偏移、used_length/max_length 当前/最大长度、fd 文件后端/guest_memfd 机密 VM、bmap 脏页位图、clear_bmap 延迟清除位图、postcopy_length postcopy 长度）、IOMMUMemoryRegion（IOMMUMemoryRegionClass translate/get_min_page_size/notify_flag_changed/replay 虚函数、address_space_translate_iommu 递归翻译→多级 IOMMU 嵌套）、脏页追踪（dirty_log_mask 掩码→cpu_physical_memory_set_dirty_range→KVM_GET_DIRTY_LOG/dirty ring 同步→迁移增量传输/VGA 重绘/VFIO DMA）、全局地址空间（system_memory/system_io 全局根区域、address_space_memory/address_space_io 全局地址空间、memory_map_init 初始化→system UINT64_MAX 容器+io 65536 端口）。
+
+**适合读者**：需要理解 QEMU 内存子系统架构、MemoryRegion 类型与层次、地址翻译与分发机制、FlatView 扁平化与拓扑更新、MemoryListener 通知链、KVM memslot 同步、RAMBlock 内存管理或 IOMMU/脏页追踪的开发者。  
+**关键源文件**：`include/system/memory.h`（~2900行）、`system/memory.c`（~3700行）、`system/physmem.c`（~3900行）、`include/system/ramblock.h`（~130行）
 
 ---
 
