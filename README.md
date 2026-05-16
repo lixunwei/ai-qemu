@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **87 篇文档**，总计 **~2554KB** 中文技术文档
+> 共 **88 篇文档**，总计 **~2579KB** 中文技术文档
 
 ---
 
@@ -180,6 +180,14 @@ ARM PMUv3 性能监控单元全栈分析：pm_event 事件表（SW_INCR/INST_RET
 
 **适合读者**：需要理解 ARM PMU 虚拟化实现、性能计数器惰性求值机制、EL 过滤逻辑或 PMU 中断连接的开发者。  
 **关键源文件**：`target/arm/cpregs-pmu.c`、`target/arm/cpu.h`、`target/arm/internals.h`、`target/arm/kvm.c`
+
+### [18-Debug-Breakpoint-Watchpoint调试子系统深度分析-硬件断点-单步与GDB-Stub.md](architecture/18-Debug-Breakpoint-Watchpoint调试子系统深度分析-硬件断点-单步与GDB-Stub.md)
+> **25KB · 13 节**
+
+ARM 调试子系统全栈分析：CPUARMState 调试状态（dbgbvr[16]/dbgbcr[16]/dbgwvr[16]/dbgwcr[16] 硬件断点与 Watchpoint 寄存器、mdscr_el1/mdcr_el2/mdcr_el3 调试控制、oslsr_el1/osdlr_el1 OS Lock）、硬件断点实现（dbgbvr_write→hw_breakpoint_update→cpu_breakpoint_insert、BT 类型 地址匹配/上下文匹配/链接断点、BAS 字段 Thumb16 偏移）、Watchpoint 实现（hw_watchpoint_update→cpu_watchpoint_insert、LSC 读/写/访问控制、MASK 对齐区域/BAS 字节选择、最大 2GB 范围）、bp_wp_matches 统一匹配（SSC 安全状态 → PAC/HMC EL 控制 → WT 链接断点、断点 PC 匹配 + Watchpoint HIT 标志）、linked_bp_matches 上下文 ID 匹配、MDSCR_EL1 调试控制（MDE 监视使能 bit[15]、KDE 内核调试 bit[13]、SS 软件单步 bit[0]）、调试异常路由（arm_debug_target_el: HCR_TGE/MDCR_TDE→EL2、MDCR_EL3.SDD 禁用安全调试、同 EL 需 KDE+¬PSTATE.D）、软件单步状态机（Active-not-pending PSTATE.SS=1 → gen_ss_advance 清除 → Active-pending → gen_step_complete_exception → EC_SOFTWARESTEP）、BRK 指令（trans_BRK→gen_exception_bkpt_insn→HELPER(exception_bkpt_insn)、目标 EL<当前 EL 时提升、EC_AA64_BKPT 0x3c）、调试异常分发（arm_debug_excp_handler: Watchpoint→EXCP_DATA_ABORT+syn_watchpoint, 断点→EXCP_PREFETCH_ABORT+syn_breakpoint, GDB BP_GDB 优先于 BP_CPU）、GDB Stub 集成（gdb_breakpoint_insert/remove、hyp_gdbstub.c 硬件后端）、KVM 调试（debug exit EC 分发、KVM_GUESTDBG_USE_HW/SW_BP、BRK#0 补丁）。
+
+**适合读者**：需要理解 ARM 调试架构虚拟化、硬件断点/Watchpoint 机制、TCG 单步实现或 GDB/KVM 调试集成的开发者。  
+**关键源文件**：`target/arm/tcg/debug.c`、`target/arm/debug_helper.c`、`target/arm/tcg/translate.h`、`target/arm/syndrome.h`、`target/arm/kvm.c`
 
 ---
 
