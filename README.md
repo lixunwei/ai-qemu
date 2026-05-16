@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **89 篇文档**，总计 **~2611KB** 中文技术文档
+> 共 **90 篇文档**，总计 **~2645KB** 中文技术文档
 
 ---
 
@@ -196,6 +196,14 @@ SMMUv3/IOMMU 全栈分析：IOMMU 核心框架（IOMMUTLBEntry 翻译结果、IO
 
 **适合读者**：需要理解 ARM SMMUv3 IOMMU 虚拟化实现、DMA 地址翻译路径、嵌套翻译机制或 VFIO 直通设备 IOMMU 集成的开发者。  
 **关键源文件**：`hw/arm/smmuv3.c`、`hw/arm/smmu-common.c`、`include/hw/arm/smmuv3.h`、`include/hw/arm/smmu-common.h`、`include/hw/arm/smmuv3-common.h`、`hw/arm/smmuv3-internal.h`、`include/system/memory.h`
+
+### [20-PCI-PCIe子系统深度分析-设备模型-配置空间-BAR映射-MSI-MSI-X中断与ECAM.md](architecture/20-PCI-PCIe子系统深度分析-设备模型-配置空间-BAR映射-MSI-MSI-X中断与ECAM.md)
+> **34KB · 13 节**
+
+PCI/PCIe 子系统全栈分析：PCIDeviceClass 设备类方法表（realize/exit/config_read/config_write/vendor_id/device_id）、PCIDevice 设备实例（5 个配置空间数组 config/cmask/wmask/w1cmask/used、io_regions[7] BAR 区域、bus_master_as DMA 地址空间、MSI/MSI-X 双栈、PCIExpressDevice PCIe 扩展）、PCIBus 总线模型（devices[256] 设备表、set_irq/map_irq/route_intx_to_irq IRQ 三回调、address_space_mem/io 地址空间）、PCIHostState 主桥（conf_mem/data_mem/mmcfg 三种配置访问方式）、配置空间管理（pci_config_alloc 5 数组分配、pci_init_cmask/wmask/w1cmask 三层掩码、pci_default_write_config 写掩码+W1C+BAR 重映射级联）、配置空间访问路径（ECAM pcie_mmcfg_data_write→pci_host_config_write_common→config_write、Legacy CF8/CFC pci_data_write 调度）、BAR 管理（pci_register_bar 类型标志 IO/MEM64/PREFETCH、pci_bar_address 地址计算+COMMAND 使能检查、pci_update_mappings 动态 add/del_subregion）、PCIe 能力（PCIExpressDevice exp_cap/aer_cap/ats/pasid/pri/acs/sriov、pcie_cap_init v2 初始化）、MSI 中断（msi_init 能力注册 1-32 向量、msi_prepare_message 地址+数据构造、msi_notify→msi_send_message→pci_msi_trigger→address_space_stl_le 投递）、MSI-X 中断（msix_init Table/PBA BAR 内 MMIO 子区域、每条目 16 字节 addr/data/ctrl、msix_table_mmio_read/write Guest 访问、msix_notify 向量 Mask/Pending 管理）、MSI→GIC ITS 路径（bus_master_as 写入→IOMMU 翻译→GITS_TRANSLATER→do_process_its_cmd→process_its_cmd_phys→gicv3_redist_process_lpi）、INTx 传统中断（pci_change_irq_level 逐级 Swizzle 传播、gpex_swizzle_map_irq_fn (slot+pin)%4、irq_count OR 语义）、ECAM/GPEX 主桥（GPEXHost PCIExpressHost 基类、gpex_host_realize MMCFG+MMIO+IO+IRQ+根总线创建、pcie_host.h ECAM 地址编码 bus[27:20]/devfn[19:12]/offset[11:0]）、virt 机器集成（create_pcie ECAM/MMIO/IO 窗口映射、INTx→GIC SPI 连接、DT pci-host-ecam-generic/msi-map/iommu-map 生成）。
+
+**适合读者**：需要理解 PCI/PCIe 设备虚拟化、配置空间访问机制、BAR MMIO 映射、MSI/MSI-X 中断投递路径或 ARM virt PCIe 拓扑集成的开发者。  
+**关键源文件**：`include/hw/pci/pci_device.h`（~205行）、`include/hw/pci/pci_bus.h`（~70行）、`hw/pci/pci.c`（~3500行）、`hw/pci/pci_host.c`（~200行）、`hw/pci/pcie_host.c`（~110行）、`hw/pci/msi.c`（~440行）、`hw/pci/msix.c`（~640行）、`hw/pci-host/gpex.c`（~260行）、`hw/arm/virt.c`
 
 ---
 
