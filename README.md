@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **58 篇文档**，总计 **~2103KB** 中文技术文档
+> 共 **59 篇文档**，总计 **~2119KB** 中文技术文档
 
 ---
 
@@ -16,7 +16,7 @@
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
-| [arm/](#arm-arm-架构通用) | 12 | ~269KB | EL 状态管理、AArch32 异常、CP15/MMU、GICv3、Cache、Timer、PMU、调试、SVE/SME、TrustZone、内存模型、TZ 安全组件模拟 |
+| [arm/](#arm-arm-架构通用) | 13 | ~285KB | EL 状态管理、AArch32 异常、CP15/MMU、GICv3、Cache、Timer、PMU、调试、SVE/SME、TrustZone、内存模型、TZ 安全组件模拟、RME/Realm |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -552,6 +552,16 @@ ARM TrustZone 安全组件硬件模拟深度分析：TZ-MPC 内存保护控制�
 
 **适合读者**：需要理解 TrustZone 硬件安全模拟、MPC/PPC/MSC 设备原理、安全内存架构、MMU 安全态追踪的开发者。
 **关键源文件**：`hw/misc/tz-mpc.c`（~560行）、`hw/misc/tz-ppc.c`（~360行）、`hw/misc/tz-msc.c`（~300行）、`target/arm/ptw.c`（~2600行）、`target/arm/helper.c`（~10188行）
+
+---
+
+### [23-ARM-RME-Realm管理扩展深度分析.md](arm/23-ARM-RME-Realm管理扩展深度分析.md)
+> **16KB · 11 节**
+
+ARM Realm Management Extension（RME/FEAT_RME）完整实现分析：四世界安全模型（ARMSecuritySpace 枚举 Secure/NonSecure/Root/Realm、GPI 低 2 位对应枚举值）、SCR_EL3.NSE 扩展位（NSE:NS 组合选择四世界、NSE=1+NS=0 保留处理）、arm_security_space() 四世界判定（EL3+RME→Root、arm_security_space_below_el3 NSE/NS 映射）、CPU 特性（ID_AA64PFR0.RME 字段、isar_feature_aa64_rme/gpc2 检测、x-rme/x-l0gptsz QOM 属性）、RME 系统寄存器（GPCCR_EL3 全字段 GPC/PPS/PGS/L0GPTSZ/SH/SPAD/NSPAD/RLPAD/SA/NSP/NA6/NA7/NSO、GPTBR_EL3 基地址、MFAR_EL3 故障地址）、GPT 两级遍历（Level-0 Block/Table descriptor、Level-1 Contiguous/Granule descriptor、16 种 GPI 值解释 0000-1111）、四级优先级检查（配置有效性/地址空间禁用/PPS 超限/GPTBR 超限）、GPC 检查时机（get_phys_addr_gpc MMU 翻译后执行）、GPC 故障类型（GPCFOnWalk/GPCFOnOutput、GPCF 子类型 AddressSize/Walk/EABT/Fail）、FSC 编码、Realm MMU 处理（ARMMMUIdx_Phys_Realm/Root 物理索引、ptw_idx_for_stage_2 Realm 分支）、四世界架构总览（EL3=Root/三个 Lower 世界）、Realm 与 TrustZone 对比（页面级 vs 块级隔离、机密计算 vs 固件安全）。
+
+**适合读者**：需要理解 ARM RME 四世界模型、GPT 颗粒保护表、GPC 故障机制、Realm 机密计算架构的开发者。
+**关键源文件**：`include/hw/arm/arm-security.h`（~37行）、`target/arm/helper.c`（~10188行）、`target/arm/ptw.c`（~2600行）、`target/arm/internals.h`（~1100行）、`target/arm/cpu-features.h`（~1200行）
 
 ---
 
