@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **73 篇文档**，总计 **~2294KB** 中文技术文档
+> 共 **74 篇文档**，总计 **~2305KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 8 | ~213KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动 |
-| [arm64/](#arm64-arm64-架构) | 32 | ~797KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令 |
+| [arm64/](#arm64-arm64-架构) | 33 | ~808KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -356,6 +356,14 @@ CPACR_EL1 三级 FP/SIMD 陷阱链（FPEN/ZEN/SMEN → CPTR_EL2 → CPTR_EL3）�
 
 **适合读者**：需要理解特殊系统寄存器功能、AT 地址翻译指令实现或 Cache 维护指令虚拟化的开发者。
 **关键源文件**：`target/arm/helper.c`（寄存器定义/写回调）、`target/arm/tcg/cpregs-at.c`（AT 指令）、`target/arm/tcg/vfp_helper.c`（FPCR/FPSR）
+
+### [33-ARM64-Debug-Breakpoint-Watchpoint与RAS寄存器深度分析.md](arm64/33-ARM64-Debug-Breakpoint-Watchpoint与RAS寄存器深度分析.md)
+> **11KB · 12 节**
+
+完整调试架构实现：三级调试陷阱体系（TDOSA/TDA/TDCC × EL1→EL2→EL3）、MDSCR_EL1 全局开关（MDE/SS/TDCC）、MDCR_EL2/EL3 陷阱路由（TDE 整体重路由）、OS 锁（OSLAR/OSLSR/OSDLR）、断点动态注册（DBGBVRn/BCRn → hw_breakpoint_update → cpu_breakpoint_insert）、观察点（DBGWVRn/WCRn 支持 BAS 字节选择和 MASK 掩码最大 2GB）、统一匹配框架 bp_wp_matches()（SSC 安全过滤→PAC/HMC EL 过滤→链接断点）、调试异常路由 arm_debug_target_el()、最小 RAS（ERRIDR=0 零记录、DISR/VDISR/VSESR SError 报告注入）。
+
+**适合读者**：需要理解 ARM 硬件调试机制、断点/观察点实现原理或 RAS 错误处理的开发者。
+**关键源文件**：`target/arm/debug_helper.c`（寄存器定义/访问控制）、`target/arm/tcg/debug.c`（匹配逻辑/异常处理）、`target/arm/helper.c`（RAS/MDCR）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
