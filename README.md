@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **84 篇文档**，总计 **~2475KB** 中文技术文档
+> 共 **85 篇文档**，总计 **~2506KB** 中文技术文档
 
 ---
 
@@ -154,6 +154,16 @@ TCG 后端代码生成管线全解：tcg_gen_code() 主循环（Op 遍历与分�
 
 **适合读者**：需要理解 TCG 后端机器码生成、寄存器分配或添加新 Host 架构后端的开发者。  
 **关键源文件**：`tcg/tcg.c`、`tcg/aarch64/tcg-target.c.inc`、`tcg/aarch64/tcg-target.h`、`include/tcg/tcg.h`
+
+---
+
+### [15-内存子系统深度分析-MemoryRegion-AddressSpace-FlatView与IOMMU.md](architecture/15-内存子系统深度分析-MemoryRegion-AddressSpace-FlatView与IOMMU.md)
+> **31KB · 12 节**
+
+内存子系统全栈分析：MemoryRegion 树形层次（Container/Alias/Overlap 三种组合、6种MR类型初始化）、MemoryRegionOps 设备MMIO回调（read/write/read_with_attrs 及 valid/impl 访问约束）、AddressSpace 地址空间（RCU 保护的 current_map、DMA bounce buffer 机制）、FlatView 拓扑展平（render_memory_region 递归算法、优先级间隙填充、flatview_simplify 合并）、地址解析全路径（flatview_do_translate→address_space_translate_internal→MR dispatch 或 RAM 直接访问）、MemoryListener 观察者模式（region_add/del/nop 回调、两遍 diff 算法、事务提交流程）、IOMMU 级联翻译（IOMMUMemoryRegionClass.translate 回调、多级 do-while 循环、IOMMUNotifier 失效通知）、TCG 内存访问路径（TLB addend 直通 vs tlb_fill→address_space_translate 完整路径）、KVM 内存路径（kvm_region_add/del/commit 事务批量提交、KVM_SET_USER_MEMORY_REGION2 ioctl、dirty ring 脏页同步）、RAMBlock 物理内存后端（host mmap、脏页位图、迁移支持）、ROM/ROM设备区别。
+
+**适合读者**：需要理解 QEMU 内存映射机制、编写设备 MMIO、调试地址解析或理解 KVM/TCG 内存集成的开发者。  
+**关键源文件**：`include/system/memory.h`、`system/memory.c`、`system/physmem.c`、`accel/kvm/kvm-all.c`、`include/system/ramblock.h`
 
 ---
 
