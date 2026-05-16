@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **59 篇文档**，总计 **~2119KB** 中文技术文档
+> 共 **60 篇文档**，总计 **~2134KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
-| [arm64/](#arm64-arm64-架构) | 21 | ~651KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU |
+| [arm64/](#arm64-arm64-架构) | 22 | ~666KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -250,6 +250,16 @@ ARM64 GCS/RME 及 ARMv9 新扩展完整实现分析。**GCS（守护控制栈）
 
 **适合读者**：分析 ARM CCA 机密计算、影子栈保护、RME 安全域隔离、ARMv9 新特性仿真实现的开发者。  
 **关键源文件**：`target/arm/cpregs-gcs.c`、`target/arm/tcg/translate-a64.c`、`target/arm/ptw.c`、`target/arm/helper.c`、`target/arm/tcg/hflags.c`、`target/arm/mmuidx.h`、`include/hw/arm/arm-security.h`、`target/arm/cpu-irq.c`
+
+---
+
+### [22-ARM64异常级别状态管理与指令执行变化深度分析.md](arm64/22-ARM64异常级别状态管理与指令执行变化深度分析.md)
+> **15KB · 11 节**
+
+ARM64 异常级别（EL0-EL3）切换时 CPU 指令执行行为变化深度分析：TB Flags EL 编码（MMUIDX 间接编码 EL、rebuild_hflags_a64 全部 EL 相关标志 SVEEXC_EL/SMEEXC_EL/UNPRIV/TRAP_ERET/NV/E2H/PAUTH_ACTIVE/BT/MTE_ACTIVE）、DisasContext EL 字段（current_el/fp_excp_el/sve_excp_el/sme_excp_el/trap_eret/e2h/nv/nv1/nv2）、系统寄存器访问门控（CPAccessRights PL0-PL3 位图层级包含设计、cp_access_ok 静态检查、accessfn 动态陷阱、VHE 重定向）、每个 EL 指令可用性（EL0 用户态限制、EL1 PL1 寄存器+HCR 陷阱控制、EL2 Stage-2/VHE、EL3 SCR/RME 全权限）、异常入口完整流程（arm_cpu_do_interrupt_aarch64 VBAR 向量表 4×4 布局、SPSR/ELR 保存、ESR/FAR 综合信息、PSTATE 重构 DAIF/PAN/TCO/SSBS/ALLINT）、异常返回 ERET（helper_exception_return 7 种非法返回检测、SPSR→PSTATE 恢复、SP/TBI/SVE 调整、illegal_return PSTATE.IL 设置）、MMU Regime 与 EL 映射（6 种 regime、TGE/DC 翻译禁用、SP_EL0/SP_ELx 选择）、HCR_EL2 陷阱效应（TVM/TRVM/TSW/TACR/TTLB/TID/TSC/TWI/TWE 全表、TB Flags 缓存策略）、EL 切换状态变化对比表。
+
+**适合读者**：需要理解 ARM64 EL 状态转换如何改变指令执行行为、TB Flags 编码、异常入口/返回完整机制的开发者。
+**关键源文件**：`target/arm/tcg/hflags.c`（~500行）、`target/arm/tcg/translate-a64.c`（~11000行）、`target/arm/tcg/translate.h`（~210行）、`target/arm/tcg/helper-a64.c`（~800行）、`target/arm/helper.c`（~10188行）、`target/arm/cpregs.h`（~600行）
 
 ---
 
