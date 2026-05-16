@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **67 篇文档**，总计 **~2231KB** 中文技术文档
+> 共 **69 篇文档**，总计 **~2250KB** 中文技术文档
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
-| [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
+| [architecture/](#architecture-架构) | 8 | ~213KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动 |
 | [arm64/](#arm64-arm64-架构) | 28 | ~753KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
@@ -80,6 +80,22 @@ AioContext 核心数据结构与生命周期、主循环（`main_loop_wait` + GM
 
 **适合读者**：需要深入理解 QEMU 事件驱动架构、优化 I/O 延迟或开发新异步后端的开发者。  
 **关键源文件**：`util/async.c`、`util/aio-posix.c`、`util/main-loop.c`、`iothread.c`、`util/qemu-coroutine.c`、`block/linux-aio.c`
+
+### [06-块层核心架构深度分析.md](architecture/06-块层核心架构深度分析.md)
+> **10KB · 11 节**
+
+块层三层架构（BlockBackend → 格式 BDS → 协议 BDS）、BlockDriver/BDS/BlockBackend 核心结构体、BdrvChild 父子关系与 BDS 树、I/O 分发路径（bdrv_co_preadv_part → bdrv_driver_preadv 优先级链）、协程化 I/O、驱动注册（block_init 构造器模式）、格式探测机制、块设备管理命令。
+
+**适合读者**：需要理解 QEMU 块层整体架构、BDS 图拓扑或开发新块驱动的开发者。  
+**关键源文件**：`include/block/block_int-common.h`、`block/block-backend.c`、`block/io.c`、`block.c`
+
+### [07-qcow2格式驱动与块IO后端深度分析.md](architecture/07-qcow2格式驱动与块IO后端深度分析.md)
+> **9KB · 11 节**
+
+qcow2 磁盘格式（QCowHeader、L1/L2 两级地址翻译、引用计数、快照/加密/压缩）、读写路径（get_host_offset → 簇类型判断 → COW 分配）、file-posix 协议驱动（io_uring/linux-aio/线程池三模式、O_DIRECT、文件锁）、raw 格式透传、virtio-blk 设备（virtqueue → blk_co_preadv、IOThread dataplane）、块作业框架（mirror/commit/stream/backup、Job 状态机）。
+
+**适合读者**：需要理解 qcow2 内部实现、优化块 I/O 性能或分析磁盘格式的开发者。  
+**关键源文件**：`block/qcow2.c`、`block/qcow2.h`、`block/qcow2-cluster.c`、`block/file-posix.c`、`hw/block/virtio-blk.c`
 
 ---
 
