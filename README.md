@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **72 篇文档**，总计 **~2285KB** 中文技术文档
+> 共 **73 篇文档**，总计 **~2294KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 8 | ~213KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动 |
-| [arm64/](#arm64-arm64-架构) | 31 | ~788KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由 |
+| [arm64/](#arm64-arm64-架构) | 32 | ~797KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -348,6 +348,14 @@ MMU 核心寄存器详解：TCR_EL1 完整位域（T0SZ/T1SZ/TG0/TG1/IPS/EPD/A1 
 
 **适合读者**：需要理解虚拟化陷阱路由机制、实现新陷阱位或分析 VM Exit 路径的开发者。
 **关键源文件**：`target/arm/cpu.h`（HCR/SCR 定义）、`target/arm/cpregs.h`（FGT）、`target/arm/helper.c`（accessfn）、`target/arm/tcg/op_helper.c`（异常流程）
+
+### [32-ARM64特殊系统寄存器与Cache-AT指令深度分析.md](arm64/32-ARM64特殊系统寄存器与Cache-AT指令深度分析.md)
+> **9KB · 12 节**
+
+CPACR_EL1 三级 FP/SIMD 陷阱链（FPEN/ZEN/SMEN → CPTR_EL2 → CPTR_EL3）、CONTEXTIDR_EL1 上下文 ID 与 ASID 刷新策略（VMSA 短描述符时 TLB flush）、PAR_EL1 + AT 指令完整实现（do_ats_write 翻译流程→PAR 写入→Stage-2 fault 异常变换）、TPIDR 三寄存器（EL0 RW / EL0 RO / EL1 RW → Linux TLS/current 指针）、FPCR/FPSR 舍入模式与 softfloat 交互、Timer CNTVCT/CNTFRQ/CNTHCTL 陷阱、DC ZVA memset 实现 + HCR_EL2.TDZ/TSW/TPCP/TPU Cache 维护陷阱、QEMU 不模拟缓存但保留陷阱语义。
+
+**适合读者**：需要理解特殊系统寄存器功能、AT 地址翻译指令实现或 Cache 维护指令虚拟化的开发者。
+**关键源文件**：`target/arm/helper.c`（寄存器定义/写回调）、`target/arm/tcg/cpregs-at.c`（AT 指令）、`target/arm/tcg/vfp_helper.c`（FPCR/FPSR）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
