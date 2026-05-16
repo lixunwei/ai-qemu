@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **78 篇文档**，总计 **~2358KB** 中文技术文档
+> 共 **79 篇文档**，总计 **~2373KB** 中文技术文档
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
-| [architecture/](#architecture-架构) | 11 | ~257KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost |
+| [architecture/](#architecture-架构) | 12 | ~273KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统 |
 | [arm64/](#arm64-arm64-架构) | 34 | ~817KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
@@ -120,6 +120,14 @@ VirtIO 设备框架全解：VirtIODevice 三层特性协商、VRing 描述符/av
 
 **适合读者**：需要理解 VirtIO 设备模型、优化虚拟化 I/O 性能或开发 vhost-user 后端的开发者。  
 **关键源文件**：`hw/virtio/virtio.c`、`include/hw/virtio/virtio.h`、`hw/virtio/virtio-pci.c`、`hw/virtio/vhost.c`、`hw/virtio/vhost-user.c`、`hw/virtio/virtio-iommu.c`
+
+### [11-内存子系统深度分析-MemoryRegion树FlatView与RAMBlock.md](architecture/11-内存子系统深度分析-MemoryRegion树FlatView与RAMBlock.md)
+> **15KB · 12 节**
+
+QEMU 内存子系统全解：MemoryRegion 四种类型（RAM/MMIO/别名/容器）及树形组织、MemoryRegionOps 回调接口（带属性访问/大小约束/字节序）、render_memory_region 递归扁平化（优先级/重叠/别名展开）、FlatView 有序范围数组 + dispatch 基数树、AddressSpace RCU 保护与事务性更新、MemoryRegionSection 地址解析、RAMBlock 结构（mmap/脏页位图/迁移元数据）、三种脏页客户端（VGA/Code/Migration）、MemoryListener 通知机制（KVM EPT/TCG TLB/vhost）、完整 MMIO 分发路径、MemoryRegionCache 快速缓存、DMA 映射（RAM 零拷贝/MMIO bounce buffer）。
+
+**适合读者**：需要理解 QEMU 内存管理架构、设备 MMIO 注册或内存热插拔机制的开发者。  
+**关键源文件**：`include/system/memory.h`、`system/memory.c`、`system/physmem.c`、`include/system/ramblock.h`
 
 ---
 
