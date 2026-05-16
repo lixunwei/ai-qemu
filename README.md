@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **95 篇文档**，总计 **~2770KB** 中文技术文档
+> 共 **96 篇文档**，总计 **~2794KB** 中文技术文档
 
 ---
 
@@ -238,6 +238,14 @@ MemoryRegion/AddressSpace 内存子系统全栈分析：MemoryRegion 核心结�
 
 **适合读者**：需要理解 QEMU 内存子系统架构、MemoryRegion 类型与层次、地址翻译与分发机制、FlatView 扁平化与拓扑更新、MemoryListener 通知链、KVM memslot 同步、RAMBlock 内存管理或 IOMMU/脏页追踪的开发者。  
 **关键源文件**：`include/system/memory.h`（~2900行）、`system/memory.c`（~3700行）、`system/physmem.c`（~3900行）、`include/system/ramblock.h`（~130行）
+
+### [25-Block-Layer-IO子系统深度分析-BlockDriverState-协程IO-请求追踪与限流.md](architecture/25-Block-Layer-IO子系统深度分析-BlockDriverState-协程IO-请求追踪与限流.md)
+> **24KB · 18 节**
+
+Block Layer I/O 子系统全栈分析：BlockDriverState 核心结构（drv/opaque 驱动 vtable 与私有数据、aio_context 事件循环、filename/backing_file 文件链、bl BlockLimits I/O 约束、children/backing/file/parents 节点图、total_sectors 磁盘容量、dirty_bitmaps 脏位图、copy_on_read CoR 引用计数、in_flight/serialising_in_flight 请求计数、reqs_lock/tracked_requests 请求追踪、flush_queue/active_flush_req flush 串行化、write_gen/flushed_gen 写入代追踪、block_status_cache RCU 缓存）、BlockDriver 驱动 vtable（format_name/protocol_name、bdrv_open/bdrv_close 生命周期、bdrv_co_preadv_part/bdrv_co_pwritev_part 新版 I/O 回调、bdrv_co_flush_to_os/to_disk 两级 flush、bdrv_co_pdiscard/bdrv_co_truncate/bdrv_co_block_status、bdrv_snapshot_create/goto/delete/list 快照、bdrv_check_perm/bdrv_set_perm/bdrv_child_perm 权限）、BlockBackend 设备前端（name/refcnt/root BdrvChild、ctx AioContext、dev DeviceState/dev_ops 设备模型、enable_write_cache 写缓存、perm/shared_perm 权限、throttle_group_member I/O 限流、in_flight/queued_requests 请求管理）、BdrvChild 父子关系（bs/name/klass/role/opaque、perm/shared_perm 权限授予、frozen 冻结标记、BdrvChildRoleBits DATA/METADATA/FILTERED/COW/PRIMARY/IMAGE 角色位）、节点图与典型链路（BlockBackend→root→格式 BDS→file→协议 BDS→实际 I/O、backing→COW 链递归）、权限系统（BLK_PERM_CONSISTENT_READ/WRITE/WRITE_UNCHANGED/RESIZE 常量、bdrv_child_perm 计算→bdrv_check_perm 检查→bdrv_set_perm 应用→file-posix fcntl/OFD 锁、父冲突检查+累计传播到子树）、BlockLimits I/O 约束（request_alignment/max_transfer/opt_transfer/max_pdiscard/max_pwrite_zeroes/min_mem_alignment/opt_mem_alignment/max_iov→自动拆分超大请求+对齐非对齐请求）、bdrv_open 打开路径（bdrv_open_common 解析选项→查找驱动→设置标志→bdrv_open_driver 分配 opaque→drv->bdrv_open→设置 supported_flags）、I/O 入口 BlockBackend 层（blk_co_preadv→blk_co_do_preadv_part：blk_wait_while_drained→blk_check_byte_request→bdrv_inc_in_flight→throttle_group_co_io_limits_intercept 限流→bdrv_co_preadv_part 下发→bdrv_dec_in_flight、写入类似+FUA 标志控制）、核心协程 I/O 路径（bdrv_driver_preadv 驱动分发→优先 bdrv_co_preadv_part→回退旧接口、bdrv_aligned_preadv 对齐验证→CoR 串行化→按 max_transfer 分块→bdrv_driver_preadv 循环、完整读取流程 blk_co_preadv→throttle→tracked_request_begin→pad→aligned_preadv→driver_preadv→drv->bdrv_co_preadv_part→递归到协议层→tracked_request_end）、请求追踪与串行化（BdrvTrackedRequest offset/bytes/type/serialising/overlap_offset/overlap_bytes/co/wait_queue/waiting_for、tracked_request_begin/end 追踪生命周期、tracked_request_set_serialising+bdrv_find_conflicting_request+bdrv_wait_serialising_requests_locked CoR 和写入的集群级串行化）、Copy-on-Read（bdrv_co_do_copy_on_readv 簇对齐→bdrv_co_is_allocated 检查→bounce buffer 从 backing 读取→bdrv_driver_pwritev 写入当前层→复制到 Guest 缓冲区）、写入路径与 Flush（bdrv_driver_pwritev 驱动分发+FUA 模拟→bdrv_co_flush、flush 链 blk→drv->bdrv_co_flush_to_os→递归 bdrv_co_flush(bs->file)→drv->bdrv_co_flush_to_disk fsync、enable_write_cache false→自动 FUA）、协程包装器模式（co_wrapper_mixed/co_wrapper 宏→block-coroutine-wrapper.py 自动生成→协程内直接调用/非协程创建协程+bdrv_poll_co 轮询）、I/O 限流（ThrottleGroupMember/ThrottleGroup/ThrottleState、throttle_group_co_io_limits_intercept 获取锁→next_throttle_token 轮转→throttle_group_schedule_timer→qemu_co_queue_wait 协程挂起→throttle_account 记账→schedule_next_request、位于 blk_co_do_preadv_part/pwritev_part 实际 I/O 前）、Drain 机制（bdrv_do_drained_begin quiesce_counter++→通知父节点→bdrv_drain_poll 等待 in_flight==0、bdrv_do_drained_end quiesce_counter--→唤醒排队请求、bdrv_drain_all_begin/end 全局 drain→图变更前必须）、Block Job 基础设施（Job id/driver/co/auto_finalize/auto_dismiss/cb/progress/aio_context/status、JobSTT 状态转移表 CREATED→RUNNING→WAITING→PENDING→CONCLUDING→NULL+PAUSED/ABORTING 分支、mirror/commit/stream/backup 四种任务类型）。
+
+**适合读者**：需要理解 QEMU Block Layer 架构、BDS 节点图与父子关系、块设备 I/O 协程路径、请求追踪与串行化机制、Copy-on-Read 实现、I/O 限流与 Drain、Block Job 状态机或 bdrv_open 打开路径的开发者。  
+**关键源文件**：`include/block/block_int-common.h`（~1300行）、`include/block/block-common.h`（~600行）、`block/block-backend.c`（~2400行）、`block/io.c`（~3500行）、`block.c`（~8000行）、`block/throttle-groups.c`（~700行）、`include/qemu/job.h`（~400行）
 
 ---
 
