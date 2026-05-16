@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **98 篇文档**，总计 **~2834KB** 中文技术文档
+> 共 **99 篇文档**，总计 **~2854KB** 中文技术文档
 
 ---
 
@@ -562,6 +562,14 @@ ARM64 内存管理全栈分析：ARMMMUIdx 翻译体制索引（E10_0/E10_1/E20_
 
 **适合读者**：需要理解 ARM64 页表遍历实现、Stage-1/Stage-2 翻译交互、TLB 管理、TLBI/AT 指令模拟或内存属性合并机制的开发者。  
 **关键源文件**：`target/arm/ptw.c`（~3950行）、`target/arm/mmuidx.h`（~200行）、`target/arm/internals.h`（~1500行）、`target/arm/helper.c`（~10100行）、`target/arm/tcg/tlb_helper.c`（~380行）、`target/arm/tcg/tlb-insns.c`（~740行）、`target/arm/tcg/cpregs-at.c`（~360行）、`accel/tcg/cputlb.c`（~2600行）
+
+### [39-ARM64-EL3-Secure世界切换深度分析-SMC异常入口-Monitor执行-ERET返回与安全状态转换.md](arm64/39-ARM64-EL3-Secure世界切换深度分析-SMC异常入口-Monitor执行-ERET返回与安全状态转换.md)
+> **20KB · 15 节**
+
+ARM64 EL3/Secure 世界切换全栈分析：SMC 指令翻译（trans_SMC 两步处理：pre_smc 陷阱决策 + EXCP_SMC 异常生成）、pre_smc 决策表（有/无 EL3 × SMD × HCR_TSC × PSCI 三维矩阵、AArch64 SMD 安全态也生效 vs AArch32 仅非安全态、HCR_TSC 路由 EL2 优先于 SMD、NV 嵌套虚拟化陷阱）、arm_cpu_do_interrupt_aarch64 异常进入（VBAR_EL3 基地址 + 向量偏移 +0x400/+0x600 取决于 SCR_RW、SPSR_EL3/ELR_EL3/ESR_EL3 保存、PSTATE.DAIF=1111 全屏蔽 + SP_EL3 + PAN/TCO/SSBS/ALLINT 设置、arm_rebuild_hflags 切换到 E3 MMU 索引）、EL3 系统寄存器（SCR_EL3/TTBR0_EL3/TCR_EL3/ELR_EL3/SPSR_EL3/ESR_EL3/FAR_EL3/VBAR_EL3/CPTR_EL3 全部 opc1=6 PL3_RW）、SCR_EL3 写入回调（valid_mask 从 0x3fff 基础 + 20+ 特性门控扩展、SCR_RW 无 AArch32 时强制 1、NS/NSE 变化触发 12 种 MMU 索引 TLB 刷新）、安全状态判定（arm_security_space 四域：EL3 → Root/Secure、EL3 以下 → SCR_NS/NSE 三分支 Secure/NonSecure/Realm）、hflags 与 TB 隔离（rebuild_hflags_a64 编码 current_el + mmu_idx 确保 EL3 TB 不与 EL1 混用、E3 vs E10_1 翻译体制差异）、ERET 返回（el_from_spsr 提取目标 EL、RME NSE=1+NS=0 非法检查、执行宽度匹配、HCR_TGE EL1 返回禁止、pstate_write 恢复 PSTATE + aarch64_restore_sp + rebuild_hflags、TBI 地址调整、illegal_return 设置 PSTATE.IL）、安全内存访问（MemTxAttrs.secure → ARMASIdx_S/NS → 不同 address_space）、PSCI 旁路（arm_is_psci_call 在陷阱决策前检查、arm_handle_psci_call 实现 CPU_ON/OFF/RESET/VERSION）、EL3 陷阱控制（SMD/TERR/TLOR/API/APK/ATA/HXEN/FGTEN/PIEN 等 SCR_EL3 位控制低 EL 指令陷入）。
+
+**适合读者**：需要理解 ARM64 安全世界切换实现、SMC/ERET 异常路径、EL3 Monitor 执行环境、SCR_EL3 安全配置或 PSCI 固件接口的开发者。  
+**关键源文件**：`target/arm/tcg/translate-a64.c`（~3205行）、`target/arm/tcg/op_helper.c`（~1200行）、`target/arm/helper.c`（~10190行）、`target/arm/tcg/helper-a64.c`（~785行）、`target/arm/tcg/hflags.c`（~575行）、`target/arm/tcg/psci.c`（~120行）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
