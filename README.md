@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **83 篇文档**，总计 **~2453KB** 中文技术文档
+> 共 **84 篇文档**，总计 **~2475KB** 中文技术文档
 
 ---
 
@@ -144,6 +144,16 @@ TCG 前端翻译管线全解：decodetree DSL 指令解码框架（scripts/decod
 
 **适合读者**：需要理解 QEMU 翻译管线、添加新指令或新架构前端的开发者。  
 **关键源文件**：`scripts/decodetree.py`、`target/arm/tcg/a64.decode`、`target/arm/tcg/translate-a64.c`、`accel/tcg/translator.c`、`tcg/tcg-op.c`、`tcg/optimize.c`、`tcg/tcg.c`、`include/tcg/tcg.h`
+
+---
+
+### [14-TCG后端代码生成深度分析-AArch64后端寄存器分配与TLB慢路径.md](architecture/14-TCG后端代码生成深度分析-AArch64后端寄存器分配与TLB慢路径.md)
+> **22KB · 12 节**
+
+TCG 后端代码生成管线全解：tcg_gen_code() 主循环（Op 遍历与分发）、tcg_reg_alloc_op() 寄存器分配三阶段（输入分配→输出分配→发射）、outop 表驱动架构（outop_add/outop_and 等替代传统 tcg_out_op 大 switch）、C_O1_I2(r,r,rA) 约束记法、AArch64 寄存器布局（callee-saved 优先分配 X20-X28、TMP0/TMP1/TMP2 保留、AREG0=X19、GUEST_BASE=X28）、AArch64Insn 枚举与 tcg_out_insn 类型安全宏、tcg_out_movi 7 级立即数加载策略（MOVZ→MOVN→ORR→ADR→ADRP+ADD→MOVZ+MOVK→常量池）、TLB 快路径 prepare_host_addr（LDP→AND_LSR→ADD→LDR→CMP→B.NE）、TLB 慢路径延迟发射（tcg_out_ldst_finalize）、tcg_out_qemu_ld/st_direct Host 内存访问、goto_tb 双模式 TB 链接（B 直接/LDR 间接）与原子补丁、exit_tb 返回主循环、Prologue/Epilogue 完整栈帧（STP/LDP X19-X27）、条件码映射与 CBZ/CBNZ/TBZ/TBNZ 分支优化、三种重定位类型（pc26/pc19/pc14）。
+
+**适合读者**：需要理解 TCG 后端机器码生成、寄存器分配或添加新 Host 架构后端的开发者。  
+**关键源文件**：`tcg/tcg.c`、`tcg/aarch64/tcg-target.c.inc`、`tcg/aarch64/tcg-target.h`、`include/tcg/tcg.h`
 
 ---
 
