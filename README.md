@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **86 篇文档**，总计 **~2530KB** 中文技术文档
+> 共 **87 篇文档**，总计 **~2554KB** 中文技术文档
 
 ---
 
@@ -172,6 +172,14 @@ TCG 后端代码生成管线全解：tcg_gen_code() 主循环（Op 遍历与分�
 
 **适合读者**：需要理解 QEMU 定时器机制、ARM Generic Timer 虚拟化、设备定时器开发或 icount 精确时序的开发者。  
 **关键源文件**：`include/qemu/timer.h`、`util/qemu-timer.c`、`hw/core/ptimer.c`、`target/arm/helper.c`、`target/arm/gtimer.h`、`include/hw/core/clock.h`
+
+### [17-PMU性能监控单元深度分析-事件计数器-溢出中断与EL过滤.md](architecture/17-PMU性能监控单元深度分析-事件计数器-溢出中断与EL过滤.md)
+> **24KB · 12 节**
+
+ARM PMUv3 性能监控单元全栈分析：pm_event 事件表（SW_INCR/INST_RETIRED/CPU_CYCLES/STALL_FRONTEND/STALL_BACKEND/STALL 共 6 种事件、get_count 底层计数获取、ns_per_count 溢出预测）、CPUARMState PMU 状态（c9_pmcr/c9_pmcnten/c9_pmovsr/c9_pminten 控制位图、c15_ccnt/c15_ccnt_delta 周期计数器惰性快照、c14_pmevcntr[31]/c14_pmevcntr_delta[31] 事件计数器）、惰性求值核心机制（pmccntr_op_start 快照+溢出检测、pmccntr_op_finish delta 重算+timer_mod_anticipate_ns 溢出预测、pmevcntr_op_start/finish 事件计数器同理、pmu_op_start/finish 聚合操作）、EL 切换快照（pmu_pre_el_change/pmu_post_el_change 在 EL 变化前后拆分计数）、四层使能过滤（PMCR.E 全局使能 → HPMD/SPME/SCCD/HCCD 禁止位 → P/U/NSK/NSU/NSH/M EL 过滤 → event_supported 事件支持检查）、溢出检测与中断（old & ~new & overflow_mask 回绕检测 → PMOVSR 置位 → pmu_update_irq: PMCRE ∧ PMINTEN∩PMOVSR → GICv3 PPI）、PMCR 写入（PMCRC 复位 CCNT、PMCRP 复位事件计数器、HPMN 虚拟化替换 N）、SW_INCR 软件递增（PMSWINC 写入实时递增+溢出检测，不可预测）、PMU 系统寄存器定义（v7_pm_reginfo 数组 + 动态生成 PMEVCNTR/PMEVTYPER、access_tpm 陷入控制）、pmu_timer 溢出预测定时器（arm_pmu_timer_cb → op_start+op_finish 周期唤醒）、KVM PMU 集成（KVM_ARM_VCPU_PMU_V3_INIT/IRQ 初始化、cpreg 迁移路径同步）。
+
+**适合读者**：需要理解 ARM PMU 虚拟化实现、性能计数器惰性求值机制、EL 过滤逻辑或 PMU 中断连接的开发者。  
+**关键源文件**：`target/arm/cpregs-pmu.c`、`target/arm/cpu.h`、`target/arm/internals.h`、`target/arm/kvm.c`
 
 ---
 
