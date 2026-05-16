@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **75 篇文档**，总计 **~2314KB** 中文技术文档
+> 共 **76 篇文档**，总计 **~2326KB** 中文技术文档
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
-| [architecture/](#architecture-架构) | 8 | ~213KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动 |
+| [architecture/](#architecture-架构) | 9 | ~225KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端 |
 | [arm64/](#arm64-arm64-架构) | 34 | ~817KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
@@ -96,6 +96,14 @@ qcow2 磁盘格式（QCowHeader、L1/L2 两级地址翻译、引用计数、快�
 
 **适合读者**：需要理解 qcow2 内部实现、优化块 I/O 性能或分析磁盘格式的开发者。  
 **关键源文件**：`block/qcow2.c`、`block/qcow2.h`、`block/qcow2-cluster.c`、`block/file-posix.c`、`hw/block/virtio-blk.c`
+
+### [08-TCG后端深度分析-IR生成寄存器分配与代码缓存.md](architecture/08-TCG后端深度分析-IR生成寄存器分配与代码缓存.md)
+> **12KB · 14 节**
+
+TCG JIT 编译器全流程：TCGTemp/TCGOp/TCGContext 数据结构、tcg_gen_* 前端 IR 生成 API、tcg_optimize() 常量折叠/传播/死代码消除、三遍活性分析（liveness_pass_0/1/2）、线性扫描寄存器分配（tcg_reg_alloc_op/mov）、all_outop[] 后端分发表、AArch64 后端实现（tcg_out_ldst/qemu_ld_direct/prologue）、TranslationBlock 结构与 cflags 编译标志、代码缓存多区域管理（per-vCPU 独占）、TB 失效与全量刷新、TB 链接（Block Chaining）消除查找开销、cpu_exec_loop 三级 TB 查找执行循环。
+
+**适合读者**：需要深入理解 TCG JIT 编译器内部实现、优化代码生成或扩展新后端的开发者。  
+**关键源文件**：`tcg/tcg.c`、`include/tcg/tcg.h`、`tcg/optimize.c`、`tcg/region.c`、`tcg/aarch64/tcg-target.c.inc`、`accel/tcg/translate-all.c`、`accel/tcg/cpu-exec.c`
 
 ---
 
