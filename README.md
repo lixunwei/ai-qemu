@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **70 篇文档**，总计 **~2266KB** 中文技术文档
+> 共 **72 篇文档**，总计 **~2285KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 8 | ~213KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动 |
-| [arm64/](#arm64-arm64-架构) | 29 | ~769KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟 |
+| [arm64/](#arm64-arm64-架构) | 31 | ~788KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -332,6 +332,22 @@ ARM64 系统寄存器完整模拟框架：ARMCPRegInfo 结构体（编码/权限
 
 **适合读者**：需要理解系统寄存器访问如何被拦截、分发和处理的开发者，或需要添加新系统寄存器支持的开发者。
 **关键源文件**：`target/arm/cpregs.h`（~1100行）、`target/arm/helper.c`（~8500行）、`target/arm/tcg/translate-a64.c`、`target/arm/tcg/op_helper.c`、`target/arm/machine.c`
+
+### [30-ARM64-MMU系统寄存器与页表遍历深度分析.md](arm64/30-ARM64-MMU系统寄存器与页表遍历深度分析.md)
+> **10KB · 9 节**
+
+MMU 核心寄存器详解：TCR_EL1 完整位域（T0SZ/T1SZ/TG0/TG1/IPS/EPD/A1 等）、TTBR0/1_EL1 布局（ASID[63:48] + BADDR + CnP）、MAIR_EL1 属性槽（8×8位 Device/Normal 编码）、VTCR_EL2 Stage-2 配置（SL0 起始级别、T0SZ IPA 空间）、页表遍历完整流程（get_phys_addr_lpae 逐级查表：TCR 解码→TTBR 选择→描述符遍历→权限/属性解析）、Stage-1 + Stage-2 两级翻译路径、翻译体制选择（EL10/E2/E20/SE3）、TLBI 指令实现（IS 跨核同步、HCR_EL2.TTLB 陷阱）、QEMU TLB 简化（不跟踪 ASID、忽略 SH/IRGN/ORGN）。
+
+**适合读者**：需要理解 QEMU 如何实现 ARM64 MMU 地址翻译或分析 TLB 性能的开发者。
+**关键源文件**：`target/arm/ptw.c`（~2700行）、`target/arm/helper.c`、`target/arm/internals.h`、`target/arm/tcg/tlb-insns.c`
+
+### [31-ARM64-EL2-EL3系统寄存器陷阱路由深度分析.md](arm64/31-ARM64-EL2-EL3系统寄存器陷阱路由深度分析.md)
+> **10KB · 9 节**
+
+完整陷阱路由框架：HCR_EL2 全部 56+ 陷阱位分类（VM 寄存器 TVM/TRVM、中断路由 FMO/IMO/AMO、指令 TWI/TWE/TSC、TLB TTLB/TTLBIS、ID TID0-5、Cache TSW/TPCP、MMU VM/DC/E2H/NV）、SCR_EL3 安全位（NS/IRQ/FIQ/EA 路由、SMD/HCE/RW/FGTEN）、CPTR_EL2/EL3 三级 FP/SIMD/SVE 陷阱链、FEAT_FGT 细粒度陷阱（HFGRTR/HFGWTR 逐寄存器位控制 vs HCR.TVM 粗粒度对比）、accessfn 实现模式、陷阱→异常流程（syndrome 生成→raise_exception→TGE 覆盖）、四级检查优先级（EL 权限→HSTR→FGT→accessfn）。
+
+**适合读者**：需要理解虚拟化陷阱路由机制、实现新陷阱位或分析 VM Exit 路径的开发者。
+**关键源文件**：`target/arm/cpu.h`（HCR/SCR 定义）、`target/arm/cpregs.h`（FGT）、`target/arm/helper.c`（accessfn）、`target/arm/tcg/op_helper.c`（异常流程）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
