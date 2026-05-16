@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **93 篇文档**，总计 **~2724KB** 中文技术文档
+> 共 **94 篇文档**，总计 **~2745KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 15 | ~342KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程 |
-| [arm64/](#arm64-arm64-架构) | 36 | ~851KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异 |
+| [arm64/](#arm64-arm64-架构) | 37 | ~872KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -522,6 +522,14 @@ ARM64 不同异常级别（EL0-EL3）下指令执行流差异全解：rebuild_hf
 
 **适合读者**：需要理解不同 EL 下 CPU 行为差异、实现虚拟化陷阱或调试权限问题的开发者。  
 **关键源文件**：`target/arm/tcg/hflags.c`、`target/arm/tcg/translate.h`、`target/arm/cpregs.h`、`target/arm/helper.c`、`target/arm/debug_helper.c`
+
+### [37-ARM64安全状态转换深度分析-SCR_EL3-HCR_EL2联动-中断路由与异常级别安全域.md](arm64/37-ARM64安全状态转换深度分析-SCR_EL3-HCR_EL2联动-中断路由与异常级别安全域.md)
+> **21KB · 17 节**
+
+ARM64 安全状态转换全栈分析：ARMSecuritySpace 四域安全模型（Secure/NonSecure/Root/Realm 对应 NSE:NS 编码）、SCR_EL3 安全配置寄存器位域（NS/IRQ/FIQ/EA/SMD/HCE/RW/EEL2/NSE 等 40+ 位定义与特性门控）、安全状态判定（arm_security_space EL3→Root/Secure + arm_security_space_below_el3 SCR_NS/SCR_NSE 三分支）、HCR_EL2 Hypervisor 配置位域（VM/FMO/IMO/AMO/TSC/HCD/TGE/RW/E2H/NV 等）、arm_hcr_el2_eff 有效值遮罩（安全态+无 SEL2→返回 0 完全无效、AArch32 过滤、TGE+E2H 清除虚拟化位、TGE 非 E2H 强制 FMO/IMO/AMO）、SCR_EL3 写入回调（scr_write 特性门控 valid_mask、NS/NSE 变化→全 EL3 以下 TLB 刷新 12 种 MMU 索引）、中断路由联动（arm_phys_excp_target_el 6 维查找表 target_el_table[is64][scr][rw][hcr][secure][cur_el]、SCR_IRQ/FIQ/EA 路由 EL3 优先于 HCR_IMO/FMO/AMO 路由 EL2、TGE 折叠）、中断屏蔽与安全状态（VINMI/VFIQ/VSERR 仅虚拟化激活有效、目标 EL3 不可屏蔽、VHE 模式 EL2 可屏蔽、AArch32 SCR/HCR 覆盖 CPSR）、SMC 异常路由（SCR_SMD 禁用、HCR_TSC NS EL1 陷阱到 EL2 优先、PSCI 旁路、AArch64 SMD 安全态也生效 vs AArch32 仅非安全态）、HVC 异常路由（SCR_HCE 优先于 HCR_HCD、安全态 AArch32/安全态 EL1 AArch64 UNDEF）、异常进入安全状态（arm_cpu_do_interrupt_aarch64 向量偏移 SCR_RW→+0x400/+0x600）、ERET 安全性校验（RME NSE=1+NS=0 保留非法、arm_el_is_aa64 宽度匹配、TGE EL1 返回禁止）、arm_el_is_aa64 寄存器宽度链（EL3 固定→SCR_RW 控制 EL2→HCR_RW 控制 EL1、arm_scr_rw_eff 安全态 SEL2 感知）、Secure EL2（arm_is_el2_enabled_secstate 安全态需 SCR_EEL2）、VHE 寄存器重定向（vhe_redir_to_el2/el01 SCTLR/TTBR/TCR/VBAR 等）、Stage 2 MMU（HCR_VM/DC 使能、安全态 HCR 无效时自动禁用）。
+
+**适合读者**：需要理解 ARM64 安全世界切换、SCR_EL3/HCR_EL2 联动控制、中断路由优先级、SMC/HVC 异常路由或 Secure EL2 实现的开发者。  
+**关键源文件**：`include/hw/arm/arm-security.h`（~37行）、`target/arm/cpu.h`（~2250行）、`target/arm/internals.h`（~490行）、`target/arm/helper.c`（~10190行）、`target/arm/tcg/helper-a64.c`（~730行）、`target/arm/tcg/op_helper.c`（~1200行）、`target/arm/cpu-irq.c`（~165行）
 
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
