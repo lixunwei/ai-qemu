@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **85 篇文档**，总计 **~2506KB** 中文技术文档
+> 共 **86 篇文档**，总计 **~2530KB** 中文技术文档
 
 ---
 
@@ -164,6 +164,14 @@ TCG 后端代码生成管线全解：tcg_gen_code() 主循环（Op 遍历与分�
 
 **适合读者**：需要理解 QEMU 内存映射机制、编写设备 MMIO、调试地址解析或理解 KVM/TCG 内存集成的开发者。  
 **关键源文件**：`include/system/memory.h`、`system/memory.c`、`system/physmem.c`、`accel/kvm/kvm-all.c`、`include/system/ramblock.h`
+
+### [16-时钟与定时器子系统深度分析-QEMUTimer-ptimer-ARM-Generic-Timer与Clock框架.md](architecture/16-时钟与定时器子系统深度分析-QEMUTimer-ptimer-ARM-Generic-Timer与Clock框架.md)
+> **24KB · 12 节**
+
+时钟与定时器全栈分析：QEMUTimer 核心基础设施（4 种时钟类型 REALTIME/VIRTUAL/HOST/VIRTUAL_RT、QEMUTimerList 有序链表、timer_init_full/timer_mod_ns/timer_del API）、时间获取语义（qemu_clock_get_ns 按类型分发、VM 暂停行为差异）、定时器到期分发（timerlist_run_timers 弹出循环、锁外回调设计）、主循环集成（timerlistgroup_deadline_ns → poll 超时、qemu_clock_advance_virtual_time warp 逐步推进）、ptimer 周期定时器（ptimer_state 结构、enabled 三态、ptimer_tick 单次停止/周期重装、ptimer_reload 最低周期保护、6 种策略标志、事务机制）、ARM Generic Timer 架构（7 种定时器实例 PHYS/VIRT/HYP/SEC/HYPVIRT/S_EL2_PHYS/S_EL2_VIRT、ARMGenericTimer cval+ctl 状态、gt_get_countervalue 虚拟时钟除以频率）、系统寄存器（CNTFRQ_EL0/CNTP_CTL_EL0/CNTV_CVAL_EL0 等 ARMCPRegInfo 定义、CTL ENABLE/IMASK/ISTATUS 控制位）、gt_recalc_timer 核心重算（ISTATUS 计算、nexttick 溢出处理、timer_mod 编程）、gt_update_irq 中断连接（ISTATUS∧¬IMASK → qemu_set_irq → GICv3 PPI）、定时器偏移（gt_direct_access_timer_offset、CNTVOFF_EL2 虚拟化偏移、EL 相关物理偏移）、Clock 设备时钟框架（Clock 结构体、period 定点数、时钟树 source/children、multiplier/divider 分频倍频、clock_propagate 递归传播）、icount 指令计数模式（VIRTUAL 时钟由指令驱动、deadline 排除、精确时序调试）。
+
+**适合读者**：需要理解 QEMU 定时器机制、ARM Generic Timer 虚拟化、设备定时器开发或 icount 精确时序的开发者。  
+**关键源文件**：`include/qemu/timer.h`、`util/qemu-timer.c`、`hw/core/ptimer.c`、`target/arm/helper.c`、`target/arm/gtimer.h`、`include/hw/core/clock.h`
 
 ---
 
