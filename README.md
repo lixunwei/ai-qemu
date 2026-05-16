@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **61 篇文档**，总计 **~2147KB** 中文技术文档
+> 共 **63 篇文档**，总计 **~2181KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 6 | ~194KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型 |
-| [arm64/](#arm64-arm64-架构) | 23 | ~679KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转 |
+| [arm64/](#arm64-arm64-架构) | 25 | ~714KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -268,6 +268,22 @@ ARM64 安全/非安全中断在不同异常级别和安全状态下的完整路�
 
 **适合读者**：需要理解 ARM64 安全/非安全中断在不同 EL 和安全状态下如何路由、屏蔽、流转，以及虚拟中断注入机制的开发者。
 **关键源文件**：`hw/intc/arm_gicv3_cpuif.c`（~2300行）、`hw/intc/arm_gicv3_dist.c`（~2000行）、`target/arm/cpu-irq.c`（~270行）、`target/arm/helper.c`（~10188行）
+
+### [24-GICv3完整中断生命周期深度分析.md](arm64/24-GICv3完整中断生命周期深度分析.md)
+> **18KB · 11 节**
+
+GICv3 中断从设备触发到 CPU 处理完成的完整生命周期深度分析：GPIO 连线与中断输入（gicv3_init_irqs_and_mmio SPI/PPI GPIO + CPU 输出 IRQ/FIQ/NMI 线、gicv3_set_irq SPI→GICD / PPI→GICR 分派）、SPI 端到端（gicv3_dist_set_irq 电平/边沿 pending 更新、gicd_int_pending 四重位操作过滤 enable+active+group、gicv3_update_noirqset gicd_irouter_target 路由缓存+irqbetter 优先级比较、gicv3_cpuif_update 信号 CPU）、SGI 生命周期（icc_generate_sgi Aff3:2:1+targetlist+IRM 解码、gicv3_redist_send_sgi 组匹配+NSACR 检查+pending 设置）、PPI 生命周期（gicv3_redist_set_irq 电平追踪+边沿锁存、Timer/PMU PPI 映射表）、优先级与抢占（icc_gprio_mask BPR 组/子优先级分割、icc_highest_active_prio APR 位图扫描+NMI 特殊、icc_hppi_can_preempt PMR→运行优先级→组优先级比较链）、中断状态机四状态（Inactive→Pending→Active→Active+Pending 转换图、icc_activate_irq SGI/PPI/SPI/LPI 分支、电平 vs 边沿触发 pending 差异）、CPU 应答（icc_iar0/1_read 抢占检查+activate+返回 INTID、NMI→INTID_NMI）、EOI（icc_eoir_write 组匹配+安全检查+icc_drop_prio+icc_deactivate_irq、EOImode=0 一步 vs EOImode=1 分离 ICC_DIR）、完整 SPI 10 步流程图。
+
+**适合读者**：需要理解 GICv3 中断从触发到完成的完整数据流、状态机转换、优先级抢占机制的开发者。
+**关键源文件**：`hw/intc/arm_gicv3.c`（~480行）、`hw/intc/arm_gicv3_cpuif.c`（~2300行）、`hw/intc/arm_gicv3_dist.c`（~2000行）、`hw/intc/arm_gicv3_redist.c`（~1200行）、`hw/intc/arm_gicv3_common.c`（~400行）
+
+### [25-GICv3-ITS中断翻译服务与LPI深度分析.md](arm64/25-GICv3-ITS中断翻译服务与LPI深度分析.md)
+> **17KB · 11 节**
+
+GICv3 ITS（中断翻译服务）和 LPI（局部性外设中断）实现深度分析：ITS 架构（QOM 类型 arm-gicv3-its、MMIO 控制+翻译区域、MSI→ITS→GICR→CPU 投递链路）、核心数据结构（DTEntry 设备表、CTEntry 集合表、ITEntry 中断翻译表、VTEntry 虚拟 PE 表）、表管理（GITS_BASER 8 寄存器配置、table_entry_addr 平坦/二级表地址计算、L1→L2 间接寻址）、命令队列（GITS_CBASER/CWRITER/CREADR 环形缓冲、process_cmdq 主循环、CMD_STALL 停滞处理）、14 种命令详解（MAPD 设备映射、MAPC 集合映射、MAPTI/MAPI 中断翻译映射、INT 软件触发、INV/INVALL 缓存失效、MOVI/MOVALL LPI 迁移、DISCARD/CLEAR 清除、VMAPTI/VMAPP/VMOVI/VINVALL GICv4 虚拟化命令）、MSI→LPI 完整 11 步流程（GITS_TRANSLATER 写入→do_process_its_cmd 三级翻译→process_its_cmd_phys 集合查找→gicv3_redist_process_lpi LPI 投递→pending 表更新→CPU 接口→应答→EOI）、LPI 配置表（GICR_PROPBASER 1字节/LPI enable+priority、NS 优先级移位）、LPI pending 表（GICR_PENDBASER 1位/LPI、gicv3_redist_update_lpi_only 全量扫描）、LPI vs SPI/PPI/SGI 对比（始终 G1NS、始终边沿、无 Active 位）、vLPI 与 GICv4（process_its_cmd_virt vPE 表查找、doorbell 中断）、KVM 直通 ITS。
+
+**适合读者**：需要理解 MSI/MSI-X 如何通过 ITS 翻译为 LPI、ITS 命令队列和表管理、LPI 配置和 pending 机制的开发者。
+**关键源文件**：`hw/intc/arm_gicv3_its.c`（~2050行）、`hw/intc/arm_gicv3_its_common.c`（~130行）、`hw/intc/arm_gicv3_redist.c`（~1200行）、`include/hw/intc/arm_gicv3_its_common.h`（~380行）
 
 ---
 
