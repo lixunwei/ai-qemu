@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **91 篇文档**，总计 **~2674KB** 中文技术文档
+> 共 **92 篇文档**，总计 **~2701KB** 中文技术文档
 
 ---
 
@@ -212,6 +212,16 @@ VirtIO 子系统全栈分析：VirtIODevice 核心结构（status/isr/queue_sel 
 
 **适合读者**：需要理解 VirtIO 设备虚拟化原理、VirtQueue 描述符链处理、中断抑制优化、PCI/MMIO 传输层实现或 vhost 数据面卸载加速的开发者。  
 **关键源文件**：`include/hw/virtio/virtio.h`（~250行）、`hw/virtio/virtio.c`（~3700行）、`hw/virtio/virtio-bus.c`（~315行）、`hw/virtio/virtio-pci.c`（~2400行）、`hw/virtio/virtio-mmio.c`（~665行）、`include/hw/virtio/vhost.h`（~140行）、`hw/virtio/vhost.c`（~2300行）、`hw/virtio/vhost-user.c`（~3050行）、`hw/net/vhost_net.c`（~510行）
+
+---
+
+### [22-QOM对象模型深度分析-TypeInfo-ObjectClass-Property-接口继承与设备模型.md](architecture/22-QOM对象模型深度分析-TypeInfo-ObjectClass-Property-接口继承与设备模型.md)
+> **27KB · 14 节**
+
+QOM 对象模型全栈分析：TypeInfo 类型定义（name/parent/instance_size/instance_init/instance_post_init/instance_finalize/abstract/class_size/class_init/class_base_init/interfaces）、TypeImpl 内部表示（parent_type 解析后指针、class 懒加载字段、num_interfaces/InterfaceImpl 数组）、类型注册机制（type_init→module_init→__attribute__((constructor))→register_module_init 加入链表、module_call_init(MODULE_INIT_QOM) 遍历执行、type_register_static→type_register_internal→type_table_add 全局哈希表、type_get_or_load_by_name 模块化按需加载）、type_initialize 类初始化链（递归父类初始化→memcpy 继承虚函数表→父类接口继承→本类接口注册→class_base_init 从根到叶→class_init 覆盖虚函数）、Object 生命周期（object_new→type_initialize→g_malloc→object_initialize_with_type、memset 清零→class 绑定→object_ref 引用计数=1→object_class_property_init_all→object_init_with_type 先父后子递归→object_post_init_with_type 先父后子、object_ref/unref 原子引用计数→object_finalize 属性删除+递归 instance_finalize 先子后父+free）、ObjectClass 结构（type 回指 TypeImpl、interfaces GSList、object_cast_cache[4]/class_cast_cache[4] LRU 缓存、unparent 回调、properties 类属性哈希表）、DECLARE 宏家族（OBJECT_DECLARE_TYPE→typedef+G_DEFINE_AUTOPTR+DECLARE_OBJ_CHECKERS、OBJECT_DECLARE_SIMPLE_TYPE→DECLARE_INSTANCE_CHECKER、DECLARE_INSTANCE_CHECKER→OBJECT_CHECK 生成实例转换函数、DECLARE_CLASS_CHECKERS→GET_CLASS/CLASS 生成类转换函数、DECLARE_OBJ_CHECKERS 组合两者）、属性系统（ObjectProperty name/type/get/set/resolve/release/init/opaque/defval、实例属性 object_property_add 存 obj->properties vs 类属性 object_class_property_add 存 klass->properties、查找优先级 实例→类继承链、object_property_add_child 父子层级、object_property_add_link 对象间引用、add_str/bool/enum/uint 类型化助手）、接口机制（InterfaceInfo type 名、InterfaceClass parent_class+interface_type、type_initialize_interface 创建"type::interface"复合类型→追加 class->interfaces、INTERFACE_CHECK 转换宏、object_class_dynamic_cast 接口查找遍历 interfaces GSList）、动态类型转换（object_dynamic_cast→object_class_dynamic_cast、快速路径 name 指针比较、接口路径 interfaces 遍历+type_is_ancestor、普通继承 type_is_ancestor、object_dynamic_cast_assert 4 槽 LRU 缓存+abort 失败）、DeviceState/DeviceClass 设备模型（DeviceClass realize/unrealize/legacy_reset/vmsd/bus_type/props_/user_creatable、DeviceState realized/id/canonical_path/parent_bus/gpios/child_bus/reset、device_set_realized dc->realize→LISTENER_CALL→canonical_path→vmstate_register→子总线 realize→hotplug reset→plug）、SysBusDevice 系统总线设备（mmio[QDEV_MAX_MMIO]/pio[QDEV_MAX_PIO]、sysbus_init_mmio/init_irq/mmio_map/connect_irq）、QDev 属性助手（Property name/info/offset/defval、DEFINE_PROP_BOOL/UINT32/STRING/LINK 宏、device_class_set_props_n→qdev_class_add_property→object_class_property_add 桥接 QOM）、ARMCPU 类型链实例（arm_cpu_type_info .name=TYPE_ARM_CPU .parent=TYPE_CPU abstract=true、继承链 OBJECT→DEVICE→CPU→ARM_CPU→AARCH64_CPU、初始化顺序 type_initialize class 链→object_init_with_type 先父后子→arm_cpu_post_init 属性注册→arm_cpu_realizefn 指令集初始化）、QOM 树路径（object_get_root 全局根、object_resolve_path 绝对/相对路径解析、/machine/cpu[0] 等典型路径）。
+
+**适合读者**：需要理解 QEMU 类型系统、对象生命周期管理、类继承与接口机制、设备模型 realize 流程或 QOM 属性系统的开发者。  
+**关键源文件**：`include/qom/object.h`（~700行）、`qom/object.c`（~2800行）、`include/qemu/module.h`（~80行）、`include/hw/core/qdev.h`（~300行）、`hw/core/qdev.c`（~800行）、`include/hw/core/sysbus.h`（~90行）、`hw/core/sysbus.c`（~340行）、`target/arm/cpu.c`（~2590行）
 
 ---
 
