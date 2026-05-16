@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **48 篇文档**，总计 **~1955KB** 中文技术文档
+> 共 **51 篇文档**，总计 **~2016KB** 中文技术文档
 
 ---
 
@@ -16,7 +16,7 @@
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
 | [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
-| [arm/](#arm-arm-架构通用) | 5 | ~155KB | EL 状态管理、AArch32 异常处理、CP15/MMU、GICv3 中断控制器、Cache 管理 |
+| [arm/](#arm-arm-架构通用) | 8 | ~217KB | EL 状态管理、AArch32 异常处理、CP15/MMU、GICv3、Cache、Generic Timer、PMU、调试架构 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 
 ---
@@ -470,6 +470,30 @@ ARM Cache 管理在 QEMU 中的完整实现分析：QEMU 缓存模型概述（�
 
 **适合读者**：需要理解 QEMU 缓存处理策略、DC ZVA 实现、缓存 ID 寄存器配置的开发者。
 **关键源文件**：`target/arm/helper.c`（~10200行）、`target/arm/tcg/helper-a64.c`（~1000行）、`target/arm/cpu.h`（~3500行）、`target/arm/cpu-features.h`（~1700行）、`target/arm/cpu64.c`（~1000行）
+
+### [13-ARM-Generic-Timer深度分析.md](arm/13-ARM-Generic-Timer深度分析.md)
+> **18KB · 37 节**
+
+ARM Generic Timer 完整实现分析：定时器类型枚举（7 种：PHYS/VIRT/HYP/SEC/HYPVIRT/S_EL2_PHYS/S_EL2_VIRT）、CPUARMState 定时器状态（c14_cntfrq/c14_cntkctl/cnthctl_el2/cntvoff_el2/cntpoff_el2）、ARMGenericTimer 结构（ctl/cval）、QOM 集成（CPU 内嵌定时器/gt_timer_outputs GPIO/QEMUTimer）、gt_get_countervalue() 计数器实现（QEMU_CLOCK_VIRTUAL/频率周期换算）、generic_timer_cp_reginfo[] 系统寄存器数组、CNTFRQ_EL0 频率寄存器（纯软件值/最高 EL 可写）、CNTKCTL_EL1 访问控制（EL0PCTEN/EL0VCTEN/VHE 重定向）、CNTP_*/CNTV_* 物理/虚拟定时器（CTL/CVAL/TVAL/Secure 分离）、Hypervisor 定时器 CNTHP/CNTHV、安全定时器 CNTPS、CNTVOFF_EL2 虚拟偏移（虚拟计数器=物理-偏移）、CNTHCTL_EL2 陷阱控制、CTL 位定义（ENABLE/IMASK/ISTATUS）、gt_ctl_write() 控制写入（ENABLE 切换→重算/IMASK 切换→更新 IRQ）、gt_recalc_timer() 核心算法（无符号 64 位比较/QEMUTimer 调度/溢出处理）、gt_update_irq() 中断输出（ISTATUS&&!IMASK/RME CNTVMASK/CNTPMASK 覆盖）、CVAL/TVAL 写入转换、虚拟计数器偏移计算、访问控制函数体系（gt_cntfrq/counter/ptimer/vtimer/stimer_access）、Timer→GIC PPI 连接（PPI 14/11/10/13）、virt 机器接线（qdev_connect_gpio_out）、设备树描述、RME/Realm 掩码、KVM 定时器（硬件直通）、ECV 扩展（CNTPOFF_EL2/CNTVCTSS）、定时器与 EL 关系表、完整触发流程图、定时器类型对比表。
+
+**适合读者**：需要理解 ARM Generic Timer 架构、定时器→GIC 中断路径、虚拟化定时器偏移的开发者。
+**关键源文件**：`target/arm/helper.c`（~10200行）、`target/arm/gtimer.h`（~24行）、`target/arm/cpu.h`（~3500行）、`target/arm/cpu.c`（~3000行）、`hw/arm/virt.c`（~3000行）
+
+### [14-ARM-PMUv3性能监控单元深度分析.md](arm/14-ARM-PMUv3性能监控单元深度分析.md)
+> **21KB · 38 节**
+
+ARM PMUv3 性能监控单元完整实现分析：PMU 版本检测（ID_AA64DFR0.PMUVER/ARM_FEATURE_PMU/pmuv3p1-p5）、CPUARMState PMU 状态（c9_pmcr/pmcnten/pmovsr/pmuserenr/pmselr/pminten/c15_ccnt/c14_pmevcntr[31]/pmevtyper[31]）、pm_event 事件定义框架（supported/get_count/ns_per_count 三回调）、支持事件列表（SW_INCR/CPU_CYCLES/INST_RETIRED/STALL*）、CPU_CYCLES 实现（虚拟时钟×1GHz 映射/ARM_CPU_FREQ）、INST_RETIRED 实现（仅 icount 精确模式/icount_get_raw）、STALL 类事件（始终零/无流水线）、v7_pm_reginfo[] 寄存器定义、PMCR_EL0 控制（E/P/C/D/X/DP/LC/LP/N）、pmcr_write() 复位逻辑（pmu_op_start/finish 包裹）、pmcr_read() HPMN 覆盖、PMCNTENSET/CLR 使能位图、PMCCNTR_EL0 延迟更新机制（delta 快照）、pmccntr_op_start() 溢出检测（高位翻转）、pmccntr_op_finish() 溢出预测调度（timer_mod_anticipate_ns）、pmevcntr_op_start/finish 事件计数器（对称设计）、pmu_op_start/finish 批量操作、PMEVCNTRn/PMEVTYPERn 配置、pmevtyper_write() 事件切换（delta 基准重置）、PMSWINC 软件递增（逐位检查+溢出）、PMOVSR/PMOVSSET 溢出状态（写 1 清/设）、PMINTENSET/CLR 中断使能、pmu_update_irq() 中断条件（PMCR.E && PMINTEN & PMOVSR）、PMU 中断连接（pmu_interrupt→GIC PPI）、访问控制体系（access_tpm/do_pmreg_access）、PMUSERENR_EL0 精细控制（EN/SW/CR/ER 4 位）、MDCR_EL2.TPM/TPMCR/HPMN 陷阱与分区、PMCCFILTR_EL0 EL 过滤（P/U/NSK/NSU/NSH/M）、64 位计数器 PMUv3p5（LP/HLP）、时钟分频 D/LC 交互、PMU 初始化流程（pmu_init/pmceid 计算）、KVM PMU 直通（KVM_ARM_VCPU_PMU_V3）、EL 状态变化处理（pmu_pre_el_change）、迁移支持（rawwrite delta 修正）、完整工作流程图。
+
+**适合读者**：需要理解 QEMU PMU 事件计数机制、溢出中断调度、虚拟化 PMU 分区的开发者。
+**关键源文件**：`target/arm/cpregs-pmu.c`（~1300行）、`target/arm/cpu.h`（~3500行）、`target/arm/cpu.c`（~3000行）、`target/arm/helper.c`（~10200行）
+
+### [15-ARM调试架构深度分析.md](arm/15-ARM调试架构深度分析.md)
+> **24KB · 45 节**
+
+ARM 自托管调试架构完整实现分析：CPUARMState 调试寄存器（dbgbvr/dbgbcr/dbgwvr/dbgwcr[16]/mdscr_el1/oslsr_el1/osdlr_el1/mdcr_el2/mdcr_el3）、MDSCR_EL1 调试系统控制（SS 单步/KDE 内核调试/MDE 监控使能）、OSLAR/OSLSR/OSDLR OS 锁机制（oslar_write 上锁/解锁）、调试寄存器访问控制三层陷阱（access_tdosa/tdra/tda/tdcc + MDCR_EL2.TDE 总开关）、DBGBVR/DBGBCR 断点寄存器（16 对/地址匹配/BAS/SSC/HMC/PAC/BT 类型/链式）、dbgbvr/dbgbcr_write() 写入同步 TCG（hw_breakpoint_update）、DBGWVR/DBGWCR 监视点寄存器（16 对/地址+BAS/MASK 范围/LSC 读写控制）、dbgwvr/dbgwcr_write() 写入同步、define_debug_regs() 动态注册（arm_num_brps/wrps）、arm_debug_target_el() 调试目标 EL 决策（TDE/TGE→EL2/Secure→EL3/默认 EL1）、调试异常生成条件（OS 锁检查/安全策略/EL 级别/PSTATE.D）、aa64_generate_debug_exceptions()（EL3 禁止/SDD 安全禁用/同 EL 需 KDE+!D）、aa32_generate_debug_exceptions()（SDER.SUIDEN/SPD/认证开放）、bp_wp_matches() 核心匹配（SSC 安全状态/PAC-HMC 特权/链式检查）、linked_bp_matches() 链式断点、hw_breakpoint_update() TCG 绑定（地址匹配实现/上下文 UNIMP）、hw_watchpoint_update() TCG 绑定（MASK/BAS 范围计算/LSC 方向）、arm_debug_check_breakpoint()（MDE 检查/单步优先/PC 对齐优先）、arm_debug_check_watchpoint()、arm_debug_excp_handler()（WP→DATA_ABORT/BP→PREFETCH_ABORT/GDB 优先）、BRK 指令 AArch64（syn_aa64_bkpt）、BKPT 指令 AArch32（syn_aa32_bkpt）、HELPER(exception_bkpt_insn)（目标 EL < 当前 EL 时在当前 EL 处理）、软件单步（MDSCR.SS+PSTATE.SS 状态机）、arm_singlestep_active()（仅 AArch64 目标 EL）、TCG 单步翻译（单指令 TB/禁止链接/gen_step_complete_exception）、调试异常综合征表（EC 值映射）、arm_debug_exception_fsr()、DCC 通信通道（RAZ/WI 存根）、DBGAUTHSTATUS 认证开放、MDCR_EL2 Hypervisor 控制（TDE/TDA/TDOSA/TDRA/TDCC）、MDCR_EL3 安全控制（SDD/SPD）、GDB 集成（BP_GDB vs BP_CPU）、KVM 调试（KVM_EXIT_DEBUG/hw_breakpoint）、完整断点/监视点触发流程图、调试异常优先级表。
+
+**适合读者**：需要理解 ARM 自托管调试、硬件断点/监视点、调试异常路由的开发者。
+**关键源文件**：`target/arm/debug_helper.c`（~530行）、`target/arm/tcg/debug.c`（~760行）、`target/arm/cpu.h`（~3500行）、`target/arm/tcg/translate-a64.c`（~10000行）
 
 ---
 
