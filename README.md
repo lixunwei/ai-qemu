@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **108 篇文档**，总计 **~3054KB** 中文技术文档
+> 共 **109 篇文档**，总计 **~3074KB** 中文技术文档
 
 ---
 
@@ -594,6 +594,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [48-ARM64-安全扩展TrustZone深度分析-SCR_EL3-Secure-NS世界切换-安全状态隔离.md](arm64/48-ARM64-安全扩展TrustZone深度分析-SCR_EL3-Secure-NS世界切换-安全状态隔离.md)
+> **20KB · 15 节**
+
+ARM64 安全扩展（TrustZone）完整子系统分析：SCR_EL3 寄存器（el3_cp_reginfo 定义 op0=3/opc1=6/crn=1/crm=1/opc2=0 + AArch32 SCR 别名 ARM_CP_ALIAS|ARM_CP_NEWEL、scr_write 42+特性位掩码验证+RES1 强制+SCR_NS|SCR_NSE 变化→EL3 以下 12 个 MMU 索引全 TLB 刷新、scr_reset 初始化）、SCR_EL3 位定义（SCR_NS bit0 安全状态选择、SCR_IRQ/FIQ/EA bit1-3 中断路由 EL3、SCR_HCE bit8 HVC 使能、SCR_RW bit10 EL2/EL1 AArch64 选择、SCR_EEL2 bit18 Secure EL2、SCR_EASE bit19 DoubleFault SError 向量、SCR_FGTEN bit27 FGT 使能、SCR_NSE bit62 Realm 状态）、安全状态判定（ARMSecuritySpace 四状态 Secure/NonSecure/Root/Realm、arm_security_space M-profile→v7m.secure/无 EL3→NS/AArch64 EL3→Root(RME)/Secure/AArch32 Monitor→Secure/其余→arm_security_space_below_el3 SCR_NS/NSE 解码、arm_is_secure→arm_space_is_secure Secure||Root、arm_is_secure_below_el3→仅 Secure、arm_is_el2_enabled_secstate Secure 需 SCR_EEL2）、SMC 世界切换（trans_SMC AArch64→gen_helper_pre_smc SCR_SMD 检查+EXCP_SMC target_el=3、AArch32 EXCP_SMC→ARM_CPU_MODE_MON addr=0x08、PSCI conduit QEMU_PSCI_CONDUIT_SMC/HVC 路由）、AArch32 中断路由（SCR_IRQ→IRQ 路由 Monitor、SCR_FIQ→FIQ 路由 Monitor）、AArch64 异常入口安全状态（arm_cpu_do_interrupt_aarch64 VBAR_EL3+偏移、SCR_RW 决定低 EL 架构宽度、FEAT_DoubleFault SCR_EASE→SError 向量+0x180）、银行寄存器隔离（bank_fieldoffsets[2] Secure/NS：SCTLR sctlr_s/ns、TTBR0/1 ttbr0_s/ns+ttbr1_s/ns、VBAR vbar_s/ns、MAIR mair0_s/ns、CP15 union sctlr_el[4] 索引统一）、地址空间隔离（ARMASIdx_NS/S 双地址空间、arm_addressspace attrs.secure→AS、cpu_address_space_init cpu-memory/cpu-secure-memory）、内存事务安全属性（MemTxAttrs.secure/space 传播、ptw result.attrs.secure 标记）、GICv3 安全组（Group0 FIQ→EL3 安全固件、Group1S Secure 中断、Group1NS 非安全中断、gicv3_use_ns_bank 银行选择、非安全不可见 Group0 隔离）、CPU 复位（arm_cpu_reset_hold EL3→PSTATE_MODE_EL3h、RVBAR 采样→PC 初始化）、Secure EL2（FEAT_SEL2 SCR_EEL2 使能条件）。
+
+**适合读者**：需要理解 QEMU ARM TrustZone 安全扩展实现、SCR_EL3 控制位含义、Secure/NS 世界切换机制、银行寄存器/地址空间/TLB 安全隔离或 GICv3 安全中断组模型的开发者。
+**关键源文件**：`target/arm/cpu.h`（SCR 位定义 ~45行+安全函数 ~80行+地址空间 ~50行）、`target/arm/helper.c`（scr_write ~125行+安全状态函数 ~60行+中断路由 ~70行+异常入口 ~100行）、`target/arm/cpu.c`（复位 ~30行+AS 初始化 ~15行）、`include/hw/arm/arm-security.h`（~37行）、`hw/intc/arm_gicv3_cpuif.c`（安全银行 ~50行）
 
 ### [47-ARM64-系统寄存器与CP访问深度分析-ARMCPRegInfo框架-MRS-MSR翻译-cpregs哈希表-EL银行与访问控制.md](arm64/47-ARM64-系统寄存器与CP访问深度分析-ARMCPRegInfo框架-MRS-MSR翻译-cpregs哈希表-EL银行与访问控制.md)
 > **19KB · 15 节**
