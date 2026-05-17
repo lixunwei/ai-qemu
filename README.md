@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **106 篇文档**，总计 **~3012KB** 中文技术文档
+> 共 **107 篇文档**，总计 **~3035KB** 中文技术文档
 
 ---
 
@@ -594,6 +594,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [46-ARM64-TCG插件与调试子系统深度分析-PluginAPI-GDBStub-断点单步-ARM调试寄存器与Tracing.md](arm64/46-ARM64-TCG插件与调试子系统深度分析-PluginAPI-GDBStub-断点单步-ARM调试寄存器与Tracing.md)
+> **23KB · 15 节**
+
+ARM64 TCG 插件与调试完整子系统分析：TCG Plugin 公共 API（qemu_plugin_id_t 64 位标识、qemu_plugin_install 入口函数、register_vcpu_tb_trans_cb TB 翻译回调核心、register_vcpu_insn_exec_cb 指令执行回调+条件回调+内联操作、register_vcpu_mem_cb 内存访问回调、register_vcpu_syscall_cb/filter_cb/ret_cb 系统调用三回调、register_flush_cb 代码缓存刷新、register_atexit_cb 退出清理）、插件内部数据结构（qemu_plugin_state 全局状态含 ctxs 链+cb_lists 事件回调链+id_ht 哈希+dyn_cb_arr_ht 动态回调+QemuRecMutex 递归锁、qemu_plugin_ctx 插件上下文含 GModule handle+随机 ID+生命周期状态、qemu_plugin_dyn_cb 动态回调 REGULAR/COND/INLINE 三类+qemu_plugin_insn 指令结构 vaddr+insn_cbs+mem_cbs+qemu_plugin_tb TB 结构 insns 数组+cbs）、插件加载生命周期（plugin_load g_module_open→查找 install 符号→版本校验 MIN-CURRENT→xorshift64star 随机 ID→install 调用、qemu_plugin_load_list 命令行 -plugin 批量加载、plugin_reset_destroy 异步卸载/重置）、翻译时注入（plugin_gen_tb_start 事件掩码检查+PLUGIN_GEN_FROM_TB 占位、plugin_gen_insn_start/end 指令级占位、plugin_gen_tb_end→qemu_plugin_tb_trans_cb 收集→plugin_gen_inject 遍历 ops 替换 INDEX_op_plugin_cb/plugin_mem_cb 为 helper 调用+inject_cb REGULAR→gen_udata_cb COND→gen_udata_cond_cb INLINE→gen_inline_add/store）、GDB Stub 协议处理（gdb_handle_packet 主分发器 c→handle_continue s→handle_step→cpu_single_step g/G→read/write_all_regs p/P→get/set_reg m/M→read/write_mem Z/z→insert/remove_bp、gdb_read_byte RSP 字节状态机 RS_IDLE→RS_GETLINE→RS_CHKSUM）、GDB 系统模式（gdbserver_start chardev 绑定+vm_change_state_handler、gdb_vm_state_change DEBUG→T05+watchpoint RUN_STATE 映射信号号）、GDB 用户模式（gdb_handlesig 信号处理循环、TCP socket 连接）、断点子系统（CPUBreakpoint pc+flags 结构、CPUWatchpoint vaddr+len+hitaddr、cpu_breakpoint_insert GDB 头插优先+CPU 尾插、cpu_breakpoint_remove 遍历匹配、check_for_breakpoints_slow 单步优先+精确 PC→BP_GDB/BP_CPU→EXCP_DEBUG+同页→CF_BP_PAGE 逐指令检查）、单步执行（curr_cflags CF_SINGLE_STEP|CF_NO_GOTO_TB|CF_NO_GOTO_PTR|1、cpu_tb_exec 后→EXCP_DEBUG、gdb_vm_state_change 发 T05+禁用单步）、ARM 寄存器映射（arm_cpu_gdb_read/write_register AArch32 R0-R15+CPSR→AArch64 X0-X30+SP+PC+PSTATE 分派、aarch64_cpu_gdb_read/write_register 64 位实现、VFP/SVE 扩展注册）、ARM 调试寄存器（debug_cp_reginfo MDSCR_EL1 调试控制+OSLAR/OSLSR OS 锁+DBGCLAIM、define_debug_regs 动态生成 DBGBVR/BCR/WVR/WCR、dbgbvr/bcr/wvr/wcr_write→hw_breakpoint/watchpoint_update 即时同步 QEMU 断/观察点）、ARM 硬件观察点（hw_watchpoint_update WCR.E 使能+LSC 读写+MASK/BAS 地址范围→cpu_watchpoint_insert、hw_breakpoint_update BCR 解析+cpu_breakpoint_insert）、ARM 调试异常（arm_debug_check_breakpoint MDSCR_EL1.MDE 检查+单步优先+PC 对齐+bp_wp_matches 逐寄存器、arm_debug_excp_handler 观察点→EXCP_DATA_ABORT+syn_watchpoint 断点→GDB 优先/EXCP_PREFETCH_ABORT+syn_breakpoint）、Tracing 子系统（TraceEvent id+name+sstate+dstate 结构、trace_event_register_group 注册+trace_event_iter 迭代+启禁 API、simple 后端 4096*64 环形缓冲+写出线程+二进制格式 HEADER_MAGIC/VERSION、log/ftrace/dtrace 后端）。
+
+**适合读者**：需要理解 QEMU TCG 插件框架设计与使用、GDB 远程调试协议实现、断点/单步执行机制、ARM 架构调试寄存器与异常处理或 Tracing 子系统的开发者。
+**关键源文件**：`include/plugins/qemu-plugin.h`（~1000行）、`plugins/plugin.h`（~70行）、`include/qemu/plugin.h`（~145行）、`plugins/loader.c`（~420行）、`plugins/core.c`（~875行）、`accel/tcg/plugin-gen.c`（~510行）、`gdbstub/gdbstub.c`（~2485行）、`gdbstub/system.c`（~415行）、`include/exec/breakpoint.h`（~30行）、`cpu-common.c`（断点部分 ~70行）、`target/arm/gdbstub.c`（~575行）、`target/arm/debug_helper.c`（~525行）、`target/arm/tcg/debug.c`（~755行）、`trace/simple.c`（~425行）
 
 ### [45-ARM64-TCG内存模型与原子操作深度分析-屏障语义-MemOp标志-Exclusive-LSE原子与后端发射.md](arm64/45-ARM64-TCG内存模型与原子操作深度分析-屏障语义-MemOp标志-Exclusive-LSE原子与后端发射.md)
 > **19KB · 17 节**
