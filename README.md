@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **109 篇文档**，总计 **~3500KB** 中文技术文档
+> 共 **110 篇文档**，总计 **~3526KB** 中文技术文档
 
 ---
 
@@ -18,6 +18,7 @@
 | [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
 | [arm/](#arm-arm-架构通用) | 14 | ~296KB | EL 状态管理、AArch32 异常、CP15/MMU、GICv3、Cache、Timer、PMU、调试、SVE/SME、TrustZone、内存模型、TZ 安全组件模拟、RME/Realm、GICv2 vs GICv3 对比 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
+| [monitor/](#monitor-监控) | 1 | ~26KB | Monitor/QMP/QAPI、命令分发、协议协商、Schema 代码生成、事件系统、Visitor 模式 |
 
 ---
 
@@ -978,6 +979,18 @@ GDB 远程串行协议 (RSP) 完整实现分析。RSP 状态机、命令分发�
 
 **适合读者**：使用 GDB 调试 QEMU 虚拟机或扩展 GDB stub 的开发者。  
 **关键源文件**：`gdbstub/gdbstub.c`、`gdbstub/system.c`、`target/arm/gdbstub64.c`
+
+---
+
+## monitor/ 监控
+
+### [00-Monitor-QMP-QAPI深度分析-命令分发-协议协商-Schema代码生成-事件系统-Visitor模式.md](monitor/00-Monitor-QMP-QAPI深度分析-命令分发-协议协商-Schema代码生成-事件系统-Visitor模式.md)
+> **26KB · 15 节**
+
+Monitor 子系统全栈分析：Monitor/MonitorHMP/MonitorQMP 三层结构体、QMP 会话状态机（能力协商→正常命令模式）、Greeting 构造与 capabilities 协商、QMP 命令完整分发路径（JSON 增量解析→handle_qmp_command→协程调度器→qmp_dispatch→marshal 函数）、QmpCommand 注册表（链表查找/动态启用禁用）、HMP 命令表（.hx 格式/参数类型系统/包装 QMP）、QAPI Schema 体系（~26600 行 JSON 定义命令/事件/类型/枚举/联合体/alternate）、QAPI 代码生成管线（schema.py 解析→commands.py/events.py/types.py/visit.py/introspect.py 生成 C 代码）、Marshal 函数工作原理（Input Visitor→C args→业务逻辑→Output Visitor→JSON）、事件系统（qapi_event_emit 防重入队列→限流状态机→广播）、Visitor 模式（6 种 Visitor: Input/Output/Dealloc/Clone/String/Opts）、OOB 带外命令（exec-oob 旁路/直接在 I/O 线程执行）。
+
+**适合读者**：需要理解 QEMU 管理接口、扩展 QMP 命令、或分析 libvirt/virsh 与 QEMU 交互的开发者。  
+**关键源文件**：`monitor/monitor.c`、`monitor/qmp.c`、`qapi/qmp-dispatch.c`、`qapi/qmp-registry.c`、`scripts/qapi/main.py`、`qapi/control.json`
 
 ---
 
