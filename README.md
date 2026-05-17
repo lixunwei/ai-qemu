@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **107 篇文档**，总计 **~3035KB** 中文技术文档
+> 共 **108 篇文档**，总计 **~3054KB** 中文技术文档
 
 ---
 
@@ -594,6 +594,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [47-ARM64-系统寄存器与CP访问深度分析-ARMCPRegInfo框架-MRS-MSR翻译-cpregs哈希表-EL银行与访问控制.md](arm64/47-ARM64-系统寄存器与CP访问深度分析-ARMCPRegInfo框架-MRS-MSR翻译-cpregs哈希表-EL银行与访问控制.md)
+> **19KB · 15 节**
+
+ARM64 系统寄存器与 CP 访问完整子系统分析：ARMCPRegInfo 结构体（name/cp/crn/crm/opc0-2 编码、CPState AA32/AA64/BOTH 三态、ARM_CP_* 22 个标志位含 NOP/CONST/SUPPRESS_TB_END/OVERRIDE/ALIAS/IO/RAISES_EXC/NEWEL/FPU/SVE/SME/NV2_REDIRECT 等、CPAccessRights PL0-PL3_RW 位编码权限、fieldoffset/bank_fieldoffsets 直接偏移与银行偏移、accessfn/readfn/writefn/raw_readfn/raw_writefn/resetfn 六回调、secure/fgt/nv2_redirect_offset/vhe_redir_to_el2 安全状态/陷入/NV2/VHE 字段）、cpregs 哈希表（GHashTable *cp_regs 每 ARMCPU 一个、ENCODE_AA64_CP_REG 32 位键编码、add_cpreg_to_hashtable 核心：银行字段解析 bank_fieldoffsets→fieldoffset+AA32 端序调整+别名标记+ARM_CP_OVERRIDE 覆盖检查+g_hash_table_insert、add_cpreg_to_hashtable_aa32/aa64 状态分派、get_arm_cp_reginfo O(1) 哈希查找、define_arm_cp_regs_len 批量注册）、MRS/MSR AArch64 翻译（handle_sys：ENCODE_AA64_CP_REG→get_arm_cp_reginfo 查表→TIDCP 陷入检查→cp_access_ok 编译时权限→NV2 内存重定向→VHE 重定向 E2H+EL2→FOO_EL2/EL12/EL02→gen_helper_access_check_cp_reg 运行时三级检查→FPU/SVE/SME 访问检查→NV trap/redirect→读:ARM_CP_CONST/readfn/fieldoffset 三路径 写:writefn/fieldoffset+need_exit_tb、trans_SYS/MRS 入口）、MRC/MCR AArch32 翻译（do_coproc_insn：ENCODE_CP_REG 键→同样查表+权限+回调流程、trans_MCR/MRC/MCRR/MRRC decodetree 入口）、CP15 状态存储（CPUARMState.cp15 union 银行结构：sctlr_el[4] sctlr_s/ns/hsctlr、ttbr0_el[4] ttbr0_s/ns、ttbr1_el[4]、tcr_el[4]、mair_el[4] mair0_s/ns+mair1_s/ns、vbar_el[4] vbar_s/ns/hvbar、dbgbvr/bcr/wvr/wcr[16] 调试寄存器、mdscr_el1）、访问控制三级机制（cp_access_ok 编译时 EL 位移检查、HELPER(access_check_cp_reg) 运行时：accessfn 回调→HSTR_EL2 EL0 陷入→FGT fgt_read/write/exec 位图检查→CPAccessResult TRAP_EL1/2/3 陷入路由）、EL 切换与寄存器上下文（arm_cpu_do_interrupt_aarch64 异常入口 PSTATE→SPSR+PC→ELR+aarch64_sve_change_el SVE 状态调整、exception_return 异常返回 SPSR 恢复+rebuild_hflags 翻译标志重建、SCR_EL3 NS 位切换→TLB 全刷新）、FGT 精细陷入（FGTBit 编码 idx+bitpos+rev+nxs、HFGRTR/HFGWTR/HDFGRTR/HDFGWTR/HFGITR_EL2 五个陷入寄存器、NXS 变体 HCRX_EL2.FGTnXS 控制）、NV2 嵌套虚拟化重定向（nv2_redirect_offset→VNCR_EL2+offset 内存访问、NV2_REDIR_NV1/NO_NV1 条件选择、64 位原子内存操作）、VHE 寄存器重定向（vhe_redir_to_el2 EL2+E2H→FOO_EL2、vhe_redir_to_el01 EL02/EL12→FOO_EL0/EL1 回指、redirect_cpreg 键替换）。
+
+**适合读者**：需要理解 QEMU ARM 系统寄存器框架设计、MRS/MSR 指令翻译流程、Secure/NS 银行机制、EL 权限与 FGT/NV2 陷入控制或 VHE 虚拟化寄存器重定向的开发者。
+**关键源文件**：`target/arm/cpregs.h`（~1130行）、`target/arm/cpu.h`（cp15 ~220行+cp_regs ~10行）、`target/arm/helper.c`（cpreg 注册/定义 ~500行+寄存器数组 ~6000行）、`target/arm/tcg/translate-a64.c`（handle_sys ~200行）、`target/arm/tcg/translate.c`（do_coproc_insn ~650行）、`target/arm/tcg/op_helper.c`（access_check ~100行）
 
 ### [46-ARM64-TCG插件与调试子系统深度分析-PluginAPI-GDBStub-断点单步-ARM调试寄存器与Tracing.md](arm64/46-ARM64-TCG插件与调试子系统深度分析-PluginAPI-GDBStub-断点单步-ARM调试寄存器与Tracing.md)
 > **23KB · 15 节**
