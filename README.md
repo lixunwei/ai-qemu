@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **111 篇文档**，总计 **~3549KB** 中文技术文档
+> 共 **115 篇文档**，总计 **~3633KB** 中文技术文档
 
 ---
 
@@ -10,19 +10,26 @@
 
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
-| [architecture/](#architecture-架构) | 15 | ~342KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程 |
+| [architecture/](#architecture-架构) | 28 | ~866KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程、综合导航 |
 | [arm64/](#arm64-arm64-架构) | 46 | ~1355KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航 |
-| [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
+| [device-model/](#device-model-设备模型) | 9 | ~424KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA、Generic Timer、综合导航 |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
-| [accel/](#accel-加速器) | 8 | ~273KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译 |
-| [arm/](#arm-arm-架构通用) | 14 | ~296KB | EL 状态管理、AArch32 异常、CP15/MMU、GICv3、Cache、Timer、PMU、调试、SVE/SME、TrustZone、内存模型、TZ 安全组件模拟、RME/Realm、GICv2 vs GICv3 对比 |
+| [accel/](#accel-加速器) | 9 | ~291KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译、综合导航 |
+| [arm/](#arm-arm-架构通用) | 18 | ~312KB | EL 状态管理、AArch32 异常、CP15/MMU、GICv3、Cache、Timer、PMU、调试、SVE/SME、TrustZone、内存模型、TZ 安全组件模拟、RME/Realm、GICv2 vs GICv3 对比、综合导航 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
 | [monitor/](#monitor-监控) | 1 | ~26KB | Monitor/QMP/QAPI、命令分发、协议协商、Schema 代码生成、事件系统、Visitor 模式 |
 
 ---
 
 ## architecture/ 架构
+
+### [27-QEMU架构子系统综合导航.md](architecture/27-QEMU架构子系统综合导航-QOM-内存-TCG-VirtIO-事件循环-Block-PCI.md)
+> **25KB · 导航式概览 · 覆盖 27 篇文档**
+
+QEMU 架构子系统综合导航：13 个主题簇（QOM×2、执行循环×4、Machine、内存×3、Block/IO×3、TCG×5、VirtIO×3、定时器、PMU、Debug、IOMMU、PCI）全景导读，含子系统关系图、文档地图表、各簇核心概念提取与阅读建议、5 条阅读路线（入门/设备开发/性能优化/内存IO/TCG内部）。
+
+---
 
 ### [00-全局架构概览.md](architecture/00-全局架构概览.md)
 > **19KB · 12 节**
@@ -650,6 +657,13 @@ ARM64 TCG 内存访问子系统完整分析：softmmu TLB 五层数据结构体�
 **适合读者**：需要理解 QEMU softmmu 内存访问全貌、TLB 数据结构设计、快慢路径实现、ARM PTW 细节或 TLBI/AT 指令实现的开发者。
 **关键源文件**：`include/exec/tlb-common.h`（~56行）、`include/hw/core/cpu.h`（TLB 部分 ~130行）、`include/exec/tlb-flags.h`（~86行）、`accel/tcg/cputlb.c`（~2600行）、`target/arm/ptw.c`（~4100行）、`target/arm/tcg/tlb_helper.c`（~380行）、`target/arm/tcg/tlb-insns.c`（~900行）、`target/arm/tcg/cpregs-at.c`（~420行）
 
+### [09-设备模型子系统综合导航.md](device-model/09-设备模型子系统综合导航-VirtIO-Block-Chardev-VFIO-网络-DMA-Timer.md)
+> **25KB · 导航式概览 · 覆盖 8 篇文档**
+
+设备模型子系统综合导航：QOM→Device→Bus→Backend 全景图、统一 I/O 数据流、Block 完整路径（virtio-blk→BDS→qcow2）、网络数据路径对比（TAP/vhost-net/vhost-user）、各篇核心概念与阅读建议、4 条阅读路线。
+
+---
+
 ### [00-设备模型与virtio深度分析.md](device-model/00-设备模型与virtio深度分析.md)
 > **47KB · 24 节**
 
@@ -766,6 +780,13 @@ RAMBlock 管理与 Guest RAM 分配（mmap/MAP_SHARED/MAP_PRIVATE）、Huge Page
 
 ## accel/ 加速器
 
+### [08-TCG加速器子系统综合导航.md](accel/08-TCG加速器子系统综合导航-IR-前端-后端-优化-MTTCG-TLB-Plugin-Linux-user.md)
+> **18KB · 导航式概览 · 覆盖 8 篇文档**
+
+TCG 加速器子系统综合导航：翻译管线全景（Guest→Decode→IR→Optimize→RegAlloc→Host→Execute）、完整数据流路径、各篇核心概念提取、4 条阅读路线（TCG入门/优化开发/新架构/Linux-user）、与 architecture/ 和 arm64/ TCG 文档的交叉引用。
+
+---
+
 ### [00-TCG深度分析.md](accel/00-TCG深度分析.md)
 > **65KB · 30 节**
 
@@ -835,6 +856,13 @@ Linux-user 用户模式翻译完整解析：main() 初始化流程（QOM/TCG/CPU
 ---
 
 ## arm/ ARM 架构通用
+
+### [25-ARM架构模拟综合导航.md](arm/25-ARM架构模拟综合导航-EL异常-GIC-Cache-Timer-SVE-TrustZone-RME-PCI-IOMMU.md)
+> **16KB · 导航式概览 · 覆盖 17 篇文档**
+
+ARM 架构模拟综合导航：12 个主题簇（EL/异常、系统寄存器/MMU、GIC、Cache、Timer、PMU、Debug、SVE/SME、TrustZone、内存模型、设备模型、RME）全景导读，含 arm/ ↔ arm64/ 文档对应关系表、4 条阅读路线。
+
+---
 
 ### [08-ARM64-EL状态管理与指令执行深度分析.md](arm/08-ARM64-EL状态管理与指令执行深度分析.md)
 > **32KB · 26 节**
