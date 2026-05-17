@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **109 篇文档**，总计 **~3074KB** 中文技术文档
+> 共 **110 篇文档**，总计 **~3094KB** 中文技术文档
 
 ---
 
@@ -594,6 +594,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [49-ARM64-页表遍历PTW深度分析-Stage1-Stage2翻译-权限检查-Fault处理-安全属性传播.md](arm64/49-ARM64-页表遍历PTW深度分析-Stage1-Stage2翻译-权限检查-Fault处理-安全属性传播.md)
+> **20KB · 15 节**
+
+ARM64 页表遍历（PTW）完整子系统分析：S1Translate 遍历上下文结构（in_mmu_idx/in_ptw_idx/in_space/cur_space/in_s1_is_el0/in_prot_check/out_space 七字段）、ARMMMUIdx 索引系统（E10_0-E3 Stage1 索引 22 个+Stage2/Stage2_S+Phys_S/NS/Root/Realm 物理+Stage1_E0/E1 无 TLB 仅遍历、ARM_MMU_IDX_A=0x20 编码）、get_phys_addr 入口（arm_mmu_idx_to_security_space→in_space 初始化→get_phys_addr_gpc→get_phys_addr_nogpc 分发：Phys→disabled/E10→twostage/E20-E3→lpae）、Stage-1 LPAE 遍历（get_phys_addr_lpae：aa64_va_parameters→T0SZ/TG/granule 解码→regime_ttbr TTBR0/1 选择→L0-L3 四级遍历→描述符解析 bit[1:0] valid+table/block/page→tableattrs 五位向下传播→AF 检查→物理地址拼接→get_S1prot 权限）、Stage-2 翻译（get_phys_addr_twostage：S1→IPA→S2 串联、ptw_idx_for_stage_2 物理索引→prot=s1&s2 权限合并→页大小取大值→缓存属性合并）、权限检查（get_S1prot PAN/EPAN+SIF+WXN/PXN/XN+Root/Realm 跨域取指禁止、get_S2prot S2AP→R/W+TTS2UXN 四值 XN、get_S2prot_indirect S2PIE 16 条目间接权限）、故障处理（ARMFaultType 24 种+ARMMMUFaultInfo 11 字段+arm_fi_to_lfsc/sfsc FSC 编码）、安全属性传播（in_space→cur_space NSTable 降级、result.attrs.secure/space 最终标记）、TLB 交互（tlb_set_page_full→TLB 缓存、TLBI vae1/alle1_tlbmask 掩码）、AT 地址翻译指令（do_ats_write→PAR_EL1 格式化）。
+
+**适合读者**：需要理解 QEMU ARM64 页表遍历实现、Stage-1/2 翻译流程、AArch64 LPAE 描述符格式、S1+S2 权限合并、TLB 写入与失效机制或 AT 指令实现的开发者。
+**关键源文件**：`target/arm/ptw.c`（S1Translate ~70行+get_phys_addr ~2100行+权限检查 ~200行）、`target/arm/internals.h`（ARMFaultType ~70行+ARMMMUFaultInfo ~30行+FSC ~180行+ARMCacheAttrs ~10行）、`target/arm/mmuidx.h`（ARMMMUIdx ~65行）、`target/arm/tcg/cpregs-at.c`（AT 指令 ~260行）
 
 ### [48-ARM64-安全扩展TrustZone深度分析-SCR_EL3-Secure-NS世界切换-安全状态隔离.md](arm64/48-ARM64-安全扩展TrustZone深度分析-SCR_EL3-Secure-NS世界切换-安全状态隔离.md)
 > **20KB · 15 节**
