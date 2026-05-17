@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **110 篇文档**，总计 **~3094KB** 中文技术文档
+> 共 **111 篇文档**，总计 **~3117KB** 中文技术文档
 
 ---
 
@@ -594,6 +594,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [50-ARM64-GICv3中断控制器深度分析-Distributor-Redistributor-CPUInterface-中断路由与优先级.md](arm64/50-ARM64-GICv3中断控制器深度分析-Distributor-Redistributor-CPUInterface-中断路由与优先级.md)
+> **23KB · 15 节**
+
+ARM64 GICv3 中断控制器完整子系统分析：GICv3State 核心状态（num_cpu/num_irq/gicd_ctlr、GIC_DECLARE_BITMAP group/grpmod/enabled/pending/active/level/edge_trigger/nmi 8 位图、gicd_ipriority[MAXIRQ]/gicd_irouter[MAXIRQ]/gicd_irouter_target[MAXIRQ] 路由缓存、GICv3CPUState per-CPU 状态 parent_irq/fiq/virq/vfiq/nmi 6 输出线+gicr_* Redistributor+icc_* CPU Interface+ich_* 虚拟接口+hppi/hpplpi/hppvlpi 缓存）、Distributor GICD（gicd_readl/writel MMIO 访问：GICD_CTLR S/NS 视图分离+DS 安全简化、GICD_TYPER ITLinesNumber/SecurityExtn/LPIS/NMI 能力、GICD_IGROUPR/IGRPMODR 三组分配 G0/G1S/G1NS、GICD_ISENABLER/ICENABLER/ISPENDR/ICPENDR 位图操作→gicv3_update 通知、GICD_IPRIORITYR 优先级、GICD_IROUTER 亲和性路由→gicv3_cache_target_cpustate O(1) 缓存）、Redistributor GICR（gicr_readl/writel：GICR_CTLR EnableLPIs、GICR_TYPER 亲和性/Last/LPI 能力、GICR_WAKER ProcessorSleep、GICR_ISENABLER0/IPENDR0/IACTIVER0 SGI/PPI 32 位寄存器、GICR_IPRIORITYR 优先级、GICR_VPROPBASER/VPENDBASER vLPI 表）、CPU Interface ICC 系统寄存器（icc_pmr_read/write PMR 优先级掩码、icc_iar0/1_read 中断确认→icc_activate_irq pending→active+APR 更新、icc_eoir_write 中断结束→icc_drop_prio+icc_deactivate_irq active 清除、ICC_HPPIR0/1 最高挂起、ICC_BPR0/1 二进制点→icc_gprio_mask 组优先级掩码、ICC_CTLR_EL1/3 控制、ICC_SRE 使能、ICC_SGI0R/1R SGI 生成→icc_generate_sgi、ICC_AP0R/1R 活跃优先级、ICC_RPR 运行优先级）、优先级与抢占（irqbetter prio<hppi.prio 低值高优先级+同优先级 NMI 优先+低号优先、icc_gprio_mask BPR→组优先级位+子优先级位分离、icc_hppi_can_preempt PMR 过滤+NMI 特殊+运行优先级比较+组优先级掩码抢占判定、gicv3_redist_update SGI/PPI 扫描→hppi、gicv3_update_noirqset SPI IROUTER 路由→per-CPU hppi、gicv3_full_update 完整重算）、中断信号传递（gicv3_cpuif_update：G0→FIQ 始终/G1S→Secure IRQ 或 NS FIQ/G1NS→NS IRQ 或 Secure FIQ、qemu_set_irq parent_fiq/irq/nmi→CPU 异常输入）、安全模型（gicv3_use_ns_bank→arm_is_secure_below_el3、gicd_int_pending EN_GRP0/GRP1S/GRP1NS 三组独立使能过滤、group=0+grpmod=0→G0/group=0+grpmod=1→G1S/group=1→G1NS）、虚拟接口（ICH_HCR_EL2 使能+陷入控制、ICH_VMCR_EL2 虚拟 PMR/BPR/VENG0/1、ICH_LR_EL2 列表寄存器 vINTID/pINTID/Priority/NMI/Group/HW/State 四状态、hppvi_index 最高虚拟中断选择、gicv3_cpuif_virt_update vIRQ/vFIQ+维护中断）、SGI 生成（ICC_SGI0R/1R→TargetList+Aff+INTID+IRM 路由）、中断完整生命周期端到端（gicv3_set_irq→pending→IROUTER 路由→hppi→cpuif_update→FIQ/IRQ→CPU 异常→IAR 读→activate→处理→EOIR 写→deactivate→下一中断）。
+
+**适合读者**：需要理解 QEMU ARM GICv3 中断控制器实现、Distributor/Redistributor/CPU Interface 三层架构、中断优先级与抢占机制、安全组路由模型、虚拟 GIC 接口或中断端到端生命周期的开发者。
+**关键源文件**：`include/hw/intc/arm_gicv3_common.h`（GICv3State ~60行+GICv3CPUState ~90行）、`hw/intc/arm_gicv3.c`（irqbetter+pending+update ~380行+set_irq ~30行）、`hw/intc/arm_gicv3_dist.c`（GICD read/write ~550行）、`hw/intc/arm_gicv3_redist.c`（GICR read/write ~350行）、`hw/intc/arm_gicv3_cpuif.c`（ICC regs+priority+virtual ~2700行）、`hw/intc/gicv3_internal.h`（ICH 定义 ~65行）
 
 ### [49-ARM64-页表遍历PTW深度分析-Stage1-Stage2翻译-权限检查-Fault处理-安全属性传播.md](arm64/49-ARM64-页表遍历PTW深度分析-Stage1-Stage2翻译-权限检查-Fault处理-安全属性传播.md)
 > **20KB · 15 节**
