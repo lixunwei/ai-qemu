@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **104 篇文档**，总计 **~2968KB** 中文技术文档
+> 共 **105 篇文档**，总计 **~2993KB** 中文技术文档
 
 ---
 
@@ -594,6 +594,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [44-ARM64-TCG执行循环深度分析-cpu_exec主循环-TB查找链接-中断异常-MTTCG多线程与icount.md](arm64/44-ARM64-TCG执行循环深度分析-cpu_exec主循环-TB查找链接-中断异常-MTTCG多线程与icount.md)
+> **25KB · 17 节**
+
+ARM64 TCG 执行引擎完整运行时分析：cpu_exec 主入口（sigsetjmp 异常恢复、cpu_handle_halt 检测、cpu_exec_enter/exit 钩子、SyncClocks 时钟同步初始化）、cpu_exec_loop 双层循环（外层 cpu_handle_exception 异常处理循环、内层 cpu_handle_interrupt 中断检查+TB 执行循环、get_tb_cpu_state 获取翻译键 pc/flags/cflags）、TB 查找两级缓存（tb_lookup 第一级 per-CPU jmp_cache O(1) 直接映射 PC 哈希+flags+cflags 比较、第二级 tb_htable_lookup 全局 QHT 物理地址哈希查找+qht_lookup_custom、未命中→tb_gen_code JIT 编译+回填 jmp_cache）、TB 执行 cpu_tb_exec（tcg_qemu_tb_exec 进入翻译代码、返回值 ret&~TB_EXIT_MASK=last_tb/ret&TB_EXIT_MASK=退出码、TB_EXIT_IDX0/IDX1 正常链跳转/TB_EXIT_REQUESTED 被中断、未执行 TB 恢复 guest PC synchronize_from_tb、单步调试 EXCP_DEBUG）、cpu_loop_exec_tb 退出后处理（icount 到期补充 icount_decr.u16.low+icount_extra、精确大小 TB 生成 cflags_next_tb）、TB 链接 tb_add_jump（qatomic_cmpxchg 原子占用 jmp_dest 跳转槽、tb_set_jmp_target 补丁本机跳转、jmp_list_head/next 反向链表用于失效撤销）、中断处理 cpu_handle_interrupt 优先级链（CF_NOIRQ 跳过→icount_decr.u16.high 清零→CPU_INTERRUPT_DEBUG→HALT→RESET→cpu_exec_interrupt 目标特定 IRQ/FIQ→EXITTB 断链→exit_request/icount 到期→EXCP_INTERRUPT）、异常处理 cpu_handle_exception（exception_index<0 无异常、≥EXCP_INTERRUPT 异步退出返回调用者、<EXCP_INTERRUPT 同步异常→do_interrupt 回调→继续执行）、EXCP_* 退出码全景（INTERRUPT/HLT/DEBUG/HALTED/YIELD/ATOMIC 六种异步码）、CF_* 编译标志（CF_COUNT_MASK/NO_GOTO_TB/NO_GOTO_PTR/SINGLE_STEP/MEMI_ONLY/USE_ICOUNT/INVALID/PARALLEL/NOIRQ/PCREL/BP_PAGE/CLUSTER_MASK 十二种标志）、MTTCG 多线程模型（mttcg_cpu_thread_fn 每 vCPU 独立 OS 线程、tcg_cpu_exec→cpu_exec、EXCP_ATOMIC→cpu_exec_step_atomic exclusive 单步、线程创建 CF_PARALLEL 标志）、RR 轮转单线程模型（rr_cpu_thread_fn 共享线程"ALL CPUs/TCG"、rr_kick_vcpu_timer/rr_kick_next_cpu 定时器时间片切换 TCG_KICK_PERIOD、BQL 锁定 bql_lock/unlock、icount_prepare_for_run/process_data 预算分配、CPU_NEXT 轮转、rr_start_vcpu_thread 复用线程）、exclusive 执行区域（start_exclusive 停止所有 CPU pending_cpus 计数+qemu_cpu_kick、end_exclusive 广播恢复、cpu_exec_start/cpu_exec_end 执行屏障 running 标志+has_waiter 配合、可重入 exclusive_context_count）、icount 指令计数（icount_decr.u16.low 每指令递减+u16.high 强制退出、icount_extra 溢出预算、icount_budget 本轮总预算、CF_USE_ICOUNT 影响翻译插入递减检查、align_clocks guest 太快则 nanosleep 节流）、cpu_exec_step_atomic（sigsetjmp+start_exclusive→CF_NO_GOTO_TB|~CF_PARALLEL|1 单条指令编译执行→end_exclusive 恢复）。
+
+**适合读者**：需要理解 QEMU TCG 运行时执行引擎全貌、TB 查找/链接机制、中断异常处理流程、MTTCG/RR 线程模型或 icount 指令计数实现的开发者。
+**关键源文件**：`accel/tcg/cpu-exec.c`（~1070行）、`accel/tcg/tcg-accel-ops-mttcg.c`（~137行）、`accel/tcg/tcg-accel-ops-rr.c`（~348行）、`cpu-common.c`（exclusive 部分 ~140行）、`include/exec/cpu-common.h`（EXCP_* 定义）、`include/exec/translation-block.h`（TB 结构 + CF_* 标志）
 
 ### [43-ARM64-TCG-softmmu-TLB深度分析-数据结构-快慢路径-页表遍历-TLBI指令与MMIO分发.md](arm64/43-ARM64-TCG-softmmu-TLB深度分析-数据结构-快慢路径-页表遍历-TLBI指令与MMIO分发.md)
 > **23KB · 20 节**
