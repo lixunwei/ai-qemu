@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **113 篇文档**，总计 **~3158KB** 中文技术文档
+> 共 **114 篇文档**，总计 **~3180KB** 中文技术文档
 
 ---
 
@@ -594,6 +594,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [53-ARM64-调试架构深度分析-MDSCR-DBGBCR-DBGWCR-断点观察点-单步执行.md](arm64/53-ARM64-调试架构深度分析-MDSCR-DBGBCR-DBGWCR-断点观察点-单步执行.md)
+> **22KB · 15 节**
+
+ARM64 调试架构完整子系统分析：调试寄存器存储（cp15.dbgbvr[16]/dbgbcr[16]/dbgwvr[16]/dbgwcr[16]/mdscr_el1/oslsr_el1/osdlr_el1/mdcr_el2/mdcr_el3、cpreg 动态注册循环 debug_helper.c:477-523）、MDSCR_EL1 控制（SS[0]单步使能+KDE[13]同EL调试+MDE[15]全局使能）、DBGBCR 断点控制（E+PMC+BAS+HMC+SSC+LBN+BT 断点类型 地址匹配/上下文ID/VMID/地址不匹配）、DBGWCR 观察点控制（E+PAC+LSC+BAS+HMC+SSC+LBN+WT+MASK+SSCE 位域定义 internals.h:111-121、MASK模式 2^mask 字节对齐区域/BAS模式逐字节选择）、调试异常路由（arm_debug_target_el HCR_TGE/MDCR_EL2.TDE→EL2 + MDCR_EL3.SDD Secure禁止 + 默认EL1、raise_exception_debug Same-EL EC位自动设置）、调试异常使能（arm_generate_debug_exceptions OS Lock检查+aa64路径 EL3禁止/SDD/KDE+DAIF.D/debug_el>cur_el）、硬件断点（hw_breakpoint_update BT类型分发→cpu_breakpoint_insert + arm_debug_check_breakpoint MDE+单步优先级+PC对齐优先级+bp_wp_matches）、硬件观察点（hw_watchpoint_update LSC→BP_MEM_READ/WRITE/ACCESS + MASK/BAS地址计算→cpu_watchpoint_insert + check_watchpoints→bp_wp_matches）、匹配核心（bp_wp_matches SSC安全状态+HMC/PAC EL权限+WT链接断点验证 断点观察点复用BCR/WCR同布局）、调试异常处理（arm_debug_excp_handler 观察点→EXCP_DATA_ABORT+syn_watchpoint / 断点→EXCP_PREFETCH_ABORT+syn_breakpoint + GDB BP_GDB优先）、软件断点BRK（gen_exception_bkpt_insn→HELPER(exception_bkpt_insn) 不依赖MDE/KDE 始终产生异常 debug_el<cur_el时提升到cur_el）、单步状态机（Inactive→Active-not-pending→Active-pending→异常 gen_ss_advance清除PSTATE.SS + gen_step_complete_exception + gen_swstep_exception）、翻译时调试（ss_active/pstate_ss TB标志→单指令TB+禁止链接+Active-pending立即异常）。
+
+**适合读者**：需要理解 QEMU ARM64 调试子系统、硬件断点/观察点实现、单步执行状态机、调试异常路由与使能条件或 GDB 桩集成的开发者。
+**关键源文件**：`target/arm/tcg/debug.c`（arm_debug_target_el ~24行+使能检查 ~30行+bp_wp_matches ~97行+断点检查 ~45行+观察点更新 ~88行+断点更新 ~85行+异常处理 ~45行+单步helper ~5行）、`target/arm/debug_helper.c`（MDSCR定义 ~8行+DBGBCR/BVR注册 ~23行+DBGWCR/WVR注册 ~23行）、`target/arm/internals.h`（DBGWCR位域 ~11行）、`target/arm/tcg/translate.h`（gen_ss_advance ~8行+gen_swstep_exception ~6行）、`target/arm/tcg/translate-a64.c`（ss_active初始化 ~11行+Active-pending处理 ~17行）、`target/arm/tcg/hflags.c`（SS_ACTIVE ~3行+PSTATE__SS ~10行）
 
 ### [52-ARM64-异常处理完整流程深度分析-同步异步异常入口-VBAR向量表-PSTATE保存恢复-异常返回.md](arm64/52-ARM64-异常处理完整流程深度分析-同步异步异常入口-VBAR向量表-PSTATE保存恢复-异常返回.md)
 > **26KB · 15 节**
