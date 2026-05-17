@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **115 篇文档**，总计 **~3633KB** 中文技术文档
+> 共 **117 篇文档**，总计 **~3661KB** 中文技术文档
 
 ---
 
@@ -13,8 +13,8 @@
 | [architecture/](#architecture-架构) | 28 | ~866KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程、综合导航 |
 | [arm64/](#arm64-arm64-架构) | 46 | ~1355KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航 |
 | [device-model/](#device-model-设备模型) | 9 | ~424KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA、Generic Timer、综合导航 |
-| [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
-| [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
+| [network/](#network-网络子系统) | 2 | ~64KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径、综合导航 |
+| [memory/](#memory-内存子系统) | 3 | ~69KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA、综合导航 |
 | [accel/](#accel-加速器) | 9 | ~291KB | TCG 翻译引擎全貌、优化递次、IR 与前端翻译、后端代码生成与 TB 管理、MTTCG 多线程翻译、Softmmu TLB 与内存访问、TCG Plugin 系统、Linux-user 用户模式翻译、综合导航 |
 | [arm/](#arm-arm-架构通用) | 18 | ~312KB | EL 状态管理、AArch32 异常、CP15/MMU、GICv3、Cache、Timer、PMU、调试、SVE/SME、TrustZone、内存模型、TZ 安全组件模拟、RME/Realm、GICv2 vs GICv3 对比、综合导航 |
 | [debug/](#debug-调试) | 1 | ~49KB | GDB 协议、断点、ARM64 寄存器映射 |
@@ -746,6 +746,13 @@ ARM Generic Timer 完整实现分析：ARMGenericTimer 数据结构（cval/ctl �
 
 ## network/ 网络子系统
 
+### [01-网络子系统综合导航.md](network/01-网络子系统综合导航-TAP-SLIRP-VirtIO-vhost-过滤器-多队列.md)
+> **16KB · 导航式概览 · 覆盖 1 篇文档**
+
+网络子系统综合导航：分层架构速览、知识地图（核心框架/数据路径/后端实现/高级特性）、关键数据结构一览、TX/RX 数据包生命周期、分角色阅读路径（初学者/网络开发者/性能优化者）、与其他子系统交叉索引。
+
+---
+
 ### [00-网络子系统深度分析.md](network/00-网络子系统深度分析.md)
 > **48KB · 29 节**
 
@@ -757,6 +764,13 @@ ARM Generic Timer 完整实现分析：ARMGenericTimer 数据结构（cval/ctl �
 ---
 
 ## memory/ 内存子系统
+
+### [02-内存子系统综合导航.md](memory/02-内存子系统综合导航-MemoryRegion-FlatView-MMIO-RAMBlock-脏页追踪.md)
+> **12KB · 导航式概览 · 覆盖 2 篇文档**
+
+内存子系统综合导航：双文档全景图（抽象层+物理层）、知识地图（MemoryRegion/AddressSpace/FlatView/RAMBlock/脏页追踪/MMIO/IOMMU）、核心架构分层图、MMIO 访问完整路径、交叉引用关系、分角色阅读路径（初学者/设备开发者/迁移开发者/性能优化者）。
+
+---
 
 ### [00-内存子系统深度分析.md](memory/00-内存子系统深度分析.md)
 > **30KB · 16 节**
