@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **114 篇文档**，总计 **~3180KB** 中文技术文档
+> 共 **109 篇文档**，总计 **~3500KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 15 | ~342KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程 |
-| [arm64/](#arm64-arm64-架构) | 37 | ~872KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、异常入口与返回、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、VirtIO、PCI/PCIe、SMMUv3/IOMMU、EL 状态管理与指令执行、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、系统寄存器模拟、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、Debug/Breakpoint/Watchpoint/RAS、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动 |
+| [arm64/](#arm64-arm64-架构) | 45 | ~1332KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -319,16 +319,6 @@ GICv3 完整架构：Distributor（SPI 路由）、Redistributor（SGI/PPI/LPI�
 
 ---
 
-### [06-异常级别状态管理深度分析.md](arm64/06-异常级别状态管理深度分析.md)
-> **42KB · 21 节 + 3 附录**
-
-ARM64 异常级别 (EL0-EL3) 的状态跟踪与切换。PSTATE 分拆存储、`arm_current_el()`/`arm_el_is_aa64()` 核心函数、安全状态（Root/Secure/NonSecure/Realm）× EL 交互矩阵、各 EL 执行环境对比（翻译体制/特权指令/陷入控制）。异常入口的 PSTATE→SPSR 保存与 PSTATE 修改（DAIF/PAN/TCO/SSBS/ALLINT）、ERET 返回的合法性检查与 SP 恢复、SVC/HVC/SMC 路由逻辑、WFI/WFE trap 控制、系统寄存器 EL 访问矩阵、MMU index 与 EL 映射、SVE 向量长度在 EL 切换时的收窄、EL 变化钩子（PMU/Timer/SVE）。包含系统调用/虚拟机退出/安全监控调用三种典型场景分析。
-
-**适合读者**：分析异常/中断处理流程或 Hypervisor 切换的开发者。  
-**关键源文件**：`target/arm/internals.h`、`target/arm/helper.c`、`target/arm/tcg/helper-a64.c`
-
----
-
 ### [07-不同EL下指令执行差异深度分析.md](arm64/07-不同EL下指令执行差异深度分析.md)
 > **34KB · 25 节 + 3 附录**
 
@@ -356,14 +346,6 @@ ARM64 虚拟化扩展的 QEMU 完整实现。HCR_EL2 寄存器 60+ 位域定义�
 
 **适合读者**：分析 Hypervisor 行为、Stage-2 页表或虚拟化性能的开发者。  
 **关键源文件**：`target/arm/cpu.h`、`target/arm/helper.c`、`target/arm/ptw.c`、`target/arm/cpu-irq.c`
-
-### [10-异常入口与返回深度分析.md](arm64/10-异常入口与返回深度分析.md)
-> **39KB · 27 节**
-
-ARM64 异常入口与返回的 QEMU 完整实现。异常触发路径（`raise_exception()` / `raise_exception_ra()`）、目标 EL 确定（`exception_target_el()` / `arm_phys_excp_target_el()` 6 维路由表）、同步异常翻译（SVC/HVC/SMC/BRK + 系统寄存器陷入 + 内存故障 + PC/SP 对齐）、异步中断分发（`arm_cpu_exec_interrupt()` 优先级 NMI→FIQ→IRQ→VIRQ→VFIQ→VSERR）、调试异常（MDCR 路由）。异常入口总控（`arm_cpu_do_interrupt()` PSCI/Semihost 拦截 + AArch64/AArch32 分派）、向量表完整布局（16 向量 = 4来源×4类型）、ESR 综合征构建与 AArch32→AArch64 转换、FAR_ELx 写入、PSTATE→SPSR 保存（含 `pstate_read()/pstate_write()` 缓存字段拆解）、ELR 保存、SP 保存/恢复、新 PSTATE 组装（DAIF/PAN/TCO/SSBS/ALLINT）。ERET 翻译（FGT trap 优先 + PAuth 认证）、ERET Helper 完整流程（7 种非法返回条件 + SPSR→PSTATE 恢复 + TBI PC 处理）、AArch32↔AArch64 状态切换、SVE/SME 向量长度变更、FEAT_NV/NV2 SPSR 修改、FEAT_DoubleFault SError 重定向、GCS EXLOCK 集成。
-
-**适合读者**：分析异常处理、中断路由或 EL 切换行为的开发者。  
-**关键源文件**：`target/arm/helper.c`、`target/arm/tcg/helper-a64.c`、`target/arm/tcg/op_helper.c`、`target/arm/cpu-irq.c`、`target/arm/tcg/translate-a64.c`
 
 ### [11-MMU-TLB深度分析.md](arm64/11-MMU-TLB深度分析.md)
 > **32KB · 32 节**
@@ -427,14 +409,6 @@ ARM64 GCS/RME 及 ARMv9 新扩展完整实现分析。**GCS（守护控制栈）
 
 ---
 
-### [22-ARM64异常级别状态管理与指令执行变化深度分析.md](arm64/22-ARM64异常级别状态管理与指令执行变化深度分析.md)
-> **15KB · 11 节**
-
-ARM64 异常级别（EL0-EL3）切换时 CPU 指令执行行为变化深度分析：TB Flags EL 编码（MMUIDX 间接编码 EL、rebuild_hflags_a64 全部 EL 相关标志 SVEEXC_EL/SMEEXC_EL/UNPRIV/TRAP_ERET/NV/E2H/PAUTH_ACTIVE/BT/MTE_ACTIVE）、DisasContext EL 字段（current_el/fp_excp_el/sve_excp_el/sme_excp_el/trap_eret/e2h/nv/nv1/nv2）、系统寄存器访问门控（CPAccessRights PL0-PL3 位图层级包含设计、cp_access_ok 静态检查、accessfn 动态陷阱、VHE 重定向）、每个 EL 指令可用性（EL0 用户态限制、EL1 PL1 寄存器+HCR 陷阱控制、EL2 Stage-2/VHE、EL3 SCR/RME 全权限）、异常入口完整流程（arm_cpu_do_interrupt_aarch64 VBAR 向量表 4×4 布局、SPSR/ELR 保存、ESR/FAR 综合信息、PSTATE 重构 DAIF/PAN/TCO/SSBS/ALLINT）、异常返回 ERET（helper_exception_return 7 种非法返回检测、SPSR→PSTATE 恢复、SP/TBI/SVE 调整、illegal_return PSTATE.IL 设置）、MMU Regime 与 EL 映射（6 种 regime、TGE/DC 翻译禁用、SP_EL0/SP_ELx 选择）、HCR_EL2 陷阱效应（TVM/TRVM/TSW/TACR/TTLB/TID/TSC/TWI/TWE 全表、TB Flags 缓存策略）、EL 切换状态变化对比表。
-
-**适合读者**：需要理解 ARM64 EL 状态转换如何改变指令执行行为、TB Flags 编码、异常入口/返回完整机制的开发者。
-**关键源文件**：`target/arm/tcg/hflags.c`（~500行）、`target/arm/tcg/translate-a64.c`（~11000行）、`target/arm/tcg/translate.h`（~210行）、`target/arm/tcg/helper-a64.c`（~800行）、`target/arm/helper.c`（~10188行）、`target/arm/cpregs.h`（~600行）
-
 ### [23-ARM64安全与非安全中断路由流转深度分析.md](arm64/23-ARM64安全与非安全中断路由流转深度分析.md)
 > **13KB · 11 节**
 
@@ -483,14 +457,6 @@ KVM vGIC 设备后端完整实现分析：KVM GICv2 后端（kvm_arm_gic_realize
 **适合读者**：需要理解 KVM vGIC 工作原理、中断注入路径、KVM 迁移状态管理的开发者。
 **关键源文件**：`hw/intc/arm_gic_kvm.c`（~610行）、`hw/intc/arm_gicv3_kvm.c`（~975行）、`hw/intc/arm_gicv3_its_kvm.c`（~265行）、`hw/arm/virt.c`（~4300行）
 
-### [29-ARM64系统寄存器模拟框架深度分析.md](arm64/29-ARM64系统寄存器模拟框架深度分析.md)
-> **16KB · 14 节**
-
-ARM64 系统寄存器完整模拟框架：ARMCPRegInfo 结构体（编码/权限/回调/存储偏移/FGT/VHE重定向）、AArch64/AArch32 编码宏与哈希查找（O(1) GHashTable）、寄存器表组织（v8_cp_reginfo/el2/el3 数组）、MSR/MRS 翻译路径（handle_sys → Helper 分发 → writefn 回调）、四级访问控制（PLx 权限 + accessfn + FGT + HSTR）、关键寄存器写副作用（SCTLR→TLB刷新、HCR→虚拟中断+TLB、TCR/TTBR→条件TLB刷新、DAIF→中断掩码）、PSTATE 寄存器（NZCV/DAIF/SPSel）、迁移保存恢复（cpreg_vmstate 变长数组）、完整 MSR 执行流程图。
-
-**适合读者**：需要理解系统寄存器访问如何被拦截、分发和处理的开发者，或需要添加新系统寄存器支持的开发者。
-**关键源文件**：`target/arm/cpregs.h`（~1100行）、`target/arm/helper.c`（~8500行）、`target/arm/tcg/translate-a64.c`、`target/arm/tcg/op_helper.c`、`target/arm/machine.c`
-
 ### [30-ARM64-MMU系统寄存器与页表遍历深度分析.md](arm64/30-ARM64-MMU系统寄存器与页表遍历深度分析.md)
 > **10KB · 9 节**
 
@@ -514,14 +480,6 @@ CPACR_EL1 三级 FP/SIMD 陷阱链（FPEN/ZEN/SMEN → CPTR_EL2 → CPTR_EL3）�
 
 **适合读者**：需要理解特殊系统寄存器功能、AT 地址翻译指令实现或 Cache 维护指令虚拟化的开发者。
 **关键源文件**：`target/arm/helper.c`（寄存器定义/写回调）、`target/arm/tcg/cpregs-at.c`（AT 指令）、`target/arm/tcg/vfp_helper.c`（FPCR/FPSR）
-
-### [33-ARM64-Debug-Breakpoint-Watchpoint与RAS寄存器深度分析.md](arm64/33-ARM64-Debug-Breakpoint-Watchpoint与RAS寄存器深度分析.md)
-> **11KB · 12 节**
-
-完整调试架构实现：三级调试陷阱体系（TDOSA/TDA/TDCC × EL1→EL2→EL3）、MDSCR_EL1 全局开关（MDE/SS/TDCC）、MDCR_EL2/EL3 陷阱路由（TDE 整体重路由）、OS 锁（OSLAR/OSLSR/OSDLR）、断点动态注册（DBGBVRn/BCRn → hw_breakpoint_update → cpu_breakpoint_insert）、观察点（DBGWVRn/WCRn 支持 BAS 字节选择和 MASK 掩码最大 2GB）、统一匹配框架 bp_wp_matches()（SSC 安全过滤→PAC/HMC EL 过滤→链接断点）、调试异常路由 arm_debug_target_el()、最小 RAS（ERRIDR=0 零记录、DISR/VDISR/VSESR SError 报告注入）。
-
-**适合读者**：需要理解 ARM 硬件调试机制、断点/观察点实现原理或 RAS 错误处理的开发者。
-**关键源文件**：`target/arm/debug_helper.c`（寄存器定义/访问控制）、`target/arm/tcg/debug.c`（匹配逻辑/异常处理）、`target/arm/helper.c`（RAS/MDCR）
 
 ### [34-ARM64-ID寄存器与特性发现机制深度分析.md](arm64/34-ARM64-ID寄存器与特性发现机制深度分析.md)
 > **9KB · 12 节**
@@ -1058,14 +1016,14 @@ GDB 远程串行协议 (RSP) 完整实现分析。RSP 状态机、命令分发�
 
 ### ARM64 专题路线
 1. `arm64/00-ARM64-CPU-GICv3-TCG深度分析.md` — CPU 模型入门
-2. `arm64/06-异常级别状态管理深度分析.md` — EL 状态切换
-3. `arm64/07-不同EL下指令执行差异深度分析.md` — 指令 trap 机制
-4. `arm64/08-TrustZone安全扩展与Secure-World深度分析.md` — 安全世界
+2. `arm64/35-ARM64异常级别EL状态切换深度分析-异常进入返回与PSTATE管理.md` — EL 状态切换
+3. `arm64/36-ARM64不同EL下指令执行流变化深度分析.md` — 指令 trap 机制
+4. `arm64/48-ARM64-安全扩展TrustZone深度分析-SCR_EL3-Secure-NS世界切换-安全状态隔离.md` — 安全世界
 5. `arm64/09-虚拟化扩展深度分析-VHE-HCR_EL2-Stage2-MMU.md` — 虚拟化
-6. `arm64/10-异常入口与返回深度分析.md` — 异常入口/返回/ERET
+6. `arm64/52-ARM64-异常处理完整流程深度分析-同步异步异常入口-VBAR向量表-PSTATE保存恢复-异常返回.md` — 异常入口/返回/ERET
 7. `arm64/11-MMU-TLB深度分析.md` — MMU 页表遍历与 TLB
 8. `arm64/12-Generic-Timer定时器深度分析.md` — 定时器与计数器
-9. `arm64/03-GICv3中断控制器模拟架构深度分析.md` — 中断系统
+9. `arm64/50-ARM64-GICv3中断控制器深度分析-Distributor-Redistributor-CPUInterface-中断路由与优先级.md` — 中断系统
 10. `arm64/04-中断注入与处理深度分析.md` — 中断完整路径
 11. `arm64/02-特殊指令模拟深度分析.md` — 指令级细节
 
