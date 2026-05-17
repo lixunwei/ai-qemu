@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **112 篇文档**，总计 **~3132KB** 中文技术文档
+> 共 **113 篇文档**，总计 **~3158KB** 中文技术文档
 
 ---
 
@@ -594,6 +594,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [52-ARM64-异常处理完整流程深度分析-同步异步异常入口-VBAR向量表-PSTATE保存恢复-异常返回.md](arm64/52-ARM64-异常处理完整流程深度分析-同步异步异常入口-VBAR向量表-PSTATE保存恢复-异常返回.md)
+> **26KB · 15 节**
+
+ARM64 异常处理完整流程深度分析：异常类型分类（同步SVC/HVC/SMC/Abort/Trap、异步IRQ/FIQ/SError、虚拟VIRQ/VFIQ/VSERR、NMI VINMI/VFNMI）、EC 编码枚举（syndrome.h arm_exception_class 全部 EC 值 0x00-0x3c、综合征构造 syn_aa64_svc/hvc/smc ESR_ELx 格式 EC[31:26]+IL[25]+ISS[24:0]）、目标 EL 路由（arm_phys_excp_target_el 6维查表 target_el_table[2][2][2][2][2][4] 实现 G1-15、SCR.IRQ/FIQ/EA→EL3 路由 + HCR.IMO/FMO/AMO+TGE→EL2 路由、exception_target_el 同步异常 MAX(1,cur_el)）、异常入口主函数（arm_cpu_do_interrupt PSCI/semihost 拦截→arm_el_is_aa64 分发→pre/post_el_change_hook→EXITTB）、AArch64 入口（arm_cpu_do_interrupt_aarch64 SVE切换→VBAR偏移→ESR写入→PSTATE/ELR保存→新PSTATE设置→SP切换→hflags重建→PC跳转）、VBAR 向量表（vbar_el[1/2/3] 低5位RAZ、基础偏移 同EL-SP0+0x000/同EL-SPx+0x200/低EL-A64+0x400/低EL-A32+0x600 × 类型偏移 Sync+0x000/IRQ+0x080/FIQ+0x100/SError+0x180 = 16入口×128字节=2048字节表）、PSTATE保存（pstate_read→banked_spsr[index]、AArch32 cpsr_read_for_spsr_elx+sync_32_to_64）、新PSTATE（DAIF全屏蔽+PAN/TCO/SSBS/ALLINT按SCTLR控制+M=ELxh）、PSTATE缓存分离（NZCV/DAIF/BTYPE 热位独立存储 env->NF/ZF/CF/VF/daif/btype）、SP切换（aarch64_save_sp/restore_sp PSTATE.SP选择sp_el[el]或sp_el[0]）、中断注入（arm_cpu_exec_interrupt 8级优先级 NMI→VINMI→VFNMI→FIQ→IRQ→VIRQ→VFIQ→VSERR、arm_excp_unmasked DAIF/ALLINT/target_el屏蔽规则）、SVC/HVC/SMC翻译（trans_SVC/HVC/SMC gen_ss_advance先行+pre_helper预检查+综合征生成）、ERET（trans_ERET→helper_exception_return：SPSR读取→el_from_spsr解析→合法性验证→pstate_write恢复→SP切换→TBI地址处理→PC恢复→SVE切换）、非法返回（PSTATE_IL+仅恢复NZCV/DAIF/ALLINT+不改变EL/SP）。
+
+**适合读者**：需要理解 QEMU ARM64 异常入口/返回完整流程、VBAR 向量表偏移计算、PSTATE 保存恢复机制、中断屏蔽与注入、SVC/HVC/SMC 翻译或 ERET 实现的开发者。
+**关键源文件**：`target/arm/helper.c`（arm_cpu_do_interrupt ~60行+aarch64路径 ~230行+target_el_table ~55行+vbar_write ~12行）、`target/arm/tcg/helper-a64.c`（exception_return ~165行+el_from_spsr ~37行）、`target/arm/cpu-irq.c`（exec_interrupt ~100行+unmasked ~155行）、`target/arm/tcg/translate-a64.c`（SVC/HVC/SMC ~50行+ERET ~25行）、`target/arm/syndrome.h`（EC枚举 ~47行+综合征构造 ~60行）、`target/arm/cpu.h`（PSTATE位 ~28行+pstate_read/write ~20行）
 
 ### [51-ARM64-内存属性与缓存一致性深度分析-MAIR-TCR属性编码-Device-Normal类型-缓存维护指令.md](arm64/51-ARM64-内存属性与缓存一致性深度分析-MAIR-TCR属性编码-Device-Normal类型-缓存维护指令.md)
 > **15KB · 15 节**
