@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **105 篇文档**，总计 **~2993KB** 中文技术文档
+> 共 **106 篇文档**，总计 **~3012KB** 中文技术文档
 
 ---
 
@@ -594,6 +594,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [45-ARM64-TCG内存模型与原子操作深度分析-屏障语义-MemOp标志-Exclusive-LSE原子与后端发射.md](arm64/45-ARM64-TCG内存模型与原子操作深度分析-屏障语义-MemOp标志-Exclusive-LSE原子与后端发射.md)
+> **19KB · 17 节**
+
+ARM64 TCG 内存模型完整子系统分析：TCGBar 屏障类型系统（TCG_MO_LD_LD/ST_LD/LD_ST/ST_ST/ALL 五种排序+TCG_BAR_LDAQ/STRL/SC 三种种类、组合含义映射 ARM DMB 域）、tcg_gen_mb 屏障 IR 生成（user-only CF_PARALLEL 门控 vs softmmu 始终生成因 IO 线程并行）、MemOp 内存操作标志完整定义（大小 MO_8-MO_1024、符号 MO_SIGN、端序 MO_BSWAP/LE/BE、对齐 MO_UNALN-MO_ALIGN+MO_ALIGN_TLB_ONLY、原子性 MO_ATOM_IFALIGN/IFALIGN_PAIR/WITHIN16/WITHIN16_PAIR/SUBALIGN/NONE 六级）、ARM64 DMB/DSB/ISB 翻译（DMB/DSB Reads→LD_LD|LD_ST Writes→ST_ST All→ALL 三种映射+DSB 等效处理、ISB→gen_goto_tb TB 断裂无屏障 IR）、Load-Acquire/Store-Release（STLR→mb(STRL)+store 前屏障、LDAR→load+mb(LDAQ) 后屏障）、Exclusive Monitor 三寄存器状态（exclusive_addr/val/high cpu.h:704-713、arm_clear_exclusive 置-1、CLREX 指令翻译）、gen_load_exclusive 独占加载（单/配对/128 位三种模式、MTE 标签检查、记录 exclusive_addr/val/high）、gen_store_exclusive 独占存储（地址比较+atomic_cmpxchg 值比较+成功/失败分支+清除监控、CAS 实现而非真 exclusive monitor）、LDXR/STXR/LDXP/STXP 翻译（lasr 标志控制 Acquire/Release 附加屏障）、LSE 原子指令翻译（do_atomic_ld 通用框架+LDADD/LDCLR/LDEOR/LDSET/SWP 到 tcg_gen_atomic_fetch_* 映射+LDSMAX/LDSMIN/LDUMAX/LDUMIN 有符号无符号极值）、CAS/CASP 比较交换（64 位 cmpxchg_i64+128 位 cmpxchg_i128）、128 位原子（FEAT_LSE128 LDCLRP/LDSETP/SWPP→i128 原语）、TCG 原子 helper 生成（atomic_template.h 宏模板生成所有大小×端序 helper、atomic_mmu_lookup TLB 交互获取 host 地址、GCC __atomic_* 原生原子操作）、AArch64 后端屏障发射（tcg_out_mb 静态数组映射 TCG_MO→DMB ISH/ISHLD/ISHST、所有屏障使用 ISH 内部共享域）、CF_PARALLEL 与 MTTCG 内存序（MTTCG 全屏障+原子 helper vs RR 非原子优化+softmmu 仍保留屏障、tcg_canonicalize_memop 原子性降级）。
+
+**适合读者**：需要理解 QEMU TCG 内存排序模型、ARM 屏障/Acquire-Release 语义翻译、Exclusive Monitor 实现、LSE 原子指令映射或原子 helper 生成机制的开发者。
+**关键源文件**：`include/tcg/tcg-mo.h`（~46行）、`include/exec/memop.h`（~130行）、`tcg/tcg-op.c`（tcg_gen_mb ~18行）、`tcg/tcg-op-ldst.c`（原子操作 ~440行）、`target/arm/tcg/translate-a64.c`（屏障+exclusive+LSE ~560行）、`target/arm/cpu.h`（exclusive 状态 ~10行）、`tcg/aarch64/tcg-target.c.inc`（tcg_out_mb ~11行）、`accel/tcg/atomic_template.h`（~312行）
 
 ### [44-ARM64-TCG执行循环深度分析-cpu_exec主循环-TB查找链接-中断异常-MTTCG多线程与icount.md](arm64/44-ARM64-TCG执行循环深度分析-cpu_exec主循环-TB查找链接-中断异常-MTTCG多线程与icount.md)
 > **25KB · 17 节**
