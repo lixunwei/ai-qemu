@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **111 篇文档**，总计 **~3117KB** 中文技术文档
+> 共 **112 篇文档**，总计 **~3132KB** 中文技术文档
 
 ---
 
@@ -594,6 +594,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [51-ARM64-内存属性与缓存一致性深度分析-MAIR-TCR属性编码-Device-Normal类型-缓存维护指令.md](arm64/51-ARM64-内存属性与缓存一致性深度分析-MAIR-TCR属性编码-Device-Normal类型-缓存维护指令.md)
+> **15KB · 15 节**
+
+ARM64 内存属性与缓存一致性完整子系统分析：MAIR 属性编码（MAIR_EL1/EL2/EL3 存储 cp15.mair_el[4]、AttrIndx×8 位提取→8 位 MAIR 字段、高 4 位 Outer+低 4 位 Inner、0x00=Device-nGnRnE/0x04=nGnRE/0x44=Normal-NC/0xee=WT-RA/0xff=WB-RWA/0xf0=Tagged-WB）、TCR 属性（TCR_EL1/EL2/EL3 cp15.tcr_el[4]、T0SZ/T1SZ/TG0/TG1/SH0/SH1/ORGN/IRGN/EPD/IPS）、内存类型分类（S1_attrs_are_device 高 4 位=0→Device 四子类型、Normal 缓存策略 NC/WT/WB×Inner/Outer 组合、ARMCacheAttrs attrs:8+shareability:2+is_s2_format:1）、SCTLR 内存位（SCTLR_M/A/C/I/WXN、sctlr_write→tlb_flush）、HCR_EL2 位（HCR_DC→WB-RWA 默认缓存、HCR_CD→S2 NC 强制）、MemTxAttrs 事务属性（secure/space/user/memory/debug）、MMU 禁用属性（get_phys_addr_disabled：Device-nGnRnE 默认、HCR_DC→WB、SCTLR_I→WT）、S1+S2 合并（combine_cacheattrs 共享性取强、FWB combined_attrs_fwb S2=7/6/5/0-3 规则、非 FWB 取弱、Device/NC→Outer Shareable）、缓存维护指令（IC 全 NOP、DC 全 NOP 除 DC_ZVA→gen_helper_dc_zva 实际零填充、DCZID_EL0 块大小）、内存屏障（DMB/DSB→tcg_gen_mb TCG_BAR_SC、ISB→TB 结束）、QEMU TCG 内存模型（弱序近似、host barrier）。
+
+**适合读者**：需要理解 QEMU ARM64 内存属性系统、MAIR/TCR 编码方式、Device/Normal 内存区分、S1+S2 缓存属性合并规则、缓存维护指令实现或 QEMU 内存模型的开发者。
+**关键源文件**：`target/arm/ptw.c`（S1_attrs_are_device ~10行+MAIR 提取 ~15行+combine_cacheattrs ~100行+disabled ~75行）、`target/arm/cpu.h`（SCTLR 位 ~40行）、`include/exec/memattrs.h`（MemTxAttrs ~50行）、`target/arm/helper.c`（IC/DC 定义 ~90行）、`target/arm/tcg/translate-a64.c`（DC_ZVA ~15行+barriers ~40行）
 
 ### [50-ARM64-GICv3中断控制器深度分析-Distributor-Redistributor-CPUInterface-中断路由与优先级.md](arm64/50-ARM64-GICv3中断控制器深度分析-Distributor-Redistributor-CPUInterface-中断路由与优先级.md)
 > **23KB · 15 节**
