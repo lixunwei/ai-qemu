@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **110 篇文档**，总计 **~3526KB** 中文技术文档
+> 共 **111 篇文档**，总计 **~3549KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 15 | ~342KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程 |
-| [arm64/](#arm64-arm64-架构) | 45 | ~1332KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构 |
+| [arm64/](#arm64-arm64-架构) | 46 | ~1355KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航 |
 | [device-model/](#device-model-设备模型) | 7 | ~399KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA |
 | [network/](#network-网络子系统) | 1 | ~48KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径 |
 | [memory/](#memory-内存子系统) | 2 | ~57KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA |
@@ -553,6 +553,14 @@ ARM64 TCG 前端/后端完整代码生成流水线分析：TCG IR 系统（TCGTe
 
 **适合读者**：需要理解 QEMU TCG 翻译流水线全貌、IR 中间表示设计、优化 Pass 实现、寄存器分配策略或 AArch64 后端代码生成细节的开发者。  
 **关键源文件**：`include/tcg/tcg.h`（~440行）、`include/tcg/tcg-opc.h`（~185行）、`accel/tcg/translator.c`（~250行）、`accel/tcg/translate-all.c`（~640行）、`tcg/tcg.c`（~6000行）、`tcg/optimize.c`（~3200行）、`tcg/aarch64/tcg-target.c.inc`（~3540行）、`target/arm/tcg/translate-a64.c`（~10960行）
+
+### [54-ARM64-异常级别状态管理综合导航-EL切换-指令差异-安全状态-TCG翻译变化.md](arm64/54-ARM64-异常级别状态管理综合导航-EL切换-指令差异-安全状态-TCG翻译变化.md)
+> **23KB · 14 节 · 导航式概览**
+
+ARM64 异常级别（EL）状态管理综合导航文档，整合 8 篇深度分析（07/35/36/37/39/40/41/52，共 212KB）的核心精华。覆盖五大维度（指令可用性/MMU域/PSTATE/寄存器组/TCG翻译缓存）、异常入口11步时序与 ERET 12步返回时序、VBAR 向量偏移表、各 EL 指令行为对照表、分层陷阱控制模型（EL1→EL2→EL3 级联）、QEMU 两层实现（编译时 TB flags + 运行时 Helper）、hflags 96位结构与10大构建阶段、TB 键与链断裂机制、EL0/EL1/EL2/EL3 各级执行环境特点、VHE 寄存器重定向、安全状态四域模型与世界切换、核心数据结构与函数速查表、5 条阅读路线推荐。
+
+**适合读者**：需要全面理解 ARM64 EL 状态管理的入门者，或需要快速定位特定 EL 话题详细分析的开发者。  
+**引用文档**：07/35/36/37/39/40/41/52
 
 ### [53-ARM64-调试架构深度分析-MDSCR-DBGBCR-DBGWCR-断点观察点-单步执行.md](arm64/53-ARM64-调试架构深度分析-MDSCR-DBGBCR-DBGWCR-断点观察点-单步执行.md)
 > **22KB · 15 节**
