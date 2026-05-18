@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **123 篇文档**，总计 **~3855KB** 中文技术文档
+> 共 **126 篇文档**，总计 **~3946KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 28 | ~866KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程、综合导航 |
-| [arm64/](#arm64-arm64-架构) | 52 | ~1549KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、GIC规范验证勘误、EL状态指令执行DDI0487对照、MMU地址翻译DDI0487对照、Generic-Timer DDI0487对照、指令集模拟DDI0487对照 |
+| [arm64/](#arm64-arm64-架构) | 55 | ~1640KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、规范验证系列(GIC/EL/MMU/Timer/ISA/Debug/Security/SVE-SME) |
 | [device-model/](#device-model-设备模型) | 9 | ~424KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA、Generic Timer、综合导航 |
 | [network/](#network-网络子系统) | 2 | ~64KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径、综合导航 |
 | [memory/](#memory-内存子系统) | 3 | ~69KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA、综合导航 |
@@ -612,6 +612,39 @@ ARM64 指令集模拟规范验证：将既有文档 02/07/32 与 DDI 0487 §C3/�
 **适合读者**：需要验证 QEMU 指令翻译与 ARM ISA 规范一致性的开发者。  
 **参考规范**：ARM DDI 0487 M.b §C3.1-C3.x, §C6.1-C6.x  
 **关键源文件**：`target/arm/tcg/translate-a64.c`、`target/arm/tcg/a64.decode`
+
+---
+
+### [61-ARM64-调试架构规范验证-DDI0487-D2-H-断点观察点-单步-Debug异常路由-MDSCR对照.md](arm64/61-ARM64-调试架构规范验证-DDI0487-D2-H-断点观察点-单步-Debug异常路由-MDSCR对照.md)
+> **26KB · 10 节 · 规范对照验证**
+
+ARM64 调试架构规范验证：将既有文档 46/53 与 DDI 0487 §D2（自托管调试）和 §H（外部调试）对照。覆盖 Debug 异常路由（MDSCR_EL1.KDE/MDE、MDCR_EL2.TDE、MDCR_EL3.SDD）、断点类型与 DBGBCR/DBGBVR 字段、观察点匹配与 BAS 字节选择、单步执行算法（SPSR.SS/MDSCR.SS）、外部调试 Debug State 与 QEMU gdbstub 关系。关键发现：OSLSR_EL1 规范锁位是 bit[1]，QEMU 检查 bit[0]。
+
+**适合读者**：需要理解 ARM 调试架构规范与 QEMU 断点/观察点/单步实现对应关系的开发者。  
+**参考规范**：ARM DDI 0487 M.b §D2.1-D2.4, §H2.1-H2.3  
+**关键源文件**：`target/arm/debug_helper.c`、`target/arm/helper.c`
+
+---
+
+### [62-ARM64-安全架构TrustZone规范验证-DDI0487-D1-安全状态-SCR_EL3-世界切换-RME四域模型对照.md](arm64/62-ARM64-安全架构TrustZone规范验证-DDI0487-D1-安全状态-SCR_EL3-世界切换-RME四域模型对照.md)
+> **30KB · 9 节 · 规范对照验证**
+
+ARM64 安全架构 TrustZone 规范验证：将既有文档 08/23/37/39/48 与 DDI 0487 §D1.1.2 对照。覆盖安全状态定义（Secure/Non-secure/Realm/Root）、SCR_EL3 控制位（NS/EEL2/RW/HCE/SMD/IRQ/FIQ/EA）、世界切换机制（SMC→EL3/ERET 改变安全状态）、FEAT_RME 四域模型与 GPT、中断路由与安全状态交互（GIC Group 映射）、QEMU ARMSecuritySpace 枚举实现验证。
+
+**适合读者**：需要验证 QEMU TrustZone/RME 实现与 ARM 规范一致性的开发者。  
+**参考规范**：ARM DDI 0487 M.b §D1.1.2, §D1.4.x  
+**关键源文件**：`target/arm/cpu.h`、`target/arm/helper.c`、`target/arm/internals.h`
+
+---
+
+### [63-ARM64-SVE-SME可扩展向量规范验证-DDI0487-C8-C9-向量长度-谓词-ZA矩阵-流模式对照.md](arm64/63-ARM64-SVE-SME可扩展向量规范验证-DDI0487-C8-C9-向量长度-谓词-ZA矩阵-流模式对照.md)
+> **35KB · 10 节 · 规范对照验证**
+
+ARM64 SVE/SME 可扩展向量规范验证：将既有文档 15 与 DDI 0487 §C8/§C9 对照。覆盖 SVE 向量长度模型（VL 128-2048/ZCR_ELx 层级约束/VL 无关编程）、谓词寄存器（P0-P15/FFR/governing-merging-zeroing）、SVE 内存访问（gather-scatter/first-faulting/FFR 更新）、SME 流模式（PSTATE.SM/SVL vs VL/模式切换寄存器状态）、ZA 矩阵存储（PSTATE.ZA/tiles/外积指令）、Trap 控制层级（CPACR_EL1.ZEN-SMEN/CPTR_EL2）。关键勘误：Streaming 模式下 SVE trap 归属 SME trap 域。
+
+**适合读者**：需要验证 QEMU SVE/SME 实现与 ARM 向量扩展规范一致性的开发者。  
+**参考规范**：ARM DDI 0487 M.b §C8.1, §C9.1  
+**关键源文件**：`target/arm/sve_helper.c`、`target/arm/sme_helper.c`、`target/arm/tcg/translate-sve.c`
 
 ---
 
