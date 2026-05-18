@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **120 篇文档**，总计 **~3764KB** 中文技术文档
+> 共 **123 篇文档**，总计 **~3855KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 28 | ~866KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程、综合导航 |
-| [arm64/](#arm64-arm64-架构) | 49 | ~1458KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、GIC规范验证勘误、EL状态指令执行DDI0487对照 |
+| [arm64/](#arm64-arm64-架构) | 52 | ~1549KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、GIC规范验证勘误、EL状态指令执行DDI0487对照、MMU地址翻译DDI0487对照、Generic-Timer DDI0487对照、指令集模拟DDI0487对照 |
 | [device-model/](#device-model-设备模型) | 9 | ~424KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA、Generic Timer、综合导航 |
 | [network/](#network-网络子系统) | 2 | ~64KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径、综合导航 |
 | [memory/](#memory-内存子系统) | 3 | ~69KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA、综合导航 |
@@ -579,6 +579,39 @@ ARM64 EL 状态指令执行变化规范验证：将既有文档 07/35/36/52 与 
 **适合读者**：需要理解 EL1/EL3 执行环境本质差异、或验证异常入口/返回 PSTATE 行为的开发者。  
 **参考规范**：ARM DDI 0487 M.b §D1.1.2, §D1.4.1-§D1.4.8, §D1.5.1  
 **关键源文件**：`target/arm/helper.c`、`target/arm/tcg/helper-a64.c`、`target/arm/tcg/op_helper.c`、`target/arm/tcg/hflags.c`
+
+---
+
+### [58-ARM64-MMU地址翻译规范验证-DDI0487-D8-翻译体制-页表格式-权限检查-Fault类型对照.md](arm64/58-ARM64-MMU地址翻译规范验证-DDI0487-D8-翻译体制-页表格式-权限检查-Fault类型对照.md)
+> **39KB · 9 节 · 规范对照验证**
+
+ARM64 MMU 地址翻译规范验证：将既有文档 11/30/38/49/51 与 DDI 0487 §D7/§D8 逐项对照。覆盖翻译体制（EL1&0/EL2/EL2&0/EL3）、页表格式（4K/16K/64K granule、Block/Table/Page 描述符）、权限检查（AP/PXN/UXN/S2AP/层级控制）、Fault 类型（Translation/Address-size/Access-flag/Permission/Alignment）、内存属性（MAIR 编码/Device-Normal/缓存一致性）、QEMU ptw.c 实现差异分析。
+
+**适合读者**：需要验证 QEMU MMU 实现与 ARM 规范一致性的开发者。  
+**参考规范**：ARM DDI 0487 M.b §D7.1-D7.2, §D8.1-D8.x  
+**关键源文件**：`target/arm/ptw.c`、`target/arm/internals.h`
+
+---
+
+### [59-ARM64-Generic-Timer规范验证-DDI0487-D12-系统计数器-物理虚拟定时器-EL2控制-Secure配置对照.md](arm64/59-ARM64-Generic-Timer规范验证-DDI0487-D12-系统计数器-物理虚拟定时器-EL2控制-Secure配置对照.md)
+> **25KB · 10 节 · 规范对照验证**
+
+ARM64 Generic Timer 规范验证：将既有文档 12 与 DDI 0487 §D12 对照。覆盖系统计数器（CNTFRQ_EL0/计数器宽度/翻转行为）、物理定时器（CNTP_CTL/CVAL/TVAL）、虚拟定时器（CNTV_CTL/CNTVOFF_EL2 偏移）、EL2 定时器（CNTHP/CNTHV）、Secure 定时器（CNTPS_CTL_EL1）、Timer 中断路由（PPI ID 30/27/26/29）、CNTHCTL_EL2 Trap 控制、QEMU gt_recalc_timer 实现验证。
+
+**适合读者**：需要理解 ARM Generic Timer 架构规范与 QEMU 定时器实现对应关系的开发者。  
+**参考规范**：ARM DDI 0487 M.b §D12.1-D12.2  
+**关键源文件**：`target/arm/helper.c`、`target/arm/cpu.h`、`hw/arm/virt.c`
+
+---
+
+### [60-ARM64-指令集模拟规范验证-DDI0487-C3-C6-分支-异常生成-系统指令-数据处理-加载存储对照.md](arm64/60-ARM64-指令集模拟规范验证-DDI0487-C3-C6-分支-异常生成-系统指令-数据处理-加载存储对照.md)
+> **27KB · 9 节 · 规范对照验证**
+
+ARM64 指令集模拟规范验证：将既有文档 02/07/32 与 DDI 0487 §C3/§C6 对照。覆盖分支指令（B/BL/BR/BLR/RET/CBZ/TBZ）、异常生成指令（SVC/HVC/SMC 各 EL 行为/BRK/HLT）、系统指令（MSR/MRS/barriers DMB/DSB/ISB/cache DC/IC/AT/TLBI）、数据处理指令（ADD/SUB/逻辑/移位/位域/条件选择）、加载存储指令（LDR/STR/LDP/STP/exclusive LDXR/STXR/atomic LDADD/CAS/SWP）、QEMU TCG a64.decode 映射分析。
+
+**适合读者**：需要验证 QEMU 指令翻译与 ARM ISA 规范一致性的开发者。  
+**参考规范**：ARM DDI 0487 M.b §C3.1-C3.x, §C6.1-C6.x  
+**关键源文件**：`target/arm/tcg/translate-a64.c`、`target/arm/tcg/a64.decode`
 
 ---
 
