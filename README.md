@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **118 篇文档**，总计 **~3706KB** 中文技术文档
+> 共 **119 篇文档**，总计 **~3730KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 28 | ~866KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程、综合导航 |
-| [arm64/](#arm64-arm64-架构) | 47 | ~1400KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航 |
+| [arm64/](#arm64-arm64-架构) | 48 | ~1424KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、GIC规范验证勘误 |
 | [device-model/](#device-model-设备模型) | 9 | ~424KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA、Generic Timer、综合导航 |
 | [network/](#network-网络子系统) | 2 | ~64KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径、综合导航 |
 | [memory/](#memory-内存子系统) | 3 | ~69KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA、综合导航 |
@@ -568,6 +568,16 @@ ARM64 Hypervisor 虚拟化深度分析：翻译体制（Translation Regime）全
 
 **适合读者**：需要理解 QEMU ARM64 虚拟化地址翻译全流程、Secure EL2 实现、或 Stage-1/Stage-2 翻译交互机制的开发者。  
 **关键源文件**：`target/arm/ptw.c`、`target/arm/helper.c`、`target/arm/mmuidx.h`、`target/arm/cpu.h`、`target/arm/internals.h`
+
+---
+
+### [56-GIC规范验证补充-ARM-IHI0048B-IHI0069H-对照勘误.md](arm64/56-GIC规范验证补充-ARM-IHI0048B-IHI0069H-对照勘误.md)
+> **24KB · 6 节 · 规范对照勘误**
+
+GIC 规范验证补充文档：将现有 4 篇 GIC 分析文档（arm64/24、arm64/25、arm64/26、arm/24）的结论逐条与 ARM 官方规范 IHI 0048B.b（GICv2）和 IHI 0069H.b（GICv3/v4）对照验证。标记 13 项已验证正确、11 项需修正（EOI≠Active→Inactive 需区分 priority drop 与 deactivation、LPI 无 active 状态、INVALL 按 collection 失效、GICv2 max CPU=8 为 QEMU 限制非架构限制等）、30+ 条待补充规范引用。统一规范术语（acknowledgment/priority drop/deactivation/running priority），提供规范引用格式指南。
+
+**适合读者**：已阅读现有 GIC 分析文档、需要与 ARM 官方规范交叉验证的开发者。  
+**参考规范**：ARM IHI 0048B.b (GICv2)、ARM IHI 0069H.b (GICv3/v4)
 
 ---
 
