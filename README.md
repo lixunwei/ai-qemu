@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **128 篇文档**，总计 **~4026KB** 中文技术文档
+> 共 **129 篇文档**，总计 **~4064KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 28 | ~866KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程、综合导航 |
-| [arm64/](#arm64-arm64-架构) | 57 | ~1720KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、规范验证系列(GIC/EL/MMU/Timer/ISA/Debug/Security/SVE-SME) |
+| [arm64/](#arm64-arm64-架构) | 58 | ~1758KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、规范验证系列(GIC/EL/MMU/Timer/ISA/Debug/Security/SVE-SME) |
 | [device-model/](#device-model-设备模型) | 9 | ~424KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA、Generic Timer、综合导航 |
 | [network/](#network-网络子系统) | 2 | ~64KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径、综合导航 |
 | [memory/](#memory-内存子系统) | 3 | ~69KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA、综合导航 |
@@ -667,6 +667,17 @@ ARM64 内存模型与屏障语义规范验证：对照 DDI 0487 M.b §B2。覆�
 **适合读者**：验证 QEMU 内存模型实现、研究 ARM 弱序行为差异、评估并发 bug 复现可靠性的开发者。  
 **参考规范**：ARM DDI 0487 M.b §B2.6, §B2.10, §B2.12  
 **关键源文件**：`target/arm/tcg/translate-a64.c`、`include/tcg/tcg-mo.h`、`tcg/aarch64/tcg-target.c.inc`、`accel/tcg/atomic_template.h`
+
+---
+
+### [66-ARM64-Cache一致性与TLB广播规范验证-DDI0487-B2-D8-DC-IC-TLBI-多核一致性-PoC-PoU对照.md](arm64/66-ARM64-Cache一致性与TLB广播规范验证-DDI0487-B2-D8-DC-IC-TLBI-多核一致性-PoC-PoU对照.md)
+> **38KB · 11 节 · 规范对照验证**
+
+ARM64 Cache 一致性与 TLB 广播规范验证：对照 DDI 0487 M.b §B2.4/§D8.10/§D8.14。覆盖 DC 指令（CIVAC/CVAC/CVAU/IVAC/ZVA/GZVA/CISW 大多为 NOP 除 ZVA 真正清零）、IC 指令（IVAU/IALLU/IALLUIS system mode 为 NOP/user mode 失效 TB）、TLBI 指令（完整广播实现但过度失效/shareability-ASID-leaf 区分被压平）、PoC/PoU/PoDP 退化为统一内存点、多核一致性天然成立（无真实 cache hierarchy）、自修改代码序列容忍（TB 写脏即失效掩盖缺失的 DC/IC/DSB/ISB）、DMA 一致性（non-coherent DMA 在 QEMU 上意外工作）、FEAT_DPB 持久化点弱近似。**核心结论：QEMU 无 cache hierarchy 是最大架构差异，系统性掩盖 cache maintenance 和 DMA 相关 bug。**
+
+**适合读者**：验证 Cache/TLB 维护操作实现、评估 DMA 驱动/JIT 在 QEMU 上测试可靠性的开发者。  
+**参考规范**：ARM DDI 0487 M.b §B2.4, §D8.10, §D8.14  
+**关键源文件**：`target/arm/helper.c`、`target/arm/tcg/tlb-insns.c`、`accel/tcg/cputlb.c`、`target/arm/tcg/helper-a64.c`
 
 ---
 
