@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **127 篇文档**，总计 **~3983KB** 中文技术文档
+> 共 **128 篇文档**，总计 **~4026KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 28 | ~866KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程、综合导航 |
-| [arm64/](#arm64-arm64-架构) | 56 | ~1677KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、规范验证系列(GIC/EL/MMU/Timer/ISA/Debug/Security/SVE-SME) |
+| [arm64/](#arm64-arm64-架构) | 57 | ~1720KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、规范验证系列(GIC/EL/MMU/Timer/ISA/Debug/Security/SVE-SME) |
 | [device-model/](#device-model-设备模型) | 9 | ~424KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA、Generic Timer、综合导航 |
 | [network/](#network-网络子系统) | 2 | ~64KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径、综合导航 |
 | [memory/](#memory-内存子系统) | 3 | ~69KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA、综合导航 |
@@ -656,6 +656,17 @@ ARM64 PAC/BTI/MTE 安全特性规范验证：对照 DDI 0487 M.b §D8.10/§D10/F
 **适合读者**：验证 QEMU 对 PAC/BTI/MTE 安全特性实现与硬件一致性的开发者。  
 **参考规范**：ARM DDI 0487 M.b §D8.10, §D10, FEAT_BTI, FEAT_PAuth_LR  
 **关键源文件**：`target/arm/tcg/pauth_helper.c`、`target/arm/tcg/mte_helper.c`、`target/arm/tcg/translate-a64.c`
+
+---
+
+### [65-ARM64-内存模型与屏障语义规范验证-DDI0487-B2-DMB-DSB-ISB-Exclusive-LSE-Acquire-Release对照.md](arm64/65-ARM64-内存模型与屏障语义规范验证-DDI0487-B2-DMB-DSB-ISB-Exclusive-LSE-Acquire-Release对照.md)
+> **43KB · 11 节 · 规范对照验证**
+
+ARM64 内存模型与屏障语义规范验证：对照 DDI 0487 M.b §B2。覆盖 ARM 内存模型基本性质（multi-copy atomicity/coherence/relaxed ordering）、DMB 数据内存屏障（shareability domain 塌缩为 ISH/ordering scope 三种映射）、DSB 数据同步屏障（与 DMB 等价处理/completion 未建模）、ISB 指令同步屏障（TB 断裂近似）、Load-Acquire/Store-Release（LDAR/STLR one-way 被 full-fence 化/LDAPR RCpc 被强化为 RCsc）、Exclusive Monitor（CAS 近似/无 reservation granule/无 ABA 检测/虚假失败偏少）、LSE 原子指令（LDADD/CAS/SWP 正确/A-L-AL 变体统一 full barrier）。**核心结论：QEMU 是"过度有序"的功能模型，不是弱内存 litmus oracle。**
+
+**适合读者**：验证 QEMU 内存模型实现、研究 ARM 弱序行为差异、评估并发 bug 复现可靠性的开发者。  
+**参考规范**：ARM DDI 0487 M.b §B2.6, §B2.10, §B2.12  
+**关键源文件**：`target/arm/tcg/translate-a64.c`、`include/tcg/tcg-mo.h`、`tcg/aarch64/tcg-target.c.inc`、`accel/tcg/atomic_template.h`
 
 ---
 
