@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **135 篇文档**，总计 **~4170KB** 中文技术文档
+> 共 **136 篇文档**，总计 **~4181KB** 中文技术文档
 
 ---
 
@@ -733,6 +733,17 @@ IRQ/FIQ/SError/NMI 异步异常的完整路由与处理机制分析。涵盖 arm
 **适合读者**：需要理解中断路由、虚拟中断注入、或 PSTATE.DAIF 屏蔽逻辑的开发者。  
 **参考规范**：ARM DDI 0487 M.b §G1.13  
 **关键源文件**：`target/arm/cpu-irq.c`、`target/arm/helper.c`
+
+---
+
+### [73-ARM64-TCG-TB边界与中断检查时序-icount_decr机制-TB-chain-中断延迟分析.md](arm64/73-ARM64-TCG-TB边界与中断检查时序-icount_decr机制-TB-chain-中断延迟分析.md)
+> **11KB · 11 节 · TB 边界时序**
+
+TCG Translation Block 边界与中断检查的完整时序关系分析。涵盖 cpu_exec 主循环结构、gen_tb_start/gen_tb_end 入口退出检查生成、icount_decr.u16.high 负值触发机制、TB chaining 中的中断检测、MTTCG 跨线程中断通知（signal + atomic）、icount 精确中断模式、ARM64 DISAS_* 导致的 TB 终止类型。结论：TB 粒度中断是架构级性能-精度权衡，功能完全正确。
+
+**适合读者**：需要理解 TCG 中断延迟、或调试中断时序问题的开发者。  
+**参考规范**：QEMU 内部架构  
+**关键源文件**：`accel/tcg/cpu-exec.c`、`accel/tcg/translator.c`、`target/arm/tcg/translate-a64.c`
 
 ---
 
