@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **132 篇文档**，总计 **~4122KB** 中文技术文档
+> 共 **133 篇文档**，总计 **~4138KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 28 | ~866KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程、综合导航 |
-| [arm64/](#arm64-arm64-架构) | 61 | ~1817KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、规范验证系列(GIC/EL/MMU/Timer/ISA/Debug/Security/SVE-SME) |
+| [arm64/](#arm64-arm64-架构) | 62 | ~1833KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、规范验证系列(GIC/EL/MMU/Timer/ISA/Debug/Security/SVE-SME) |
 | [device-model/](#device-model-设备模型) | 9 | ~424KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA、Generic Timer、综合导航 |
 | [network/](#network-网络子系统) | 2 | ~64KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径、综合导航 |
 | [memory/](#memory-内存子系统) | 3 | ~69KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA、综合导航 |
@@ -711,6 +711,17 @@ SMC/HVC/MSR 系统寄存器 Trap 到 EL2/EL3 的完整实现分析。SMC 经 HCR
 **适合读者**：需要理解 ARM hypervisor trap 机制或调试 MSR/SMC 路由问题的开发者。  
 **参考规范**：ARM DDI 0487 M.b §D1.9, §C5.1  
 **关键源文件**：`target/arm/tcg/op_helper.c`、`target/arm/helper.c`、`target/arm/cpregs.h`
+
+---
+
+### [70-ARM64-ERET异常返回机制分析-SPSR-ELR-PSTATE恢复-illegal-return-EL切换对称性.md](arm64/70-ARM64-ERET异常返回机制分析-SPSR-ELR-PSTATE恢复-illegal-return-EL切换对称性.md)
+> **16KB · 11 节 · EL 切换分析**
+
+ERET 异常返回的完整实现分析，与 arm_cpu_do_interrupt_aarch64() 异常入口构成对称对。详细分析 SPSR_ELx→PSTATE 恢复、ELR_ELx→PC 恢复、SP 切换、illegal return 7 种条件、el_from_spsr() 映射逻辑、TBI 地址处理、FEAT_NV ERET trap、aarch64_pstate_valid_mask 过滤。结论：ERET 是 QEMU ARM64 质量最高的子系统之一。
+
+**适合读者**：需要理解 EL2→EL1 返回完整流程、或调试异常恢复问题的开发者。  
+**参考规范**：ARM DDI 0487 M.b §D1.10  
+**关键源文件**：`target/arm/tcg/helper-a64.c`、`target/arm/helper.c`、`target/arm/internals.h`
 
 ---
 
