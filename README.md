@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **134 篇文档**，总计 **~4151KB** 中文技术文档
+> 共 **135 篇文档**，总计 **~4170KB** 中文技术文档
 
 ---
 
@@ -733,6 +733,17 @@ IRQ/FIQ/SError/NMI 异步异常的完整路由与处理机制分析。涵盖 arm
 **适合读者**：需要理解中断路由、虚拟中断注入、或 PSTATE.DAIF 屏蔽逻辑的开发者。  
 **参考规范**：ARM DDI 0487 M.b §G1.13  
 **关键源文件**：`target/arm/cpu-irq.c`、`target/arm/helper.c`
+
+---
+
+### [72-ARM64-中断虚拟化完整链路-vGIC-List-Register-VIRQ注入-ICH_LR-ICV接口-EOI去激活.md](arm64/72-ARM64-中断虚拟化完整链路-vGIC-List-Register-VIRQ注入-ICH_LR-ICV接口-EOI去激活.md)
+> **19KB · 11 节 · 中断虚拟化**
+
+GICv3 中断虚拟化完整数据路径分析。从 Hypervisor 写 ICH_LR_EL2 → gicv3_cpuif_virt_update → VIRQ 信号 → Guest ICV_IAR → LR 状态转换 → ICV_EOIR/DIR → HW bit 物理联动去激活。涵盖 hppvi_index 优先级选择、icv_hppi_can_preempt 抢占判断、ICH_VMCR_EL2 控制、维护中断 7 种条件、vLPI 支持、FEAT_GICv3_NMI 虚拟化。
+
+**适合读者**：需要理解 KVM/Hypervisor 中断注入机制、或调试 vGIC 虚拟中断问题的开发者。  
+**参考规范**：ARM IHI 0069H §8, ARM DDI 0487 §G8  
+**关键源文件**：`hw/intc/arm_gicv3_cpuif.c`、`target/arm/cpu-irq.c`
 
 ---
 
