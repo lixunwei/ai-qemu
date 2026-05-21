@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **133 篇文档**，总计 **~4138KB** 中文技术文档
+> 共 **134 篇文档**，总计 **~4151KB** 中文技术文档
 
 ---
 
@@ -722,6 +722,17 @@ ERET 异常返回的完整实现分析，与 arm_cpu_do_interrupt_aarch64() 异�
 **适合读者**：需要理解 EL2→EL1 返回完整流程、或调试异常恢复问题的开发者。  
 **参考规范**：ARM DDI 0487 M.b §D1.10  
 **关键源文件**：`target/arm/tcg/helper-a64.c`、`target/arm/helper.c`、`target/arm/internals.h`
+
+---
+
+### [71-ARM64-异步异常IRQ-FIQ-SError路由机制-HCR_EL2-IMO-FMO-DAIF屏蔽-虚拟中断注入.md](arm64/71-ARM64-异步异常IRQ-FIQ-SError路由机制-HCR_EL2-IMO-FMO-DAIF屏蔽-虚拟中断注入.md)
+> **13KB · 11 节 · 异步异常路由**
+
+IRQ/FIQ/SError/NMI 异步异常的完整路由与处理机制分析。涵盖 arm_cpu_exec_interrupt 优先级决策、arm_phys_excp_target_el 6 维查找表（精确实现 ARM ARM Table G1-15）、arm_excp_unmasked 屏蔽判断、虚拟中断注入（VIRQ/VFIQ/VSERR）、FEAT_NMI 全链路支持（ALLINT/SPINTMASK/降级）。结论：异步异常是 QEMU ARM64 实现最完善的子系统之一。
+
+**适合读者**：需要理解中断路由、虚拟中断注入、或 PSTATE.DAIF 屏蔽逻辑的开发者。  
+**参考规范**：ARM DDI 0487 M.b §G1.13  
+**关键源文件**：`target/arm/cpu-irq.c`、`target/arm/helper.c`
 
 ---
 
