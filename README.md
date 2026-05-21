@@ -2,7 +2,7 @@
 
 > 本文档集基于 QEMU 11.0.50 源码，聚焦 ARM64 (AArch64) 架构  
 > 使用 AI 辅助分析，所有源码引用均标注文件名:行号及关键 git commit SHA  
-> 共 **130 篇文档**，总计 **~4087KB** 中文技术文档
+> 共 **131 篇文档**，总计 **~4105KB** 中文技术文档
 
 ---
 
@@ -11,7 +11,7 @@
 | 分类 | 文档数 | 总大小 | 核心主题 |
 |------|--------|--------|---------|
 | [architecture/](#architecture-架构) | 28 | ~866KB | 全局架构、QOM、执行循环、Machine 建立、线程模型、事件循环与I/O模型、块层核心架构、qcow2与块驱动、TCG后端、TCG优化与TLB、VirtIO与vhost、内存子系统、MTTCG并行执行、TCG前端翻译、主事件循环与协程、综合导航 |
-| [arm64/](#arm64-arm64-架构) | 59 | ~1781KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、规范验证系列(GIC/EL/MMU/Timer/ISA/Debug/Security/SVE-SME) |
+| [arm64/](#arm64-arm64-架构) | 60 | ~1799KB | CPU 模型、GICv3、TCG、ACPI、FDT、中断、特殊指令、EL 状态、TrustZone、虚拟化扩展、MMU/TLB、Generic Timer、PMU、CPU 特性与 ID 寄存器、SVE/SME、PAC/BTI/MTE、GCS/RME/新扩展、安全中断路由与流转、GICv3 中断生命周期、ITS/LPI、GICv3 寄存器与状态机、中断虚拟化、KVM vGIC、MMU 页表遍历、EL2/EL3 陷阱路由、特殊寄存器与 Cache/AT 指令、ID 寄存器与特性发现、EL 状态切换与 PSTATE、EL 指令执行流差异、安全状态转换与 SCR/HCR 联动、EL3-Secure世界切换、EL1-EL2交互与嵌套虚拟化、TCG hflags/翻译/代码生成/softmmu/执行循环/内存模型/插件调试、系统寄存器CP访问框架、TrustZone安全扩展、PTW深度分析、GICv3完整分析、内存属性与缓存一致性、异常处理完整流程、调试架构、EL状态管理综合导航、规范验证系列(GIC/EL/MMU/Timer/ISA/Debug/Security/SVE-SME) |
 | [device-model/](#device-model-设备模型) | 9 | ~424KB | 设备框架、virtio、块层、chardev、VFIO、网络、DMA、Generic Timer、综合导航 |
 | [network/](#network-网络子系统) | 2 | ~64KB | 网络核心架构、TAP/SLIRP/Socket 后端、vhost-net、virtio-net 设备模型、收发路径、综合导航 |
 | [memory/](#memory-内存子系统) | 3 | ~69KB | MemoryRegion、MMIO、IOMMU、RAMBlock、脏页追踪、NUMA、综合导航 |
@@ -689,6 +689,17 @@ ARM64 QEMU 规范验证差异总汇：从文档 56-66 共 11 篇验证文档中�
 **适合读者**：需要快速了解 QEMU ARM64 实现与硬件规范全部已知差异的开发者。  
 **参考规范**：ARM DDI 0487 M.b, IHI 0048B.b, IHI 0069H.b  
 **关联文档**：arm64/56-66 全部验证文档
+
+---
+
+### [68-ARM64-WFE-WFI-Trap路径分析-HCR_EL2-TWE-SCTLR-nTWE-EL状态切换机制.md](arm64/68-ARM64-WFE-WFI-Trap路径分析-HCR_EL2-TWE-SCTLR-nTWE-EL状态切换机制.md)
+> **18KB · 10 节 · Trap 机制分析**
+
+WFE/WFI 指令 Trap 到 EL2 的完整路径对比分析。发现 QEMU A-profile WFE trap 完全未实现：WFI 正确实现了三级 trap 优先级（SCTLR.nTWI → HCR_EL2.TWI → SCR_EL3.TWI），而 WFE 跳过所有检查直接 yield。详细分析 check_wfx_trap() 函数、raise_exception() 路由机制、arm_cpu_do_interrupt() 异常入口流程、EC=0x01 syndrome 编码。包含修复建议和 FEAT_TWED 状态评估。
+
+**适合读者**：需要理解 ARM EL 切换 trap 机制、或调试 WFE/WFI 相关 Hypervisor 问题的开发者。  
+**参考规范**：ARM DDI 0487 M.b §D1.12  
+**关键源文件**：`target/arm/tcg/op_helper.c`、`target/arm/tcg/translate-a64.c`、`target/arm/syndrome.h`
 
 ---
 
