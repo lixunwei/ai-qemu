@@ -1,0 +1,38 @@
+# ARM64 模拟 (通用)
+
+ARM64 CPU 模型、系统寄存器、ID 寄存器、调试架构等通用主题。
+子主题请参见各子目录。
+
+## 子目录
+
+| 目录 | 主题 | 文档数 |
+|------|------|--------|
+| [gic/](gic/INDEX.md) | GIC 中断控制器 | 12 |
+| [mmu/](mmu/INDEX.md) | MMU/TLB/页表遍历 | 8 |
+| [security/](security/INDEX.md) | 安全特性 (TrustZone/PAC/BTI/MTE/RME) | 9 |
+| [exception/](exception/INDEX.md) | 异常处理/EL切换/Trap | 10 |
+| [tcg/](tcg/INDEX.md) | ARM64 TCG翻译细节 | 6 |
+| [spec-verify/](spec-verify/INDEX.md) | 规范验证对照 | 6 |
+
+## 本目录文档
+
+| # | 文档 | 主题 |
+|---|------|------|
+| 00 | [ARM64-CPU-GICv3-TCG深度分析](00-ARM64-CPU-GICv3-TCG深度分析.md) | CPU 模型、GICv3、TCG 翻译总览 |
+| 01 | [ACPI表生成与启动流程](01-ACPI表生成与启动流程深度分析.md) | ACPI 表构建、启动流程 |
+| 02 | [特殊指令模拟](02-特殊指令模拟深度分析.md) | WFI/WFE/DMB/DSB 等特殊指令 |
+| 05 | [FDT设备树](05-FDT设备树深度分析.md) | FDT 设备树生成与解析 |
+| 09 | [虚拟化扩展(VHE/HCR_EL2/Stage2)](09-虚拟化扩展深度分析-VHE-HCR_EL2-Stage2-MMU.md) | VHE、HCR_EL2、Stage-2 MMU |
+| 12 | [Generic-Timer定时器](12-Generic-Timer定时器深度分析.md) | 物理/虚拟定时器、EL 控制 |
+| 13 | [PMU性能监控单元](13-PMU性能监控单元深度分析.md) | PMUv3 事件计数器、溢出中断 |
+| 14 | [CPU特性与ID寄存器](14-CPU特性与ID寄存器仿真深度分析.md) | ID 寄存器仿真、特性发现 |
+| 15 | [SVE-SME可扩展向量扩展](15-SVE-SME可扩展向量扩展深度分析.md) | SVE/SME 向量长度、谓词、ZA 矩阵 |
+| 16 | [PAC-BTI-MTE安全特性](16-PAC-BTI-MTE安全特性深度分析.md) | 指针认证、分支目标、内存标签概览 |
+| 31 | [EL2-EL3系统寄存器陷阱路由](31-ARM64-EL2-EL3系统寄存器陷阱路由深度分析.md) | EL2/EL3 trap 路由规则 |
+| 32 | [特殊系统寄存器与Cache/AT指令](32-ARM64特殊系统寄存器与Cache-AT指令深度分析.md) | DC/IC/AT 指令、特殊寄存器 |
+| 34 | [ID寄存器与特性发现机制](34-ARM64-ID寄存器与特性发现机制深度分析.md) | ID_AA64* 寄存器族 |
+| 47 | [系统寄存器与CP访问(ARMCPRegInfo)](47-ARM64-系统寄存器与CP访问深度分析-ARMCPRegInfo框架-MRS-MSR翻译-cpregs哈希表-EL银行与访问控制.md) | ARMCPRegInfo 框架、MRS/MSR 翻译 |
+| 53 | [调试架构(MDSCR/断点/观察点)](53-ARM64-调试架构深度分析-MDSCR-DBGBCR-DBGWCR-断点观察点-单步执行.md) | 硬件断点、观察点、单步 |
+| 54 | [异常级别状态管理综合导航](54-ARM64-异常级别状态管理综合导航-EL切换-指令差异-安全状态-TCG翻译变化.md) | EL 状态管理全部主题索引 |
+| 61 | [调试架构规范验证](61-ARM64-调试架构规范验证-DDI0487-D2-H-断点观察点-单步-Debug异常路由-MDSCR对照.md) | DDI 0487 D2/H 对照验证 |
+| 74 | [Fine-Grained-Traps(FGT)机制](74-ARM64-Fine-Grained-Traps-FGT机制分析-HFGRTR-HFGITR-声明式trap-REV-nXS豁免.md) | HFGRTR/HFGITR、声明式 trap |
