@@ -15,6 +15,7 @@
 | 106 | [GDB远程调试完全指南](106-QEMU-GDB远程调试完全指南-RSP命令-ARM64寄存器-断点观察点-monitor透传-反向调试.md) | RSP协议40+命令, ARM64寄存器组, 断点观察点, monitor透传, 反向调试, 物理内存模式 | ~830 |
 | 110 | [Linux内核调试工作流](110-QEMU-GDB调试Linux内核完整工作流-编译配置-Rootfs制作-启动参数-断点调试-模块调试-自动化.md) | ARM64内核编译, Rootfs制作(3种), QEMU启动配置, GDB内核调试, 模块调试, 7个调试场景, 自动化脚本 | ~450 |
 | 111 | [性能分析与Profiling](111-QEMU性能分析与Profiling实践指南-perf集成-TCG统计-ftrace-sync-profile-PMU-调优.md) | perfmap/jitdump, sync-profile, trace events, Guest perf/ftrace, PMU仿真, 代码缓存调优, 火焰图 | ~430 |
+| 112 | [开发者指南:添加设备与指令](112-QEMU开发者指南-添加设备与指令-QOM模型-SysBus-PCI-decode-TCG翻译-测试.md) | QOM设备模型, SysBus/PCI完整示例, ARM64指令添加, decode文件, Helper, 构建系统, QTest | ~650 |
 
 ---
 
