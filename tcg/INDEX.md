@@ -19,3 +19,4 @@ TCG 核心子系统：IR 设计、前端翻译、优化 Pass、后端代码生�
 | 13 | [TCG前端翻译(解码/IR/优化)](13-TCG前端翻译深度分析-指令解码IR生成与优化Pass.md) | 指令解码、IR 生成、优化 Pass |
 | 14 | [TCG后端(AArch64/寄存器/TLB)](14-TCG后端代码生成深度分析-AArch64后端寄存器分配与TLB慢路径.md) | AArch64 后端、寄存器分配、TLB 慢路径 |
 | 78 | [TCG前端IR生成与优化Pass](78-TCG前端IR生成与优化Pass深度分析-操作码体系-常量折叠-拷贝传播-活性分析-寄存器分配.md) | 操作码体系、常量折叠、拷贝传播、活性分析、寄存器分配 |
+| 107 | [TCG与真实JIT编译器对比](107-TCG与真实JIT编译器对比分析-寄存器分配-优化Pass-代码缓存-V8-LLVM-HotSpot-LuaJIT.md) | TCG vs V8/LLVM/HotSpot/LuaJIT: IR设计、优化深度、寄存器分配、代码缓存、投机优化、分层编译 |
