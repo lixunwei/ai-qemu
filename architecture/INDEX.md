@@ -30,3 +30,4 @@ QEMU 全局架构、对象模型、执行循环、线程模型等核心设计文
 | 99 | [KVM-ARM64特性与VM-Exit深度分析-退出处理-特性协商-DeviceAPI-cpreg-线程模型](99-KVM-ARM64特性与VM-Exit深度分析-退出处理-特性协商-DeviceAPI-cpreg-线程模型.md) | VM-Exit 处理、特性协商、Device API、cpreg、线程模型 |
 | 100 | [ARM64硬件虚拟化与QEMU-KVM实现对比分析-EL2-Stage2-vGIC-Timer-Trap-差异汇总](100-ARM64硬件虚拟化与QEMU-KVM实现对比分析-EL2-Stage2-vGIC-Timer-Trap-差异汇总.md) | EL2、Stage-2、vGIC、Timer、Trap 实现对比 |
 | 101 | [UI显示子系统全面分析-VNC-GTK-Spice-输入-渲染管线-DisplayChangeListener](101-UI显示子系统全面分析-VNC-GTK-Spice-输入-渲染管线-DisplayChangeListener.md) | VNC、GTK、Spice、输入链路、渲染管线 |
+| 108 | [快照与VMState子系统深度分析-SaveVM-LoadVM-QCOW2快照-RAM保存-设备状态序列化-版本兼容](108-QEMU快照与VMState子系统深度分析-SaveVM-LoadVM-QCOW2快照-RAM保存-设备状态序列化-版本兼容.md) | VMState 框架、SaveVM/LoadVM、QCOW2 内部快照、RAM 保存、ARM64 状态、版本兼容 |
