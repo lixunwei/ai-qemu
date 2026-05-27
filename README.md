@@ -25,7 +25,8 @@
 | [debug/](debug/INDEX.md) | 4 | GDB 调试子系统 |
 | [monitor/](monitor/INDEX.md) | 1 | Monitor/QMP/QAPI |
 | [network/](network/INDEX.md) | 2 | 网络子系统 |
-| **总计** | **~163** | |
+| [practice/](practice/INDEX.md) | 5 | 实践指南 (监测/调试/用法/GDB) |
+| **总计** | **~168** | |
 
 ---
 
@@ -371,7 +372,7 @@
 | 热迁移 | 1 | ⭐⭐⭐ |
 | 确定性重放 | 2 | ⭐⭐⭐ |
 | UI/Display | 1 | ⭐⭐⭐ |
-| 调试 | 4 | ⭐⭐⭐ |
+| 调试 | 4+1 | ⭐⭐⭐⭐ |
 | 网络 | 2 | ⭐⭐ |
 | Monitor/QMP | 1 | ⭐⭐ |
 | ARM 规范验证 | 7 | ⭐⭐⭐⭐ |
@@ -385,8 +386,20 @@
 
 ---
 
+### practice/ (5 篇)
+
+| # | 主题 |
+|---|------|
+| 102 | 监测与追踪系统: Tracing 6后端, QMP, Stats, HMP |
+| 103 | 调试系统: GDB Stub, TCG日志, Core Dump, ARM64调试 |
+| 104 | 基础用法: 编译, CPU/内存/存储/网络/显示配置 |
+| 105 | 高级用法: KVM调优, VirtIO, VFIO, 迁移, 安全 |
+| 106 | GDB远程调试完全指南: RSP协议, ARM64寄存器, 断点, 反向调试 |
+
+---
+
 ## 源码版本
 
 - **QEMU**: 11.0.50 (commit 基于 2025 年 main 分支)
 - **参考规范**: DDI 0487 M.b (ARMv9.6-A), IHI 0069H.b (GICv3/v4)
-- **文档总数**: 163 篇 (截至 2025-07)
+- **文档总数**: 168 篇 (截至 2025-07)
