@@ -22,11 +22,11 @@
 | [arm/](arm/INDEX.md) | 18 | ARM 通用 (含 AArch32) |
 | [device-model/](device-model/INDEX.md) | 21 | 设备模型 (VirtIO/Block/PCI/VFIO/DMA/Timer) |
 | [memory/](memory/INDEX.md) | 6 | 内存子系统 (MemoryRegion/FlatView/RAMBlock) |
-| [debug/](debug/INDEX.md) | 4 | GDB 调试子系统 |
+| [debug/](debug/INDEX.md) | 5 | GDB 调试子系统 |
 | [monitor/](monitor/INDEX.md) | 1 | Monitor/QMP/QAPI |
 | [network/](network/INDEX.md) | 2 | 网络子系统 |
-| [practice/](practice/INDEX.md) | 5 | 实践指南 (监测/调试/用法/GDB) |
-| **总计** | **~170** | |
+| [practice/](practice/INDEX.md) | 8 | 实践指南 (调试/用法/内核开发/Profiling/开发者指南) |
+| **总计** | **~175** | |
 
 ---
 
